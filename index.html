@@ -1,54 +1,741 @@
-<!-- ... existing code ... -->
-    <script src="https://unpkg.com/react@17/umd/react.development.js"></script>
-    <script src="https://unpkg.com/react-dom@17/umd/react-dom.development.js"></script>
-    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>인공지능수학 수행평가</title>
+    
+    <!--  Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
-<!-- ... existing code ... -->
-                                                if (part.startsWith('{{') && part.endsWith('}}')) {
-                                                    const currentIdx = blankIdx++;
-                                                    const ans = studentAnswers[q.id] ? studentAnswers[q.id][currentIdx] : '';
-                                                    const isActive = activeBlank && activeBlank.qId === q.id && activeBlank.index === currentIdx;
-                                                    
-                                                    return (
-<!-- ... existing code ... -->
-                                        <div className="flex justify-between items-center mb-4">
-                                            <h3 className="font-bold">알맞은 단어를 선택하세요:</h3>
-                                            <button onClick={() => setActiveBlank(null)} className="text-xl font-black">X</button>
-                                        </div>
-                                        <div className="flex flex-wrap gap-2">
-                                            {(questions.find(q => q.id === activeBlank.qId) || {options: []}).options.map((opt, i) => (
-                                                <button key={i} onClick={() => handleAnswerSelect(opt)} className="monotone-btn px-4 py-2 text-sm flex-grow sm:flex-grow-0 text-center">
-                                                    {opt}
-                                                </button>
-                                            ))}
-                                            <button onClick={() => handleAnswerSelect('')} className="monotone-btn bg-gray-200 px-4 py-2 text-sm">지우기</button>
-                                        </div>
-<!-- ... existing code ... -->
-                                <h2 className="text-2xl font-bold border-b-2 border-black pb-2 mb-4">평가 결과</h2>
-                                {questions.map(q => {
-                                    // 현재 제출된 학생의 데이터를 submissions 배열에서 찾음
-                                    const mySub = submissions.find(s => s.studentId === studentInfo.id);
-                                    const secData = mySub && mySub.results ? mySub.results[q.id] : null;
-                                    if(!secData) return null;
-                                    return (
-                                        <div key={q.id} className="flex justify-between items-center py-3 border-b border-gray-300">
-<!-- ... existing code ... -->
-                                })}
-                                <div className="flex justify-between items-center py-4 mt-2">
-                                    <span className="font-black text-xl">최종 총점</span>
-                                    <span className="font-black text-3xl text-red-600">{(submissions.find(s => s.studentId === studentInfo.id) || {totalScore: 0}).totalScore}점</span>
+    
+    <!-- React & ReactDOM -->
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+    
+    <!-- Babel (구문 번역기) -->
+    <script src="https://unpkg.com/@babel/standalone@7/babel.min.js"></script>
+    
+    <!-- KaTeX (수학 수식 렌더링 라이브러리) -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.css">
+    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.js"></script>
+
+    <style>
+        body {
+            font-family: 'Malgun Gothic', 'Apple SD Gothic Neo', sans-serif;
+            background-color: #f3f4f6;
+            color: #111827;
+        }
+        /* 흑백(모노톤) 학습지 테마 스타일 */
+        .monotone-box {
+            background-color: #ffffff;
+            border: 3px solid #000000;
+            box-shadow: 6px 6px 0px 0px #000000;
+        }
+        .monotone-btn {
+            background-color: #ffffff;
+            border: 2px solid #000000;
+            font-weight: bold;
+            transition: all 0.2s;
+            box-shadow: 3px 3px 0px 0px #000000;
+        }
+        .monotone-btn:active:not(:disabled) {
+            transform: translate(3px, 3px);
+            box-shadow: 0px 0px 0px 0px #000000;
+        }
+        .monotone-btn:disabled {
+            background-color: #e5e7eb;
+            color: #9ca3af;
+            box-shadow: none;
+            cursor: not-allowed;
+        }
+        .monotone-input {
+            border: 2px solid #000000;
+            padding: 0.5rem;
+            outline: none;
+        }
+        .monotone-input:focus {
+            background-color: #f3f4f6;
+        }
+        /* 빈칸 스타일 */
+        .blank-space {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            min-width: 60px;
+            height: 32px;
+            border-bottom: 2px dashed #000;
+            cursor: pointer;
+            padding: 0 8px;
+            font-weight: bold;
+            color: #000;
+            background-color: #e5e7eb;
+            margin: 0 4px;
+            vertical-align: middle;
+        }
+        .blank-space.active {
+            background-color: #000;
+            color: #fff;
+        }
+        .blank-space.filled {
+            background-color: #d1d5db;
+            border-bottom: 2px solid #000;
+        }
+        /* 수식 내부 폰트 크기 조정 */
+        .katex { font-size: 1.1em; }
+        
+        /* 모바일 최적화 스크롤바 */
+        ::-webkit-scrollbar { width: 8px; height: 8px; }
+        ::-webkit-scrollbar-track { background: #f1f1f1; border-left: 2px solid #000; }
+        ::-webkit-scrollbar-thumb { background: #000; }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const defaultQuestions = [
+            {
+                id: 'q1',
+                title: '01. 텍스트 자료의 표현 및 처리',
+                content: `[텍스트 자료의 표현]
+관찰이나 측정 등을 통해 얻게 되는 가공되지 않은 정보를 {{자료}}라고 한다.
+{{정형}} 자료는 일정한 형식을 갖춘 자료이고, {{비정형}} 자료는 일정한 형식을 갖추지 않은 자료이다.
+텍스트 자료는 집합이나 {{벡터}}로 나타낼 수 있다.
+$$n$$개의 수 $$x_1, x_2, \\cdots, x_n$$을 괄호 속에 순서대로 나열하여 나타낸 $$\\vec{X} = (x_1, x_2, \\cdots, x_n)$$을 벡터라 하고, $$x_1, x_2, \\cdots, x_n$$을 벡터 $$\\vec{X}$$의 {{성분}}이라고 한다.
+
+[텍스트 자료의 처리 및 시각화]
+비정형 텍스트 자료에서 단어의 {{빈도수}}를 구하면 그 자료에서 주제어를 찾을 수 있다.
+단어 빈도수를 이용하여 TF-IDF를 구하면 텍스트 자료의 유용한 정보를 알아낼 수 있다.
+TF-IDF가 작으면 중요도가 {{낮은}} 단어이고, TF-IDF가 크면 중요도가 {{높은}} 단어이다.
+자료의 분석 결과를 쉽게 이해할 수 있도록 시각적으로 표현하여 효과적으로 전달하는 과정을 {{시각화}}라고 한다.
+텍스트 자료는 단어 빈도수를 이용하여 표, 막대그래프, 원그래프, {{단어 구름}} 등으로 시각화할 수 단어이다.`,
+                options: ['빈도수', '시각화', '자료', '낮은', '높은', '성분', '정형', '비정형', '벡터', '단어 구름']
+            },
+            {
+                id: 'q2',
+                title: '02. 이미지 자료의 표현 및 처리',
+                content: `[이미지 자료의 표현]
+수 또는 문자를 직사각형 모양으로 배열하여 괄호로 묶은 것을 {{행렬}}이라고 한다.
+행렬 $$A$$의 제 $$i$$행과 제 $$j$$열이 만나는 위치에 있는 성분을 행렬 $$A$$의 $$(i, j)$$ 성분이라 하고, 기호로 {{$$a_{ij}$$}}와 같이 나타낸다.
+흑백 이미지는 각 픽셀에서 검은색은 {{0}}, 흰색은 255로 나타내고, 그 사이의 회색은 {{1}}부터 254까지의 수로 나타낼 수 있다.
+컬러 이미지에서 각 픽셀의 색상 정보는 RGB 채널의 광원의 세기를 나타내는 수를 {{ $$(R, G, B)$$ }}의 순서쌍으로 나타낸다.
+
+[이미지 자료의 처리]
+이미지를 합성하여 새로운 이미지를 만들 때, 이미지를 행렬로 표현하고 연산을 하여 나타낼 수 있다. 이미지의 합성에 이용되는 행렬의 연산은 {{덧셈과 뺄셈}}이다.
+이미지의 밝기를 조절할 때 이용되는 행렬의 연산은 {{실수배}}이다.
+컬러 이미지를 흑백 이미지로 바꿀 때, 흑백 이미지를 나타내는 행렬의 각 성분은 컬러 이미지를 나타내는 세 행렬 $$R, G, B$$에 대응하는 성분의 {{평균}}으로 구한다.
+이미지의 평행이동과 대칭이동에 이용되는 행렬의 연산은 {{곱셈}}이다.`,
+                options: ['0', '1', '$$a_{ij}$$', '$$(R, G, B)$$', '행렬', '실수배', '덧셈과 뺄셈', '평균', '곱셈']
+            },
+            {
+                id: 'q3',
+                title: '03. 손실함수와 최적화',
+                content: `[손실함수]
+입력값 $$x_1, x_2, \\cdots, x_n$$에 대한 측정값이 $$y_1, y_2, \\cdots, y_n$$이고, 추세선 $$f(x)=ax$$ ($$a$$는 상수)에 따른 예측값이 $$ax_1, ax_2, \\cdots, ax_n$$이라 할 때,
+오차: $$y_1-ax_1, y_2-ax_2, \\cdots, y_n-ax_n$$
+손실함수 $$L(a) = \\frac{1}{n} \\times ( $$ {{ $$(y_1-ax_1)^2+(y_2-ax_2)^2+\\cdots+(y_n-ax_n)^2$$ }} $$ ) $$ 이다.
+
+[다항함수의 극한]
+다항함수 $$y=f(x)$$에서 $$x$$의 값이 $$a$$가 아니면서 $$a$$에 한없이 가까워질 때 함숫값 $$f(x)$$가 일정한 수 $$L$$에 한없이 가까워지면, 함수 $$y=f(x)$$는 $$L$$에 {{수렴}}한다고 하고, 이것을 기호로 {{ $$\\lim_{x \\to a} f(x)=L$$ }}과 같이 나타낸다.
+
+[다항함수의 평균변화율]
+다항함수 $$y=f(x)$$에서 $$x$$의 값이 $$a$$에서 $$b$$까지 변할 때의 {{평균변화율}}은 다음과 같다.
+$$\\frac{\\Delta y}{\\Delta x} = \\frac{f(b)-f(a)}{b-a} = \\frac{f(a+\\Delta x)-f(a)}{\\Delta x}$$
+
+[다항함수의 미분계수]
+다항함수 $$y=f(x)$$에서 $$x=a$$에서의 미분계수 {{ $$f'(a)$$ }}는 점 $$(a, f(a))$$에서 곡선 $$y=f(x)$$의 접선의 {{기울기}}와 같다.
+
+[최적화]
+손실함수의 값을 최소화하는 추세선의 기울기를 찾는 과정을 손실함수의 {{최적화}}라 하고, 손실함수의 값이 최소가 되도록 하는 추세선을 {{최적 추세선}}이라고 한다.
+손실함수의 값이 감소하는 방향을 찾고 초깃값을 반복적으로 이동시키면서 최적화하는 방법을 {{경사하강법}}이라고 한다.
+{{학습률}}의 크기를 적절히 조절하면 미분계수의 크기에 관계없이 손실함수의 값이 변하는 정도를 조절할 수 있다.`,
+                options: ['평균변화율', '최적화', '경사하강법', '$$\\lim_{x \\to a} f(x)=L$$', "$$f'(a)$$", '최적 추세선', '기울기', '학습률', '$$(y_1-ax_1)^2+(y_2-ax_2)^2+\\cdots+(y_n-ax_n)^2$$', '수렴']
+            }
+        ];
+
+        const defaultRubrics = {
+            'q1': [
+                { min: 9, score: 10, label: 'A' }, { min: 7, score: 8, label: 'B' },
+                { min: 5, score: 6, label: 'C' }, { min: 0, score: 4, label: 'D' }
+            ],
+            'q2': [
+                { min: 8, score: 10, label: 'A' }, { min: 6, score: 8, label: 'B' },
+                { min: 4, score: 6, label: 'C' }, { min: 0, score: 4, label: 'D' }
+            ],
+            'q3': [
+                { min: 9, score: 10, label: 'A' }, { min: 7, score: 8, label: 'B' },
+                { min: 5, score: 6, label: 'C' }, { min: 0, score: 4, label: 'D' }
+            ]
+        };
+
+        // 선생님의 구글 앱스 스크립트 웹 앱 URL을 여기에 붙여넣으세요.
+        const GAS_URL = ""; 
+
+        const Toast = ({ message }) => {
+            if (!message) return null;
+            return (
+                <div className="fixed top-5 left-1/2 transform -translate-x-1/2 bg-black text-white px-6 py-3 font-bold border-2 border-white shadow-[4px_4px_0px_0px_rgba(0,0,0,0.5)] z-50 animate-bounce">
+                    {message}
+                </div>
+            );
+        };
+
+        const ConfirmModal = ({ isOpen, title, message, onConfirm, onCancel, confirmText="확인", isDanger=false }) => {
+            if (!isOpen) return null;
+            return (
+                <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50 p-4">
+                    <div className="monotone-box p-6 w-full max-w-sm">
+                        <h3 className="text-xl font-black mb-2 border-b-2 border-black pb-2">{title}</h3>
+                        <div className="mb-6 font-medium whitespace-pre-wrap">{message}</div>
+                        <div className="flex justify-end gap-3">
+                            {onCancel && <button onClick={onCancel} className="monotone-btn px-4 py-2 bg-gray-200">취소</button>}
+                            <button onClick={onConfirm} className={`monotone-btn px-4 py-2 ${isDanger ? 'bg-red-600 text-white' : 'bg-black text-white'}`}>
+                                {confirmText}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            );
+        };
+
+        // 수식 렌더링 컴포넌트 ($$...$$로 감싸진 텍스트를 KaTeX로 변환)
+        const MathText = ({ text }) => {
+            if (!text) return null;
+            const parts = text.split(/(\$\$.*?\$\$)/g);
+            return (
+                <React.Fragment>
+                    {parts.map((part, i) => {
+                        if (part.startsWith('$$') && part.endsWith('$$')) {
+                            const math = part.slice(2, -2);
+                            let html = math;
+                            if (window.katex) {
+                                try { html = window.katex.renderToString(math, { throwOnError: false }); }
+                                catch (e) { console.error("KaTeX Error:", e); }
+                            }
+                            return <span key={i} dangerouslySetInnerHTML={{ __html: html }} />;
+                        }
+                        return <span key={i}>{part}</span>;
+                    })}
+                </React.Fragment>
+            );
+        };
+
+        const App = () => {
+            const [view, setView] = React.useState('login'); 
+            const [toastMsg, setToastMsg] = React.useState('');
+            
+            const [questions, setQuestions] = React.useState(() => JSON.parse(localStorage.getItem('aimath_q_v2')) || defaultQuestions);
+            const [rubrics, setRubrics] = React.useState(() => JSON.parse(localStorage.getItem('aimath_r_v2')) || defaultRubrics);
+            const [submissions, setSubmissions] = React.useState(() => JSON.parse(localStorage.getItem('aimath_s_v2')) || []);
+            const [teacherPw, setTeacherPw] = React.useState(() => localStorage.getItem('aimath_pw') || 'admin');
+
+            // 전역 확인 모달 상태 (브라우저 기본 confirm 대체용)
+            const [globalConfirm, setGlobalConfirm] = React.useState({ isOpen: false, title: '', message: '', onConfirm: null, isDanger: false });
+
+            // 학생용 상태
+            const [studentInfo, setStudentInfo] = React.useState({ id: '', name: '' });
+            const [studentAnswers, setStudentAnswers] = React.useState({});
+            const [activeBlank, setActiveBlank] = React.useState(null);
+            const [currentQIdx, setCurrentQIdx] = React.useState(0); // 페이지 넘김용 인덱스
+
+            React.useEffect(() => {
+                localStorage.setItem('aimath_q_v2', JSON.stringify(questions));
+                localStorage.setItem('aimath_r_v2', JSON.stringify(rubrics));
+                localStorage.setItem('aimath_s_v2', JSON.stringify(submissions));
+                localStorage.setItem('aimath_pw', teacherPw);
+            }, [questions, rubrics, submissions, teacherPw]);
+
+            const showToast = (msg) => {
+                setToastMsg(msg);
+                setTimeout(() => setToastMsg(''), 2500);
+            };
+
+            const showConfirm = (title, message, onConfirm, isDanger=false) => {
+                setGlobalConfirm({
+                    isOpen: true, title, message, isDanger,
+                    onConfirm: () => {
+                        onConfirm();
+                        setGlobalConfirm(prev => Object.assign({}, prev, { isOpen: false }));
+                    }
+                });
+            };
+
+            const sendToGas = (action, data) => {
+                if (!GAS_URL) return;
+                fetch(GAS_URL, {
+                    method: 'POST', mode: 'no-cors', headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ action: action, data: data })
+                }).catch(e => console.log("GAS 전송 실패 (오프라인 모드):", e));
+            };
+
+            const getCorrectAnswers = (content) => {
+                const matches = content.match(/\{\{([^}]+)\}\}/g) || [];
+                return matches.map(m => m.replace(/\{\{|\}\}/g, '').trim());
+            };
+
+            const calculateScore = (qId, correctCount) => {
+                const rubric = rubrics[qId] || [];
+                const sorted = rubric.slice().sort((a, b) => b.min - a.min);
+                for (let i = 0; i < sorted.length; i++) {
+                    if (correctCount >= sorted[i].min) return { score: sorted[i].score, label: sorted[i].label };
+                }
+                return { score: 0, label: '최하위' };
+            };
+
+            const handleStudentLogin = (e) => {
+                e.preventDefault();
+                if (studentInfo.id.length !== 4 || isNaN(studentInfo.id)) {
+                    showToast("학번은 4자리 숫자로 입력해주세요."); return;
+                }
+                if (!studentInfo.name.trim()) {
+                    showToast("이름을 입력해주세요."); return;
+                }
+                const alreadySubmitted = submissions.find(s => s.studentId === studentInfo.id);
+                if (alreadySubmitted) {
+                    showToast("이미 제출이 완료된 학번입니다."); return;
+                }
+                
+                const initAns = {};
+                questions.forEach(q => {
+                    const blanksCnt = (q.content.match(/\{\{[^}]+\}\}/g) || []).length;
+                    initAns[q.id] = Array(blanksCnt).fill('');
+                });
+                setStudentAnswers(initAns);
+                setCurrentQIdx(0); // 첫 페이지부터 시작
+                setView('student');
+            };
+
+            const handleAnswerSelect = (optionStr) => {
+                if (!activeBlank) return;
+                const qId = activeBlank.qId;
+                const index = activeBlank.index;
+                
+                const newAns = Object.assign({}, studentAnswers);
+                if (newAns[qId]) {
+                    newAns[qId][index] = optionStr;
+                    setStudentAnswers(newAns);
+                }
+                setActiveBlank(null);
+            };
+
+            const submitEvaluation = () => {
+                const results = {};
+                let totalScore = 0;
+
+                questions.forEach(q => {
+                    const correctAnswers = getCorrectAnswers(q.content);
+                    const myAnswers = studentAnswers[q.id] || [];
+                    let correctCount = 0;
+                    
+                    correctAnswers.forEach((ans, idx) => {
+                        if (myAnswers[idx] && myAnswers[idx].trim() === ans.trim()) correctCount++;
+                    });
+
+                    const scoreInfo = calculateScore(q.id, correctCount);
+                    results[q.id] = { correctCount, totalBlanks: correctAnswers.length, scoreInfo };
+                    totalScore += scoreInfo.score;
+                });
+
+                const newSub = {
+                    studentId: studentInfo.id, studentName: studentInfo.name,
+                    results, totalScore, timestamp: new Date().toISOString()
+                };
+
+                setSubmissions([...submissions, newSub]); 
+                sendToGas("submit", newSub);    
+                setView('result'); 
+            };
+
+            const deleteStudentData = (studentId) => {
+                showConfirm("기록 삭제", `${studentId} 학생의 기록을 삭제하시겠습니까?\n삭제 후 해당 학생은 재평가가 가능해집니다.`, () => {
+                    setSubmissions(submissions.filter(s => s.studentId !== studentId));
+                    sendToGas("delete", { studentId });
+                    showToast("기록이 삭제되었습니다.");
+                }, true);
+            };
+
+            const [loginModalOpen, setLoginModalOpen] = React.useState(false);
+            const [inputPw, setInputPw] = React.useState('');
+
+            const executeTeacherLogin = () => {
+                if (inputPw === teacherPw) {
+                    setLoginModalOpen(false);
+                    setView('teacher');
+                    showToast("관리자 권한으로 로그인되었습니다.");
+                } else {
+                    showToast("비밀번호가 일치하지 않습니다.");
+                }
+            };
+
+            if (view === 'login') {
+                return (
+                    <div className="min-h-screen flex flex-col items-center justify-center p-4">
+                        <Toast message={toastMsg} />
+                        <div className="monotone-box p-8 max-w-md w-full relative">
+                            <button onClick={() => { setLoginModalOpen(true); setInputPw(''); }} className="absolute top-4 right-4 text-xs font-black border-b-2 border-black hover:text-gray-500">
+                                교사 접속
+                            </button>
+                            <h1 className="text-3xl font-black mb-2 text-center mt-6 tracking-tight">인공지능수학</h1>
+                            <h2 className="text-xl font-bold mb-8 text-center bg-black text-white py-1">수행평가 시스템</h2>
+                            
+                            <form onSubmit={handleStudentLogin} className="flex flex-col gap-4">
+                                <div>
+                                    <label className="block font-bold mb-1">학번 (4자리)</label>
+                                    <input type="text" placeholder="예) 3501" value={studentInfo.id} onChange={e => setStudentInfo(Object.assign({}, studentInfo, { id: e.target.value }))} className="monotone-input w-full text-lg" maxLength={4} />
+                                </div>
+                                <div>
+                                    <label className="block font-bold mb-1">이름</label>
+                                    <input type="text" placeholder="예) 홍길동" value={studentInfo.name} onChange={e => setStudentInfo(Object.assign({}, studentInfo, { name: e.target.value }))} className="monotone-input w-full text-lg" />
+                                </div>
+                                <button type="submit" className="monotone-btn mt-6 py-4 text-xl w-full bg-black text-white">평가 시작하기</button>
+                            </form>
+                        </div>
+                        
+                        <ConfirmModal isOpen={loginModalOpen} title="교사 관리자 로그인" 
+                            message={<input type="password" placeholder="비밀번호 입력" className="monotone-input w-full mt-2" value={inputPw} onChange={e => setInputPw(e.target.value)} onKeyDown={e => e.key === 'Enter' && executeTeacherLogin()} />}
+                            onConfirm={executeTeacherLogin} onCancel={() => setLoginModalOpen(false)} confirmText="접속" />
+                    </div>
+                );
+            }
+
+            if (view === 'student') {
+                const currentQuestion = questions[currentQIdx];
+                if (!currentQuestion) return null;
+                
+                const parts = currentQuestion.content.split(/(\{\{[^}]+\}\})/g);
+                let blankIdx = 0;
+
+                return (
+                    <div className="min-h-screen pb-40">
+                        <Toast message={toastMsg} />
+                        <div className="bg-black text-white p-4 sticky top-0 z-10 shadow-md flex justify-between items-center">
+                            <h1 className="text-lg font-black tracking-widest">인공지능수학 수행평가</h1>
+                            <div className="font-bold bg-white text-black px-3 py-1 border-2 border-black">{studentInfo.id} {studentInfo.name}</div>
+                        </div>
+
+                        <div className="p-4 max-w-3xl mx-auto mt-4">
+                            {/* 현재 페이지 문항 렌더링 */}
+                            <div className="monotone-box p-6 mb-6">
+                                <h2 className="text-xl font-black mb-6 pb-2 border-b-4 border-black">{currentQuestion.title}</h2>
+                                <div className="leading-loose text-lg whitespace-pre-wrap">
+                                    {parts.map((part, i) => {
+                                        if (part.startsWith('{{') && part.endsWith('}}')) {
+                                            const currentIdx = blankIdx++;
+                                            const myAnsArray = studentAnswers[currentQuestion.id];
+                                            const ans = myAnsArray ? myAnsArray[currentIdx] : '';
+                                            const isActive = activeBlank && activeBlank.qId === currentQuestion.id && activeBlank.index === currentIdx;
+                                            
+                                            return (
+                                                <span key={i} onClick={() => setActiveBlank({ qId: currentQuestion.id, index: currentIdx })}
+                                                        className={`blank-space ${isActive ? 'active' : ''} ${ans ? 'filled' : ''}`}>
+                                                    {ans ? <MathText text={ans} /> : `(${currentIdx + 1})`}
+                                                </span>
+                                            );
+                                        }
+                                        // 수식 변환 처리
+                                        return <MathText key={i} text={part} />;
+                                    })}
                                 </div>
                             </div>
-<!-- ... existing code ... -->
-                                                            <td className="p-3 border-r-2 border-black">{sub.studentName}</td>
-                                                            {questions.map(q => (
-                                                                <td key={q.id} className="p-3 text-center border-r border-gray-300">
-                                                                    {sub.results[q.id] && sub.results[q.id].scoreInfo ? sub.results[q.id].scoreInfo.score : 0}
-                                                                </td>
-                                                            ))}
-                                                            <td className="p-3 font-black border-r-2 border-black text-blue-600">{sub.totalScore}</td>
-                                                            <td className="p-3 text-center">
-<!-- ... existing code ... -->
-```
 
-이제 미리보기 버튼을 다시 눌러보시면 하얀 화면(Syntax Error) 없이 정상적으로 렌더링될 것입니다! 추가로 막히는 부분이 있으시다면 언제든 편하게 말씀해 주세요.
+                            {/* 페이징 네비게이션 */}
+                            <div className="flex justify-between items-center border-t-2 border-black pt-6">
+                                <button onClick={() => setCurrentQIdx(Math.max(0, currentQIdx - 1))} disabled={currentQIdx === 0}
+                                        className="monotone-btn px-4 py-3 sm:px-8 text-lg w-1/3 text-center">◀ 이전</button>
+                                
+                                <span className="font-bold text-lg">{currentQIdx + 1} / {questions.length}</span>
+                                
+                                {currentQIdx < questions.length - 1 ? (
+                                    <button onClick={() => setCurrentQIdx(currentQIdx + 1)} 
+                                            className="monotone-btn px-4 py-3 sm:px-8 text-lg w-1/3 text-center bg-black text-white">다음 ▶</button>
+                                ) : (
+                                    <button onClick={() => showConfirm("제출 확인", "제출 후에는 수정할 수 없습니다. 정말 제출하시겠습니까?", submitEvaluation)} 
+                                            className="monotone-btn px-4 py-3 sm:px-8 text-lg w-1/3 text-center bg-blue-600 text-white">최종 제출</button>
+                                )}
+                            </div>
+                        </div>
+
+                        {/* 정답 선택 하단 모달(시트) */}
+                        {activeBlank && (
+                            <div className="fixed bottom-0 left-0 right-0 bg-white border-t-4 border-black p-4 z-40 shadow-[0_-8px_0_0_rgba(0,0,0,1)] animate-[slideUp_0.2s_ease-out]">
+                                <div className="max-w-3xl mx-auto">
+                                    <div className="flex justify-between items-center mb-4">
+                                        <h3 className="font-bold border-b-2 border-black pb-1">알맞은 단어를 선택하세요:</h3>
+                                        <button onClick={() => setActiveBlank(null)} className="text-xl font-black px-2 hover:bg-gray-200 border-2 border-black">X</button>
+                                    </div>
+                                    <div className="flex flex-wrap gap-2">
+                                        {(questions.find(q => q.id === activeBlank.qId) || {options: []}).options.map((opt, i) => (
+                                            <button key={i} onClick={() => handleAnswerSelect(opt)} className="monotone-btn px-4 py-2 text-sm flex-grow sm:flex-grow-0 text-center">
+                                                <MathText text={opt} />
+                                            </button>
+                                        ))}
+                                        <button onClick={() => handleAnswerSelect('')} className="monotone-btn bg-gray-200 px-4 py-2 text-sm flex-grow sm:flex-grow-0">비우기</button>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
+                        <ConfirmModal isOpen={globalConfirm.isOpen} title={globalConfirm.title} message={globalConfirm.message} onConfirm={globalConfirm.onConfirm} onCancel={() => setGlobalConfirm(Object.assign({}, globalConfirm, { isOpen: false }))} confirmText={globalConfirm.isDanger ? "삭제" : "확인"} isDanger={globalConfirm.isDanger} />
+                    </div>
+                );
+            }
+
+            if (view === 'result') {
+                return (
+                    <div className="min-h-screen flex items-center justify-center p-4">
+                        <div className="monotone-box p-8 max-w-md w-full">
+                            <div className="text-center mb-6">
+                                <h1 className="text-3xl font-black mb-2">제출 완료</h1>
+                                <p className="font-bold text-gray-600 border-b-2 border-black pb-4">{studentInfo.id} {studentInfo.name} 학생, 수고하셨습니다.</p>
+                            </div>
+                            
+                            <h2 className="text-xl font-black bg-black text-white inline-block px-3 py-1 mb-4">채점 결과</h2>
+                            {questions.map(q => {
+                                const mySub = submissions.find(s => s.studentId === studentInfo.id);
+                                const secData = (mySub && mySub.results) ? mySub.results[q.id] : null;
+                                if(!secData) return null;
+                                return (
+                                    <div key={q.id} className="flex flex-col py-3 border-b-2 border-dashed border-gray-400">
+                                        <span className="font-bold mb-1 truncate">{q.title}</span>
+                                        <div className="flex justify-between text-lg">
+                                            <span>맞춘 개수: {secData.correctCount} / {secData.totalBlanks}</span>
+                                            <span className="font-black">{secData.scoreInfo.score}점 ({secData.scoreInfo.label})</span>
+                                        </div>
+                                    </div>
+                                );
+                            })}
+                            <div className="flex justify-between items-center py-4 mt-4 border-t-4 border-black">
+                                <span className="font-black text-2xl">최종 총점</span>
+                                <span className="font-black text-4xl">{(submissions.find(s => s.studentId === studentInfo.id) || {totalScore: 0}).totalScore}점</span>
+                            </div>
+                            <button onClick={() => { setView('login'); setStudentInfo({id:'', name:''}); }} className="monotone-btn bg-black text-white w-full mt-6 py-3">
+                                처음으로 돌아가기
+                            </button>
+                        </div>
+                    </div>
+                );
+            }
+
+            if (view === 'teacher') {
+                return (
+                    <React.Fragment>
+                        <Toast message={toastMsg} />
+                        <TeacherDashboard 
+                            questions={questions} setQuestions={setQuestions}
+                            rubrics={rubrics} setRubrics={setRubrics}
+                            submissions={submissions}
+                            onLogout={() => { setView('login'); showToast("로그아웃 되었습니다."); }}
+                            deleteStudentData={deleteStudentData}
+                            teacherPw={teacherPw} setTeacherPw={setTeacherPw}
+                            showToast={showToast} showConfirm={showConfirm}
+                        />
+                        <ConfirmModal isOpen={globalConfirm.isOpen} title={globalConfirm.title} message={globalConfirm.message} onConfirm={globalConfirm.onConfirm} onCancel={() => setGlobalConfirm(Object.assign({}, globalConfirm, { isOpen: false }))} confirmText={globalConfirm.isDanger ? "삭제" : "확인"} isDanger={globalConfirm.isDanger} />
+                    </React.Fragment>
+                );
+            }
+            return null;
+        };
+
+        const TeacherDashboard = ({ questions, setQuestions, rubrics, setRubrics, submissions, onLogout, deleteStudentData, teacherPw, setTeacherPw, showToast, showConfirm }) => {
+            const [tab, setTab] = React.useState('results'); 
+            const [editQuestions, setEditQuestions] = React.useState(JSON.parse(JSON.stringify(questions)));
+            
+            React.useEffect(() => {
+                setEditQuestions(JSON.parse(JSON.stringify(questions)));
+            }, [questions, tab]);
+
+            const handleSaveQuestions = () => {
+                setQuestions(editQuestions); 
+                
+                const newRubrics = Object.assign({}, rubrics);
+                editQuestions.forEach(q => {
+                    if (!newRubrics[q.id]) newRubrics[q.id] = [{ min: 0, score: 0, label: '기본' }];
+                });
+                Object.keys(newRubrics).forEach(qId => {
+                    if (!editQuestions.find(q => q.id === qId)) delete newRubrics[qId];
+                });
+                setRubrics(newRubrics);
+                showToast("문항 및 영역 정보가 저장되었습니다.");
+            };
+
+            const addQuestion = () => {
+                const newId = 'q' + Date.now();
+                setEditQuestions(editQuestions.concat({ id: newId, title: '새로운 평가 영역', content: '내용을 입력하세요. 수식은 $$수식$$ 으로, 빈칸은 {{정답}} 형태로 입력합니다.', options: ['정답'] }));
+            };
+
+            const removeQuestion = (id) => {
+                showConfirm("영역 삭제", "이 영역을 삭제하시겠습니까?\n관련된 루브릭 설정도 함께 삭제됩니다.", () => {
+                    setEditQuestions(editQuestions.filter(q => q.id !== id));
+                }, true);
+            };
+
+            const downloadExcel = () => {
+                let csvContent = "\uFEFF"; 
+                const headers = ['학번', '이름'];
+                questions.forEach(q => headers.push(q.title));
+                headers.push('총점');
+                csvContent += headers.join(',') + "\n";
+
+                submissions.forEach(sub => {
+                    const row = [sub.studentId, sub.studentName];
+                    questions.forEach(q => {
+                        const score = (sub.results && sub.results[q.id] && sub.results[q.id].scoreInfo) ? sub.results[q.id].scoreInfo.score : 0;
+                        row.push(score);
+                    });
+                    row.push(sub.totalScore);
+                    csvContent += row.join(',') + "\n";
+                });
+                const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+                const link = document.createElement("a");
+                link.href = URL.createObjectURL(blob);
+                link.download = `인공지능수학_수행평가결과.csv`;
+                document.body.appendChild(link); link.click(); document.body.removeChild(link);
+            };
+
+            return (
+                <div className="min-h-screen bg-gray-200 p-4">
+                    <div className="max-w-6xl mx-auto bg-white border-4 border-black shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] flex flex-col md:flex-row min-h-[90vh]">
+                        <div className="w-full md:w-64 bg-gray-100 border-b-4 md:border-b-0 md:border-r-4 border-black p-4 flex flex-col gap-2">
+                            <h2 className="text-xl font-black mb-6 border-b-4 border-black pb-2">👨‍🏫 교사 관리자</h2>
+                            <button onClick={() => setTab('results')} className={`monotone-btn py-3 text-left px-4 ${tab === 'results' ? 'bg-black text-white' : ''}`}>학생 제출 결과</button>
+                            <button onClick={() => setTab('edit')} className={`monotone-btn py-3 text-left px-4 ${tab === 'edit' ? 'bg-black text-white' : ''}`}>문항 및 영역 관리</button>
+                            <button onClick={() => setTab('rubric')} className={`monotone-btn py-3 text-left px-4 ${tab === 'rubric' ? 'bg-black text-white' : ''}`}>채점 기준(루브릭)</button>
+                            <button onClick={() => setTab('settings')} className={`monotone-btn py-3 text-left px-4 ${tab === 'settings' ? 'bg-black text-white' : ''}`}>설정 (비밀번호)</button>
+                            <div className="mt-auto pt-4 border-t-2 border-black">
+                                <button onClick={onLogout} className="monotone-btn w-full py-2 bg-gray-300">로그아웃</button>
+                            </div>
+                        </div>
+
+                        <div className="flex-1 p-6 overflow-auto">
+                            {tab === 'results' && (
+                                <div>
+                                    <div className="flex justify-between items-center mb-6">
+                                        <h2 className="text-2xl font-black">학생 제출 결과</h2>
+                                        <button onClick={downloadExcel} className="monotone-btn bg-black text-white px-4 py-2">📥 엑셀(CSV) 다운로드</button>
+                                    </div>
+                                    <div className="overflow-x-auto border-4 border-black">
+                                        <table className="w-full text-left border-collapse whitespace-nowrap">
+                                            <thead>
+                                                <tr className="bg-gray-200 border-b-4 border-black">
+                                                    <th className="p-3 border-r-2 border-black">학번</th><th className="p-3 border-r-2 border-black">이름</th>
+                                                    {questions.map(q => <th key={q.id} className="p-3 border-r-2 border-black text-center">{q.title}</th>)}
+                                                    <th className="p-3 border-r-2 border-black text-center">총점</th><th className="p-3 text-center">관리</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                {submissions.map((sub, idx) => (
+                                                    <tr key={idx} className="border-b-2 border-gray-300 hover:bg-gray-50">
+                                                        <td className="p-3 font-bold border-r-2 border-black">{sub.studentId}</td>
+                                                        <td className="p-3 border-r-2 border-black">{sub.studentName}</td>
+                                                        {questions.map(q => {
+                                                            const sc = (sub.results && sub.results[q.id] && sub.results[q.id].scoreInfo) ? sub.results[q.id].scoreInfo.score : 0;
+                                                            return <td key={q.id} className="p-3 text-center border-r-2 border-black">{sc}</td>;
+                                                        })}
+                                                        <td className="p-3 font-black border-r-2 border-black text-center text-xl">{sub.totalScore}</td>
+                                                        <td className="p-3 text-center"><button onClick={() => deleteStudentData(sub.studentId)} className="text-sm border-b border-red-500 text-red-600 font-bold hover:bg-red-50 px-1">🗑️ 기록 삭제</button></td>
+                                                    </tr>
+                                                ))}
+                                                {submissions.length === 0 && <tr><td colSpan={questions.length + 4} className="p-6 text-center text-gray-500 font-bold">아직 제출한 학생이 없습니다.</td></tr>}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            )}
+
+                            {tab === 'edit' && (
+                                <div>
+                                    <div className="flex flex-wrap justify-between items-center mb-6 gap-2">
+                                        <h2 className="text-2xl font-black">문항 및 영역 관리</h2>
+                                        <div>
+                                            <button onClick={addQuestion} className="monotone-btn px-4 py-2 mr-2">+ 새 영역 추가</button>
+                                            <button onClick={handleSaveQuestions} className="monotone-btn bg-black text-white px-4 py-2">변경사항 저장</button>
+                                        </div>
+                                    </div>
+                                    <div className="space-y-6">
+                                        {editQuestions.map((q, i) => (
+                                            <div key={q.id} className="monotone-box p-4 relative">
+                                                <div className="flex justify-between mb-2">
+                                                    <input type="text" className="monotone-input font-bold text-lg w-full mr-4" value={q.title} 
+                                                           onChange={e => { const n = editQuestions.slice(); n[i].title = e.target.value; setEditQuestions(n); }} />
+                                                    <button onClick={() => removeQuestion(q.id)} className="monotone-btn bg-white px-3 font-black border-2 border-red-500 text-red-500 hover:bg-red-50">삭제</button>
+                                                </div>
+                                                <p className="text-sm font-bold bg-gray-200 inline-block px-2 mb-1">본문 내용 (수식: $$수식$$, 빈칸: {`{{정답}}`})</p>
+                                                <textarea className="monotone-input w-full h-40 mb-2 leading-relaxed" value={q.content}
+                                                          onChange={e => { const n = editQuestions.slice(); n[i].content = e.target.value; setEditQuestions(n); }} />
+                                                <p className="text-sm font-bold bg-gray-200 inline-block px-2 mb-1">객관식 보기 (콤마로 구분)</p>
+                                                <input type="text" className="monotone-input w-full" value={q.options.join(', ')} 
+                                                       onChange={e => { const n = editQuestions.slice(); n[i].options = e.target.value.split(',').map(s=>s.trim()); setEditQuestions(n); }} />
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
+
+                            {tab === 'rubric' && (
+                                <div>
+                                    <div className="flex justify-between items-center mb-6">
+                                        <h2 className="text-2xl font-black">채점 기준 (루브릭) 설정</h2>
+                                    </div>
+                                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                                        {questions.map(q => {
+                                            const myRubric = rubrics[q.id] || [];
+                                            const addRubricRow = () => {
+                                                const nr = Object.assign({}, rubrics);
+                                                nr[q.id] = myRubric.concat({ min: 0, score: 0, label: '새 등급' });
+                                                setRubrics(nr);
+                                            };
+                                            const removeRubricRow = (idx) => {
+                                                const nr = Object.assign({}, rubrics);
+                                                nr[q.id] = myRubric.filter((_, i) => i !== idx);
+                                                setRubrics(nr);
+                                            };
+                                            const updateRubricRow = (idx, field, val) => {
+                                                const nr = Object.assign({}, rubrics);
+                                                const newRow = Object.assign({}, nr[q.id][idx]);
+                                                newRow[field] = val;
+                                                nr[q.id][idx] = newRow;
+                                                setRubrics(nr);
+                                            };
+
+                                            return (
+                                                <div key={q.id} className="monotone-box p-4">
+                                                    <h3 className="font-black text-lg border-b-2 border-black pb-2 mb-4 truncate">{q.title}</h3>
+                                                    {myRubric.map((r, i) => (
+                                                        <div key={i} className="flex gap-2 mb-2 items-center flex-wrap">
+                                                            <input type="number" className="monotone-input w-16 text-center p-1" value={r.min} onChange={e => updateRubricRow(i, 'min', parseInt(e.target.value) || 0)} />
+                                                            <span className="font-bold whitespace-nowrap">개 이상 맞추면</span>
+                                                            <input type="text" className="monotone-input w-20 text-center p-1" value={r.label} onChange={e => updateRubricRow(i, 'label', e.target.value)} />
+                                                            <span className="font-bold">/</span>
+                                                            <input type="number" className="monotone-input w-20 text-center p-1" value={r.score} onChange={e => updateRubricRow(i, 'score', parseInt(e.target.value) || 0)} />
+                                                            <span className="font-bold">점</span>
+                                                            <button onClick={() => removeRubricRow(i)} className="ml-auto font-black text-xl text-red-500 hover:bg-gray-100 px-2 rounded">X</button>
+                                                        </div>
+                                                    ))}
+                                                    <button onClick={addRubricRow} className="monotone-btn w-full mt-4 py-2 bg-gray-100 border-dashed">+ 기준 추가</button>
+                                                </div>
+                                            );
+                                        })}
+                                    </div>
+                                </div>
+                            )}
+
+                            {tab === 'settings' && (
+                                <div className="max-w-md">
+                                    <h2 className="text-2xl font-black mb-6">설정</h2>
+                                    <div className="monotone-box p-6">
+                                        <h3 className="font-bold mb-4 border-b-2 border-black pb-2">교사 관리자 비밀번호 변경</h3>
+                                        <input type="text" className="monotone-input w-full mb-4 text-lg" value={teacherPw} onChange={e => setTeacherPw(e.target.value)} />
+                                        <button onClick={() => showToast("새 비밀번호가 저장되었습니다.")} className="monotone-btn bg-black text-white w-full py-2">비밀번호 변경하기</button>
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+                    </div>
+                </div>
+            );
+        };
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
+    </script>
+</body>
+</html>
