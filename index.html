@@ -371,7 +371,8 @@
  name: currentUser.name,
  results,
  totalScore,
- timestamp: new Date().toLocaleString()
+ timestamp: new Date().toLocaleString(),
+ scores: questions.map(q => results[q.id].scoreInfo.score)
  };
 
  const newData = [...studentsData, finalData];
