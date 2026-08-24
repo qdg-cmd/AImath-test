@@ -268,8 +268,8 @@
     };
 
     const QuizView = ({ activeSession, settings, configBySession, currentUser, setView, setStudentsBySession }) => {
-      const questions = configBySession[activeSession]?.questions || [];
-      const rubrics = configBySession[activeSession]?.rubrics || {};
+      const questions = (configBySession[activeSession] && configBySession[activeSession].questions) || [];
+      const rubrics = (configBySession[activeSession] && configBySession[activeSession].rubrics) || {};
       const [currentQIndex, setCurrentQIndex] = React.useState(0);
       const [studentAnswers, setStudentAnswers] = React.useState({});
       const [activeBlank, setActiveBlank] = React.useState(null);
@@ -445,7 +445,7 @@
     };
 
     const ResultView = ({ activeSession, currentUser, studentsBySession, setView }) => {
-      const myData = studentsBySession[activeSession]?.slice().reverse().find(s => s.id === currentUser.id && s.name === currentUser.name);
+      const myData = (studentsBySession[activeSession] || []).slice().reverse().find(s => s.id === currentUser.id && s.name === currentUser.name);
       if (!myData) return <div className="p-8">결과를 찾을 수 없습니다.</div>;
       
       return (
@@ -473,8 +473,8 @@
 
     const AdminDashboard = ({ activeSession, setActiveSession, settings, setSettings, configBySession, setConfigBySession, studentsBySession, setStudentsBySession, setView, setIsTeacher, handleSyncConfig, isLoadingData }) => {
       const [tab, setTab] = React.useState('settings');
-      const questions = configBySession[activeSession]?.questions || [];
-      const rubrics = configBySession[activeSession]?.rubrics || {};
+      const questions = (configBySession[activeSession] && configBySession[activeSession].questions) || [];
+      const rubrics = (configBySession[activeSession] && configBySession[activeSession].rubrics) || {};
       const students = studentsBySession[activeSession] || [];
 
       const handleAddSession = () => {
@@ -623,7 +623,7 @@
 
                       <div className="bg-gray-50 p-4 border border-gray-300 rounded">
                         <h4 className="font-bold mb-2">루브릭 (채점 기준)</h4>
-                        {rubrics[q.id]?.map((r, rIndex) => (
+                        {(rubrics[q.id] || []).map((r, rIndex) => (
                           <div key={rIndex} className="flex gap-2 items-center mb-2">
                             {q.type === 'value' ? (
                               <React.Fragment>
