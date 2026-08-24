@@ -447,6 +447,12 @@
               headers: { 'Content-Type': 'text/plain' },
               body: JSON.stringify({ action: "submit", data: { session: activeSession, ...finalData } })
             }).then(() => {
+              setStudentsBySession(prev => {
+                const next = {...prev};
+                if(!next[activeSession]) next[activeSession] = [];
+                next[activeSession].push(finalData);
+                return next;
+              });
               showModal('alert', '제출 완료', '제출이 완료되었습니다!').then(() => setView('result'));
             });
           } else {
@@ -536,6 +542,41 @@
       const questions = (configBySession[activeSession] && configBySession[activeSession].questions) || [];
       const rubrics = (configBySession[activeSession] && configBySession[activeSession].rubrics) || {};
       const students = studentsBySession[activeSession] || [];
+
+      const handleDeleteStudent = (studentId, e) => {
+        e.stopPropagation();
+        showModal('confirm', '학생 기록 삭제', '정말 이 학생의 제출 기록을 삭제하시겠습니까?').then(confirmed => {
+          if (confirmed) {
+            if (settings.gasUrl) {
+              fetch(settings.gasUrl, {
+                method: 'POST',
+                mode: 'no-cors',
+                headers: { 'Content-Type': 'text/plain' },
+                body: JSON.stringify({ action: "delete", data: { session: activeSession, studentId: studentId } })
+              }).then(() => {
+                setStudentsBySession(prev => {
+                  const next = {...prev};
+                  if (next[activeSession]) {
+                    next[activeSession] = next[activeSession].filter(s => s.id !== studentId);
+                  }
+                  return next;
+                });
+                showModal('alert', '삭제 완료', '기록이 삭제되었습니다.');
+              });
+            } else {
+              setStudentsBySession(prev => {
+                const next = {...prev};
+                if (next[activeSession]) {
+                  next[activeSession] = next[activeSession].filter(s => s.id !== studentId);
+                  localStorage.setItem('aiMath_students', JSON.stringify(next));
+                }
+                return next;
+              });
+              showModal('alert', '삭제 완료', '기록이 삭제되었습니다.');
+            }
+          }
+        });
+      };
 
       const handleAddSession = () => {
          showModal('input', '회차 추가', '새로운 평가 회차 이름을 입력하세요 (예: 3차)', '회차 이름').then(name => {
@@ -748,11 +789,12 @@
                           ))}
                           <th className="p-3 border-2 border-black text-blue-600">총점</th>
                           <th className="p-3 border-2 border-black">제출시간</th>
+                          <th className="p-3 border-2 border-black text-center text-red-500">관리</th>
                         </tr>
                       </thead>
                       <tbody>
                         {students.length === 0 ? (
-                          <tr><td colSpan={4 + questions.length} className="text-center p-8 text-gray-500 font-bold border-2 border-black">제출된 데이터가 없습니다.</td></tr>
+                          <tr><td colSpan={5 + questions.length} className="text-center p-8 text-gray-500 font-bold border-2 border-black">제출된 데이터가 없습니다.</td></tr>
                         ) : (
                           students.slice().reverse().map((s, i) => (
                             <tr key={i} className="hover:bg-blue-50 cursor-pointer border-2 border-black">
@@ -765,6 +807,11 @@
                               })}
                               <td className="p-3 border-2 border-black text-blue-600 font-black text-lg text-center">{s.totalScore}점</td>
                               <td className="p-3 border-2 border-black text-sm text-gray-500">{s.timestamp}</td>
+                              <td className="p-3 border-2 border-black text-center">
+                                <button onClick={(e) => handleDeleteStudent(s.id, e)} className="bg-red-500 text-white font-bold px-3 py-1 border-2 border-black rounded shadow-[2px_2px_0_0_rgba(0,0,0,1)] hover:bg-red-600 hover:translate-y-0.5 hover:shadow-none transition-all text-sm">
+                                  삭제
+                                </button>
+                              </td>
                             </tr>
                           ))
                         )}
