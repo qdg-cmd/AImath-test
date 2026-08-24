@@ -144,25 +144,50 @@
  const [showLoginModal, setShowLoginModal] = React.useState(false);
  const [teacherPwdInput, setTeacherPwdInput] = React.useState('');
  
- const [modal, setModal] = React.useState({ show: false, message: '', onConfirm: null, isAlert: true });
- const [isLoadingData, setIsLoadingData] = React.useState(false);
+  const [modal, setModal] = React.useState({ show: false, message: '', onConfirm: null, isAlert: true });
+  const [isLoadingData, setIsLoadingData] = React.useState(false);
+  const [isSyncingConfig, setIsSyncingConfig] = React.useState(true);
 
- React.useEffect(() => {
- const ver = localStorage.getItem('aiMath_version');
- if (ver !== APP_VERSION) {
- localStorage.clear();
- localStorage.setItem('aiMath_version', APP_VERSION);
- } else {
- const savedStudents = localStorage.getItem('aiMath_students');
- if (savedStudents) setStudentsData(JSON.parse(savedStudents));
- const savedQuestions = localStorage.getItem('aiMath_questions');
- if (savedQuestions) setQuestions(JSON.parse(savedQuestions));
- const savedRubrics = localStorage.getItem('aiMath_rubrics');
- if (savedRubrics) setRubrics(JSON.parse(savedRubrics));
- const savedSettings = localStorage.getItem('aiMath_settings');
- if (savedSettings) setSettings(JSON.parse(savedSettings));
- }
- }, []);
+  React.useEffect(() => {
+    const ver = localStorage.getItem('aiMath_version');
+    if (ver !== APP_VERSION) {
+      localStorage.clear();
+      localStorage.setItem('aiMath_version', APP_VERSION);
+    }
+    
+    // 로컬 스토리지 우선 불러오기 (오프라인 대비)
+    const savedStudents = localStorage.getItem('aiMath_students');
+    if (savedStudents) setStudentsData(JSON.parse(savedStudents));
+    const savedQuestions = localStorage.getItem('aiMath_questions');
+    if (savedQuestions) setQuestions(JSON.parse(savedQuestions));
+    const savedRubrics = localStorage.getItem('aiMath_rubrics');
+    if (savedRubrics) setRubrics(JSON.parse(savedRubrics));
+    const savedSettings = localStorage.getItem('aiMath_settings');
+    let currentGasUrl = DEFAULT_GAS_URL;
+    if (savedSettings) {
+      const parsedSettings = JSON.parse(savedSettings);
+      setSettings(parsedSettings);
+      currentGasUrl = parsedSettings.gasUrl;
+    }
+    
+    // 시트에서 최신 설정 동기화
+    if (currentGasUrl) {
+      fetch(currentGasUrl + '?action=getConfig')
+        .then(res => res.json())
+        .then(json => {
+          if (json && json.status === 'success' && json.data.questions && json.data.questions.length > 0) {
+            setQuestions(json.data.questions);
+            setRubrics(json.data.rubrics);
+            localStorage.setItem('aiMath_questions', JSON.stringify(json.data.questions));
+            localStorage.setItem('aiMath_rubrics', JSON.stringify(json.data.rubrics));
+          }
+        })
+        .catch(e => console.error("Config sync error:", e))
+        .finally(() => setIsSyncingConfig(false));
+    } else {
+      setIsSyncingConfig(false);
+    }
+  }, []);
  
  // 선생님 접속 시 구글 시트에서 최신 데이터 불러오기
  React.useEffect(() => {
