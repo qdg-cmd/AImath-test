@@ -1,809 +1,762 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
- <meta charset="UTF-8">
- <meta name="viewport" content="width=device-width, initial-scale=1.0">
- <title>인공지능수학 수행평가 시스템</title>
- <script src="https://cdn.tailwindcss.com"></script>
- <script src="https://unpkg.com/react@18/umd/react.development.js" crossorigin></script>
- <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js" crossorigin></script>
- <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
- <!-- KaTeX for Math Rendering -->
- <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.css">
- <script src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.js"></script>
- <style>
- body { font-family: 'KoPub Batang', 'Malgun Gothic', serif; background-color: #f5f5f5; color: #111; }
- .worksheet-box { background-color: #fff; border: 3px solid #000; box-shadow: 6px 6px 0px 0px #000; }
- .btn-retro { border: 2px solid #000; box-shadow: 3px 3px 0px 0px #000; transition: all 0.1s; }
- .btn-retro:active { transform: translate(3px, 3px); box-shadow: 0px 0px 0px 0px #000; }
- .blank-input { border-bottom: 2px solid #000; display: inline-block; min-width: 60px; text-align: center; font-weight: bold; padding: 0 5px; cursor: pointer; min-height: 24px; }
- .blank-active { background-color: #e5e5e5; border-bottom: 3px solid #000; }
- </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>AI 활용 수학 평가</title>
+  
+  <script src="https://unpkg.com/react@17/umd/react.production.min.js"></script>
+  <script src="https://unpkg.com/react-dom@17/umd/react-dom.production.min.js"></script>
+  <script src="https://unpkg.com/babel-standalone@6/babel.min.js"></script>
+  <script src="https://cdn.tailwindcss.com"></script>
+  
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+
+  <style>
+    body { font-family: 'Pretendard', sans-serif; background-color: #f3f4f6; }
+    .blank-input {
+      display: inline-block; min-width: 60px; min-height: 30px;
+      border-bottom: 2px solid #000; margin: 0 4px; padding: 0 8px;
+      text-align: center; cursor: pointer; transition: all 0.2s;
+    }
+    .blank-active {
+      background-color: #e5e7eb; border-bottom: 3px solid #3b82f6; box-shadow: 0 4px 6px -1px rgba(59, 130, 246, 0.5);
+    }
+    .latex-container { display: inline-block; vertical-align: middle; }
+    /* 인쇄용 스타일 수정: column 제거하고 Grid 사용 */
+    @media print {
+      body { background-color: #fff; margin: 0; padding: 0; }
+      .no-print { display: none !important; }
+      .print-area { display: block !important; width: 100%; }
+      .worksheet-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        grid-gap: 20px;
+        width: 100%;
+        page-break-inside: avoid;
+      }
+      .question-box { page-break-inside: avoid; margin-bottom: 20px; }
+      #pdf-content { padding: 0 !important; width: 210mm; min-height: 297mm; margin: 0 auto; }
+    }
+    @page { margin: 10mm; size: A4; }
+  </style>
 </head>
 <body>
- <div id="root"></div>
- <script type="text/babel">
- const APP_VERSION = 'v11';
- const DEFAULT_GAS_URL = "https://script.google.com/macros/s/AKfycbzo3r9NJ-G3azQlUUmJMNhIqJiKkG-5857m9bbp6GfOspDqwiPLd9GffJTpY7lR1jhP0w/exec";
- 
- const defaultQuestions = [
- {
- id: 'q1',
- title: '01. 텍스트 자료의 표현 및 처리',
- content: `• 관찰이나 측정 등을 통해 얻게 되는 가공되지 않은 정보를 ( {{비정형}} )라고 한다.
-• ( {{정형}} ) 자료는 일정한 형식을 갖춘 자료이고, ( {{비정형}} ) 자료는 일정한 형식을 갖추지 않은 자료이다.
+  <div id="root"></div>
 
-• 텍스트 자료는 집합이나 ( {{벡터}} )로 나타낼 수 있다.
-• n개의 수 x₁, x₂, ..., xₙ을 괄호 속에 순서대로 나열하여 나타낸 
-  X = (x₁, x₂, ..., xₙ)
-  을 벡터라 하고, x₁, x₂, ..., xₙ을 벡터 X의 ( {{성분}} )이라고 한다.
-
-• 비정형 텍스트 자료에서 단어의 ( {{빈도수}} )를 구하면 그 자료에서 주제어를 찾을 수 있다.
-
-• 단어 빈도수를 이용하여 TF·IDF를 구하면 텍스트 자료의 유용한 정보를 알아낼 수 있다.
-• TF·IDF가 작으면 중요도가 ( {{낮은}} ) 단어이고, TF·IDF가 크면 중요도가 ( {{높은}} ) 단어이다.
-
-• 자료의 분석 결과를 쉽게 이해할 수 있도록 시각적으로 표현하여 효과적으로 전달하는 과정을 ( {{시각화}} )라고 한다.
-• 시각화 방법 유형에는 시간 시각화, 분포 시각화, 관계 시각화, 비교 시각화, 공간 시각화, 구조 시각화가 있다.
-
-• 텍스트 자료는 단어 빈도수를 이용하여 표, 막대그래프, 원그래프, ( {{단어 구름}} ) 등으로 시각화할 수 있다.`,
- options: ["빈도수", "시각화", "자료", "낮은", "높은", "성분", "정형", "비정형", "벡터", "단어 구름"]
- },
- {
- id: 'q2',
- title: '02. 이미지 자료의 표현 및 처리',
- content: `• 수 또는 문자를 직사각형 모양으로 배열하여 괄호로 묶은 것을 ( {{행렬}} )이라고 한다.
-• 행렬 A의 제 i행과 제 j열이 만나는 위치에 있는 성분을 행렬 A의 (i, j) 성분이라 하고, 기호로 ( $$a_{ij}$$ )와 같이 나타낸다.
-
-• 흑백 이미지는 각 픽셀에서 검은색은 ( {{0}} ), 흰색은 255로 나타내고, 그 사이의 회색은 ( {{1}} )부터 254까지의 수로 나타낼 수 있다.
-• 컬러 이미지에서 각 픽셀의 색상 정보는 RGB 채널의 광원의 세기를 나타내는 수를 ( $$(R, G, B)$$ )의 순서쌍으로 나타낸다.
-
-• 이미지를 합성하여 새로운 이미지를 만들 때, 이미지를 행렬로 표현하고 연산을 하여 나타낼 수 있다.
-• 이미지의 합성에 이용되는 행렬의 연산은 ( {{덧셈과 뺄셈}} )이다.
-
-• 이미지의 밝기를 조절할 때 이용되는 행렬의 연산은 ( {{실수배}} )이다.
-
-• 컬러 이미지를 흑백 이미지로 바꿀 때, 흑백 이미지를 나타내는 행렬의 각 성분은 컬러 이미지를 나타내는 세 행렬 R, G, B에 대응하는 성분의 ( {{평균}} )으로 구한다.
-
-• 이미지의 평행이동과 대칭이동에 이용되는 행렬의 연산은 ( {{곱셈}} )이다.`,
- options: ["0", "1", "$$a_{ij}$$", "$$(R, G, B)$$", "행렬", "실수배", "덧셈과 뺄셈", "평균", "곱셈"]
- },
- {
- id: 'q3',
- title: '03. 손실함수와 최적화',
- content: `입력값 x₁, x₂, ..., xₙ에 대한 측정값이 y₁, y₂, ..., yₙ이고, 추세선 f(x)=ax (a는 상수)에 따른 예측값이 ax₁, ax₂, ..., axₙ이라 할 때,
-• 오차: y₁-ax₁, y₂-ax₂, ..., yₙ-axₙ
-• 손실함수: L(a) = ( $$(y_1-ax_1)^2 + \\cdots + (y_n-ax_n)^2$$ ) / n
-
-• 다항함수 y=f(x)에서 x의 값이 a가 아니면서 a에 한없이 가까워질 때 함숫값 f(x)가 일정한 수 L에 한없이 가까워지면, 함수 y=f(x)는 L에 ( {{수렴}} )한다고 하고, 이것을 기호로 ( $$\\lim_{x \\to a}f(x)=L$$ )과 같이 나타낸다.
-
-• 다항함수 y=f(x)에서 x의 값이 a에서 b까지 변할 때의 ( {{평균변화율}} )은 다음과 같다.
-  (f(b)-f(a)) / (b-a) = (f(a+Δx)-f(a)) / Δx
-
-• 다항함수 y=f(x)에서 x=a에서의 미분계수 ( $$f'(a)$$ )는 점 (a, f(a))에서 곡선 y=f(x)의 접선의 ( {{기울기}} )와 같다.
-
-• 손실함수의 값을 최소화하는 추세선의 기울기를 찾는 과정을 손실함수의 ( {{최적화}} )라 하고, 손실함수의 값이 최소가 되도록 하는 추세선을 ( {{최적 추세선}} )이라고 한다.
-
-• 손실함수의 값이 감소하는 방향을 찾고 초깃값을 반복적으로 이동시키면서 최적화하는 방법을 ( {{경사하강법}} )이라고 한다.
-• ( {{학습률}} )의 크기를 적절히 조절하면 미분계수의 크기에 관계없이 손실함수의 값이 변하는 정도를 조절할 수 있다.`,
- options: ["평균변화율", "최적화", "경사하강법", "$$\\lim_{x \\to a}f(x)=L$$", "$$f'(a)$$", "최적 추세선", "기울기", "학습률", "$$(y_1-ax_1)^2 + \\cdots + (y_n-ax_n)^2$$", "수렴"]
- }
- ];
-
- const defaultRubrics = {
- 'q1': [
- { min: 9, max: 10, grade: 'A', score: 10 },
- { min: 7, max: 8, grade: 'B', score: 8 },
- { min: 0, max: 6, grade: 'C', score: 6 }
- ],
- 'q2': [
- { min: 8, max: 9, grade: 'A', score: 10 },
- { min: 5, max: 7, grade: 'B', score: 8 },
- { min: 0, max: 4, grade: 'C', score: 6 }
- ],
- 'q3': [
- { min: 9, max: 10, grade: 'A', score: 10 },
- { min: 7, max: 8, grade: 'B', score: 8 },
- { min: 0, max: 6, grade: 'C', score: 6 }
- ]
- };
-
- const LatexText = ({ text }) => {
- if (!text) return null;
- const parts = text.split(/(\$\$.*?\$\$)/g);
- return (
- <span>
- {parts.map((part, index) => {
- if (part.startsWith('$$') && part.endsWith('$$')) {
- const math = part.slice(2, -2);
- try {
- const html = katex.renderToString(math, { throwOnError: false });
- return <span key={index} dangerouslySetInnerHTML={{ __html: html }} />;
- } catch (e) {
- return <span key={index}>{part}</span>;
- }
- }
- return <span key={index}>{part}</span>;
- })}
- </span>
- );
- };
-
- function App() {
- const [view, setView] = React.useState('login'); 
- const [currentUser, setCurrentUser] = React.useState({ id: '', name: '' });
- const [studentsData, setStudentsData] = React.useState([]);
- const [questions, setQuestions] = React.useState(defaultQuestions);
- const [rubrics, setRubrics] = React.useState(defaultRubrics);
- 
- const [settings, setSettings] = React.useState({
- gasUrl: DEFAULT_GAS_URL,
- password: 'admin'
- });
- const [isTeacher, setIsTeacher] = React.useState(false);
- const [showLoginModal, setShowLoginModal] = React.useState(false);
- const [teacherPwdInput, setTeacherPwdInput] = React.useState('');
- 
-  const [modal, setModal] = React.useState({ show: false, message: '', onConfirm: null, isAlert: true });
-  const [isLoadingData, setIsLoadingData] = React.useState(false);
-  const [isSyncingConfig, setIsSyncingConfig] = React.useState(true);
-
-  React.useEffect(() => {
-    const ver = localStorage.getItem('aiMath_version');
-    if (ver !== APP_VERSION) {
-      localStorage.clear();
-      localStorage.setItem('aiMath_version', APP_VERSION);
-    }
-    
-    // 로컬 스토리지 우선 불러오기 (오프라인 대비)
-    const savedStudents = localStorage.getItem('aiMath_students');
-    if (savedStudents) setStudentsData(JSON.parse(savedStudents));
-    const savedQuestions = localStorage.getItem('aiMath_questions');
-    if (savedQuestions) setQuestions(JSON.parse(savedQuestions));
-    const savedRubrics = localStorage.getItem('aiMath_rubrics');
-    if (savedRubrics) setRubrics(JSON.parse(savedRubrics));
-    const savedSettings = localStorage.getItem('aiMath_settings');
-    let currentGasUrl = DEFAULT_GAS_URL;
-    if (savedSettings) {
-      const parsedSettings = JSON.parse(savedSettings);
-      setSettings(parsedSettings);
-      currentGasUrl = parsedSettings.gasUrl;
-    }
-    
-    // 시트에서 최신 설정 동기화
-    if (currentGasUrl) {
-      fetch(currentGasUrl + '?action=getConfig')
-        .then(res => res.json())
-        .then(json => {
-          if (json && json.status === 'success' && json.data.questions && json.data.questions.length > 0) {
-            setQuestions(json.data.questions);
-            setRubrics(json.data.rubrics);
-            localStorage.setItem('aiMath_questions', JSON.stringify(json.data.questions));
-            localStorage.setItem('aiMath_rubrics', JSON.stringify(json.data.rubrics));
+  <script type="text/babel">
+    const LatexText = ({ text }) => {
+      const containerRef = React.useRef(null);
+      React.useEffect(() => {
+        if (containerRef.current) {
+          try {
+            katex.render(text, containerRef.current, { throwOnError: false });
+          } catch (e) {
+            containerRef.current.textContent = text;
           }
-        })
-        .catch(e => console.error("Config sync error:", e))
-        .finally(() => setIsSyncingConfig(false));
-    } else {
-      setIsSyncingConfig(false);
-    }
-  }, []);
- 
- // 선생님 접속 시 구글 시트에서 최신 데이터 불러오기
- React.useEffect(() => {
- if (isTeacher && view === 'admin' && settings.gasUrl) {
- setIsLoadingData(true);
- fetch(settings.gasUrl)
- .then(res => res.json())
- .then(json => {
- if (json.status === 'success') {
- setStudentsData(json.data);
- localStorage.setItem('aiMath_students', JSON.stringify(json.data));
- }
- })
- .catch(e => console.error("Data load error:", e))
- .finally(() => setIsLoadingData(false));
- }
- }, [isTeacher, view, settings.gasUrl]);
+        }
+      }, [text]);
+      return <span ref={containerRef} className="latex-container" />;
+    };
 
- const handleTeacherLogin = () => {
- if (teacherPwdInput === settings.password) {
- setIsTeacher(true);
- setShowLoginModal(false);
- setTeacherPwdInput('');
- setView('admin');
- } else {
- setModal({ show: true, message: '비밀번호가 일치하지 않습니다.', isAlert: true });
- }
- };
+    const DEFAULT_GAS_URL = "";
 
- const handleStudentStart = (e) => {
- e.preventDefault();
- if (!currentUser.id || !currentUser.name) {
- setModal({ show: true, message: '학번과 이름을 모두 입력해주세요.', isAlert: true });
- return;
- }
- const existing = studentsData.find(s => s.id === currentUser.id);
- if (existing) {
- setModal({ show: true, message: '이미 평가를 제출한 학번입니다.', isAlert: true });
- return;
- }
- setView('quiz');
- };
+    const App = () => {
+      const [view, setView] = React.useState('login');
+      const [currentUser, setCurrentUser] = React.useState({ id: '', name: '' });
+      const [studentsBySession, setStudentsBySession] = React.useState({ "1차": [] });
+      const [isTeacher, setIsTeacher] = React.useState(false);
+      const [isLoadingData, setIsLoadingData] = React.useState(false);
+      const [isSyncingConfig, setIsSyncingConfig] = React.useState(true);
+      
+      const defaultQuestions = [
+        { id: 'q1', type: 'count', title: '01. 텍스트 자료의 정제 및 표현', content: '관찰이나 측정 등을 통해 수집된 자료 중 텍스트 자료에서 단어의 {{빈도수}}를 구하고, 이를 {{시각화}}하여 자료의 특징을 파악할 수 있다.', options: ['빈도수', '시각화', '오차', '수치화'] }
+      ];
+      const defaultRubrics = {
+        'q1': [
+          { min: 2, max: 2, grade: 'A', score: 10 },
+          { min: 1, max: 1, grade: 'B', score: 7 },
+          { min: 0, max: 0, grade: 'C', score: 4 }
+        ]
+      };
 
- return (
- <div className="max-w-3xl mx-auto p-4 md:p-6 min-h-screen relative">
- 
- {isSyncingConfig && (
-    <div className="fixed inset-0 bg-white flex flex-col items-center justify-center z-[200]">
-      <div className="worksheet-box p-8 text-center animate-pulse">
-        <h2 className="text-2xl font-black mb-4">최신 설정을 불러오는 중입니다...</h2>
-        <p className="font-bold text-gray-600">구글 시트와 동기화 중입니다. 잠시만 기다려주세요.</p>
-      </div>
-    </div>
-  )}
+      const [configBySession, setConfigBySession] = React.useState({
+        "1차": { questions: defaultQuestions, rubrics: defaultRubrics }
+      });
+      const [settings, setSettings] = React.useState({
+        gasUrl: DEFAULT_GAS_URL,
+        password: 'admin',
+        sessions: ["1차"]
+      });
+      const [activeSession, setActiveSession] = React.useState("1차");
 
- {/* 공통 모달 (alert/confirm 대체) */}
- {modal.show && (
- <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[100] p-4">
- <div className="worksheet-box p-6 w-full max-w-sm text-center bg-white">
- <p className="font-bold text-lg mb-6 whitespace-pre-wrap">{modal.message}</p>
- <div className="flex gap-2 justify-center">
- {modal.isAlert ? (
- <button onClick={() => setModal({ show: false, message: '' })} className="bg-black text-white px-6 py-2 font-bold shadow-[2px_2px_0_0_#666]">확인</button>
- ) : (
- <>
- <button onClick={() => { 
- if (modal.onConfirm) modal.onConfirm(); 
- setModal({ show: false, message: '', onConfirm: null }); 
- }} className="bg-red-500 text-white px-6 py-2 font-bold border-2 border-black">예(진행)</button>
- <button onClick={() => setModal({ show: false, message: '', onConfirm: null })} className="bg-white border-2 border-black px-6 py-2 font-bold">취소</button>
- </>
- )}
- </div>
- </div>
- </div>
- )}
-
- {/* 교사 로그인 모달 */}
- {showLoginModal && (
- <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[50] p-4">
- <div className="worksheet-box p-6 w-full max-w-sm bg-white">
- <h2 className="text-xl font-black mb-4">교사 페이지 접속</h2>
- <input 
- type="password" 
- placeholder="비밀번호 입력" 
- className="w-full p-3 border-2 border-black font-bold mb-4 outline-none"
- value={teacherPwdInput}
- onChange={e => setTeacherPwdInput(e.target.value)}
- onKeyDown={e => e.key === 'Enter' && handleTeacherLogin()}
- />
- <div className="flex gap-2">
- <button onClick={handleTeacherLogin} className="flex-1 bg-black text-white py-3 font-bold border-2 border-black">접속</button>
- <button onClick={() => setShowLoginModal(false)} className="flex-1 bg-white border-2 border-black py-3 font-bold">취소</button>
- </div>
- </div>
- </div>
- )}
-
- <header className="flex justify-between items-center mb-6 pb-4 border-b-4 border-black">
- <div>
- <h1 className="text-xl sm:text-2xl font-black tracking-tighter">인공지능수학 수행평가</h1>
- <p className="text-xs sm:text-sm font-bold text-gray-600 mt-1">학번과 이름을 정확히 입력하세요.</p>
- </div>
- {view !== 'admin' && (
- <button onClick={() => setShowLoginModal(true)} className="text-xs font-bold px-3 py-1 border-2 border-black hover:bg-gray-200">교사접속</button>
- )}
- {view === 'admin' && (
- <button onClick={() => { setIsTeacher(false); setView('login'); }} className="text-xs font-bold px-3 py-1 border-2 border-black bg-black text-white">로그아웃</button>
- )}
- </header>
-
- {/* 라우팅 */}
- {view === 'login' && (
- <div className="worksheet-box p-6 sm:p-8 max-w-md mx-auto mt-10">
- <form onSubmit={handleStudentStart} className="space-y-6">
- <div>
- <label className="block font-black text-lg mb-2">학번 (4자리)</label>
- <input type="text" pattern="[0-9]{4}" placeholder="예: 3501" className="w-full p-4 border-2 border-black font-bold text-xl outline-none" value={currentUser.id} onChange={e => setCurrentUser({...currentUser, id: e.target.value})} required />
- </div>
- <div>
- <label className="block font-black text-lg mb-2">이름</label>
- <input type="text" placeholder="이름 입력" className="w-full p-4 border-2 border-black font-bold text-xl outline-none" value={currentUser.name} onChange={e => setCurrentUser({...currentUser, name: e.target.value})} required />
- </div>
- <button type="submit" className="w-full bg-black text-white py-4 font-black text-xl btn-retro">평가 시작하기</button>
- </form>
- </div>
- )}
-
- {view === 'quiz' && (
- <QuizView 
- currentUser={currentUser} 
- questions={questions} 
- rubrics={rubrics}
- studentsData={studentsData}
- setStudentsData={setStudentsData}
- settings={settings}
- setView={setView}
- setModal={setModal}
- />
- )}
-
- {view === 'result' && (
- <ResultView currentUser={currentUser} studentsData={studentsData} onBack={() => { setView('login'); setCurrentUser({id:'', name:''}); }} />
- )}
-
- {view === 'admin' && isTeacher && (
- <AdminDashboard 
- questions={questions} setQuestions={setQuestions}
- rubrics={rubrics} setRubrics={setRubrics}
- studentsData={studentsData} setStudentsData={setStudentsData}
- settings={settings} setSettings={setSettings}
- setModal={setModal} isLoadingData={isLoadingData}
- />
- )}
- </div>
- );
- }
-
- function QuizView({ currentUser, questions, rubrics, studentsData, setStudentsData, settings, setView, setModal }) {
- const [currentPage, setCurrentPage] = React.useState(0);
- const [studentAnswers, setStudentAnswers] = React.useState({}); 
- const [activeBlank, setActiveBlank] = React.useState(null); 
-
- React.useEffect(() => {
- const initAnswers = {};
- questions.forEach(q => {
- const blankCount = (q.content.match(/\{\{.*?\}\}/g) || []).length;
- initAnswers[q.id] = Array(blankCount).fill('');
- });
- setStudentAnswers(initAnswers);
- }, [questions]);
-
- const currentQ = questions[currentPage];
- if (!currentQ) return null;
-
- const handleWordSelect = (word) => {
- if (!activeBlank) return;
- setStudentAnswers(prev => {
- const newAns = { ...prev };
- newAns[activeBlank.qId][activeBlank.index] = word;
- return newAns;
- });
- setActiveBlank(null);
- };
-
- const handleSubmit = () => {
- setModal({
- show: true,
- isAlert: false,
- message: "정말 제출하시겠습니까?\n제출 후에는 수정할 수 없습니다.",
- onConfirm: () => {
- let totalScore = 0;
- const results = {};
- questions.forEach(q => {
- const correctAnswers = (q.content.match(/\{\{(.*?)\}\}/g) || []).map(s => s.replace(/[{}]/g, '').trim());
- const userAnswers = studentAnswers[q.id] || [];
- let correctCount = 0;
- correctAnswers.forEach((ans, idx) => {
- if (userAnswers[idx] === ans) correctCount++;
- });
- const qRubrics = rubrics[q.id] || [];
- let scoreInfo = { grade: 'F', score: 0 };
- for (let r of qRubrics) {
- if (correctCount >= r.min && correctCount <= r.max) {
- scoreInfo = { grade: r.grade, score: r.score };
- break;
- }
- }
- results[q.id] = { correctCount, scoreInfo };
- totalScore += scoreInfo.score;
- });
-
- const finalData = {
- id: currentUser.id,
- name: currentUser.name,
- results,
- totalScore,
- timestamp: new Date().toLocaleString(),
- scores: questions.map(q => results[q.id].scoreInfo.score)
- };
-
- const newData = [...studentsData, finalData];
- setStudentsData(newData);
- localStorage.setItem('aiMath_students', JSON.stringify(newData));
- 
- if (settings.gasUrl) {
- try {
- fetch(settings.gasUrl, {
- method: 'POST',
- mode: 'no-cors',
- headers: { 'Content-Type': 'text/plain' },
- body: JSON.stringify({ action: "submit", data: finalData })
- });
- } catch(e) { console.error("Sheet Error:", e); }
- }
- setView('result');
- }
- });
- };
-
- const renderContentWithBlanks = (q) => {
- const parts = q.content.split(/(\{\{.*?\}\})/g);
- let blankIdx = 0;
- return parts.map((part, i) => {
- if (part.startsWith('{{') && part.endsWith('}}')) {
- const currentIdx = blankIdx++;
- const ans = studentAnswers[q.id] && studentAnswers[q.id][currentIdx];
- const isActive = activeBlank && activeBlank.qId === q.id && activeBlank.index === currentIdx;
- return (
- <span key={i} onClick={() => setActiveBlank({ qId: q.id, index: currentIdx })} className={`blank-input ${isActive ? 'blank-active' : ''}`}>
- {ans ? <LatexText text={ans} /> : <span className="text-gray-300">터치</span>}
- </span>
- );
- }
- return <LatexText key={i} text={part} />;
- });
- };
-
- return (
- <div className="flex flex-col h-[80vh]">
- <div className="flex justify-between items-center mb-4">
- <h2 className="text-xl font-black">{currentQ.title}</h2>
- <span className="font-bold border-2 border-black px-3 py-1 bg-white">{currentPage + 1} / {questions.length}</span>
- </div>
- <div className="worksheet-box p-4 sm:p-6 flex-1 overflow-y-auto leading-loose text-base sm:text-lg whitespace-pre-wrap">
- {renderContentWithBlanks(currentQ)}
- </div>
-
- {activeBlank && activeBlank.qId === currentQ.id && (
- <div className="mt-4 p-4 worksheet-box bg-gray-50 border-t-0">
- <p className="text-sm font-bold mb-2">단어를 선택하세요:</p>
- <div className="flex flex-wrap gap-2">
- {currentQ.options.map((opt, idx) => (
- <button key={idx} onClick={() => handleWordSelect(opt)} className="border-2 border-black bg-white px-3 py-2 font-bold hover:bg-black hover:text-white transition-colors">
- <LatexText text={opt} />
- </button>
- ))}
- </div>
- </div>
- )}
-
- <div className="mt-6 flex justify-between gap-4">
- {currentPage > 0 ? (
- <button onClick={() => {setCurrentPage(p => p - 1); setActiveBlank(null);}} className="flex-1 bg-white border-2 border-black py-4 font-black btn-retro text-sm sm:text-base">◀ 이전 영역</button>
- ) : <div className="flex-1"></div>}
- {currentPage < questions.length - 1 ? (
- <button onClick={() => {setCurrentPage(p => p + 1); setActiveBlank(null);}} className="flex-1 bg-black text-white border-2 border-black py-4 font-black btn-retro text-sm sm:text-base">다음 영역 ▶</button>
- ) : (
- <button onClick={handleSubmit} className="flex-1 bg-black text-white border-2 border-black py-4 font-black btn-retro text-sm sm:text-base">최종 제출하기</button>
- )}
- </div>
- </div>
- );
- }
-
- function ResultView({ currentUser, studentsData, onBack }) {
- const result = studentsData.find(s => s.id === currentUser.id);
- if (!result) return <div className="p-4 font-bold text-center">결과를 찾을 수 없습니다.</div>;
- return (
- <div className="worksheet-box p-6 sm:p-8 max-w-lg mx-auto text-center mt-10">
- <h2 className="text-2xl sm:text-3xl font-black mb-2">{result.name} 학생</h2>
- <p className="text-lg font-bold mb-8 pb-4 border-b-2 border-black">총점: <span className="text-3xl">{result.totalScore}</span>점</p>
- <div className="space-y-4 mb-8 text-left">
- {Object.entries(result.results).map(([qId, data], idx) => (
- <div key={idx} className="flex flex-col sm:flex-row justify-between sm:items-center border-2 border-black p-4 bg-gray-50 gap-2">
- <span className="font-bold">영역 {idx + 1}</span>
- <div className="text-right sm:text-left">
- <span className="font-black text-xl">{data.scoreInfo.score}점</span>
- <span className="text-sm font-bold text-gray-600 ml-2">({data.scoreInfo.grade}등급 / {data.correctCount}개 정답)</span>
- </div>
- </div>
- ))}
- </div>
- <button onClick={onBack} className="w-full bg-black text-white py-4 font-black text-xl btn-retro">처음으로 돌아가기</button>
- </div>
- );
- }
-
- function AdminDashboard({ questions, setQuestions, rubrics, setRubrics, studentsData, setStudentsData, settings, setSettings, setModal, isLoadingData }) {
- const [tab, setTab] = React.useState('students');
-
- const handleSyncConfig = () => {
-    setModal({
-      show: true,
-      isAlert: false,
-      message: '현재 작성한 문항과 루브릭 설정을 중앙 구글 시트에 덮어쓰시겠습니까?\n모든 기기(학생)가 이 설정으로 동기화됩니다.',
-      onConfirm: () => {
-        if (!settings.gasUrl) {
-          setTimeout(() => setModal({ show: true, message: '구글 시트 연동 URL이 설정되지 않았습니다.', isAlert: true }), 100);
-          return;
+      React.useEffect(() => {
+        let savedConfigBySession = { "1차": { questions: defaultQuestions, rubrics: defaultRubrics } };
+        let savedStudentsBySession = { "1차": [] };
+        
+        // 마이그레이션 로직
+        const oldQuestions = localStorage.getItem('aiMath_questions');
+        const oldRubrics = localStorage.getItem('aiMath_rubrics');
+        if (oldQuestions) {
+          try {
+            const pq = JSON.parse(oldQuestions);
+            const pr = JSON.parse(oldRubrics || "{}");
+            pq.forEach(q => { if(!q.type) q.type = 'count'; });
+            savedConfigBySession["1차"] = { questions: pq, rubrics: pr };
+          } catch(e) {}
         }
         
-        try {
+        const oldConfig = localStorage.getItem('aiMath_configBySession');
+        if (oldConfig) savedConfigBySession = JSON.parse(oldConfig);
+        
+        const savedStudents = localStorage.getItem('aiMath_students');
+        if (savedStudents) {
+          try {
+            const ps = JSON.parse(savedStudents);
+            if (Array.isArray(ps)) {
+              savedStudentsBySession["1차"] = ps;
+            } else {
+              savedStudentsBySession = ps;
+            }
+          } catch(e) {}
+        }
+        
+        const oldSettings = localStorage.getItem('aiMath_settings');
+        let currentSettings = { ...settings };
+        if (oldSettings) {
+          currentSettings = { ...currentSettings, ...JSON.parse(oldSettings) };
+        }
+        if (!currentSettings.sessions || currentSettings.sessions.length === 0) currentSettings.sessions = ["1차"];
+        
+        setSettings(currentSettings);
+        setConfigBySession(savedConfigBySession);
+        setStudentsBySession(savedStudentsBySession);
+        setActiveSession(currentSettings.sessions[0]);
+        
+        if (currentSettings.gasUrl) {
+          fetch(currentSettings.gasUrl + '?action=getConfig')
+            .then(res => res.json())
+            .then(json => {
+              if (json && json.status === 'success' && json.data) {
+                const fetchedSessions = json.data.sessions || ["1차"];
+                const fetchedConfig = json.data.configBySession || { "1차": { questions: defaultQuestions, rubrics: defaultRubrics } };
+                setSettings(s => ({...s, sessions: fetchedSessions, password: json.data.password || s.password}));
+                setConfigBySession(fetchedConfig);
+                setActiveSession(fetchedSessions[0]);
+                localStorage.setItem('aiMath_settings', JSON.stringify({...currentSettings, sessions: fetchedSessions, password: json.data.password || currentSettings.password}));
+                localStorage.setItem('aiMath_configBySession', JSON.stringify(fetchedConfig));
+              }
+            })
+            .catch(e => console.error(e))
+            .finally(() => setIsSyncingConfig(false));
+        } else {
+          setIsSyncingConfig(false);
+        }
+      }, []);
+
+      React.useEffect(() => {
+        if (isTeacher && view === 'admin' && settings.gasUrl) {
+          setIsLoadingData(true);
+          fetch(settings.gasUrl)
+            .then(res => res.json())
+            .then(json => {
+              if (json.status === 'success') {
+                let result = json.data;
+                if (Array.isArray(result)) {
+                  result = { "1차": result };
+                }
+                setStudentsBySession(result);
+                localStorage.setItem('aiMath_students', JSON.stringify(result));
+              }
+            })
+            .catch(e => console.error(e))
+            .finally(() => setIsLoadingData(false));
+        }
+      }, [isTeacher, view, settings.gasUrl]);
+
+      const handleSyncConfig = () => {
+        if (!settings.gasUrl) {
+          alert('구글 앱스 스크립트 웹 앱 URL을 먼저 저장해주세요.');
+          return;
+        }
+        const configData = {
+          password: settings.password,
+          sessions: settings.sessions,
+          configBySession: configBySession
+        };
+        fetch(settings.gasUrl, {
+          method: 'POST',
+          mode: 'no-cors',
+          headers: { 'Content-Type': 'text/plain' },
+          body: JSON.stringify({ action: "saveConfig", data: configData })
+        }).then(() => {
+          alert('구글 시트에 모든 설정과 문항/루브릭 배포가 완료되었습니다.');
+        }).catch(err => {
+          alert('저장 중 오류가 발생했습니다.');
+        });
+      };
+
+      if (isSyncingConfig) {
+        return (
+          <div className="min-h-screen flex items-center justify-center bg-gray-100">
+            <div className="text-2xl font-bold p-8 bg-white rounded-xl shadow-lg border-2 border-black">
+              구글 시트에서 설정을 불러오는 중입니다...
+            </div>
+          </div>
+        );
+      }
+
+      if (view === 'login') {
+        return <LoginView setActiveSession={setActiveSession} activeSession={activeSession} settings={settings} setView={setView} setCurrentUser={setCurrentUser} setIsTeacher={setIsTeacher} />;
+      }
+      if (view === 'quiz') {
+        return <QuizView activeSession={activeSession} settings={settings} configBySession={configBySession} currentUser={currentUser} setView={setView} setStudentsBySession={setStudentsBySession} />;
+      }
+      if (view === 'result') {
+        return <ResultView activeSession={activeSession} currentUser={currentUser} studentsBySession={studentsBySession} setView={setView} />;
+      }
+      if (view === 'admin') {
+        return <AdminDashboard 
+          activeSession={activeSession} setActiveSession={setActiveSession}
+          settings={settings} setSettings={setSettings}
+          configBySession={configBySession} setConfigBySession={setConfigBySession}
+          studentsBySession={studentsBySession} setStudentsBySession={setStudentsBySession}
+          setView={setView} setIsTeacher={setIsTeacher}
+          handleSyncConfig={handleSyncConfig} isLoadingData={isLoadingData}
+        />;
+      }
+      return <div>Error</div>;
+    };
+
+    const LoginView = ({ setActiveSession, activeSession, settings, setView, setCurrentUser, setIsTeacher }) => {
+      const [id, setId] = React.useState('');
+      const [name, setName] = React.useState('');
+      const handleLogin = (e) => {
+        e.preventDefault();
+        if (id === 'admin' && name === settings.password) {
+          setIsTeacher(true);
+          setView('admin');
+        } else if (id && name) {
+          setCurrentUser({ id, name });
+          setView('quiz');
+        }
+      };
+      return (
+        <div className="min-h-screen flex items-center justify-center px-4">
+          <form onSubmit={handleLogin} className="bg-white p-8 rounded-2xl shadow-xl w-full max-w-md border-4 border-black">
+            <h1 className="text-3xl font-black mb-8 text-center bg-yellow-300 inline-block px-4 py-2 rotate-[-2deg] shadow-[4px_4px_0_0_rgba(0,0,0,1)]">AI 활용 평가</h1>
+            
+            <div className="mb-4">
+              <label className="block font-bold mb-2">평가 회차</label>
+              <select value={activeSession} onChange={e => setActiveSession(e.target.value)} className="w-full p-4 border-2 border-black font-bold text-xl outline-none focus:bg-blue-50">
+                {settings.sessions.map(s => <option key={s} value={s}>{s}</option>)}
+              </select>
+            </div>
+
+            <input type="text" placeholder="학번 (예: 10101)" value={id} onChange={e => setId(e.target.value)} className="w-full mb-4 p-4 border-2 border-black font-bold text-xl outline-none focus:bg-blue-50" />
+            <input type="text" placeholder="이름 (예: 홍길동)" value={name} onChange={e => setName(e.target.value)} className="w-full mb-8 p-4 border-2 border-black font-bold text-xl outline-none focus:bg-blue-50" />
+            
+            <button type="submit" className="w-full bg-blue-500 text-white font-black text-2xl py-4 border-4 border-black shadow-[4px_4px_0_0_rgba(0,0,0,1)] hover:translate-y-1 hover:shadow-none transition-all">시작하기</button>
+            <p className="mt-6 text-sm text-center text-gray-500 font-bold">* 교사 로그인은 학번에 'admin', 이름에 비밀번호 입력</p>
+          </form>
+        </div>
+      );
+    };
+
+    const QuizView = ({ activeSession, settings, configBySession, currentUser, setView, setStudentsBySession }) => {
+      const questions = configBySession[activeSession]?.questions || [];
+      const rubrics = configBySession[activeSession]?.rubrics || {};
+      const [currentQIndex, setCurrentQIndex] = React.useState(0);
+      const [studentAnswers, setStudentAnswers] = React.useState({});
+      const [activeBlank, setActiveBlank] = React.useState(null);
+      const [isSubmitting, setIsSubmitting] = React.useState(false);
+
+      const currentQ = questions[currentQIndex];
+
+      if (!currentQ) return <div className="p-8 font-bold">문항이 없습니다.</div>;
+
+      const renderContentWithBlanks = (q) => {
+        const parts = q.content.split(/(\{\{.*?\}\})/g);
+        let blankIdx = 0;
+        return parts.map((part, i) => {
+          if (part.startsWith('{{') && part.endsWith('}}')) {
+            const currentIdx = blankIdx++;
+            const ans = studentAnswers[q.id] && studentAnswers[q.id][currentIdx];
+            
+            if (q.type === 'value') {
+              return (
+                <input 
+                  key={i} type="text" value={ans || ''}
+                  onChange={(e) => {
+                    setStudentAnswers(prev => {
+                      const newAns = { ...prev };
+                      if (!newAns[q.id]) newAns[q.id] = [];
+                      newAns[q.id][currentIdx] = e.target.value;
+                      return newAns;
+                    });
+                  }}
+                  className="border-b-2 border-black bg-transparent w-24 text-center font-bold outline-none focus:bg-blue-50"
+                  placeholder="입력"
+                />
+              );
+            } else {
+              const isActive = activeBlank && activeBlank.qId === q.id && activeBlank.index === currentIdx;
+              return (
+                <span key={i} onClick={() => setActiveBlank({ qId: q.id, index: currentIdx })} className={`blank-input ${isActive ? 'blank-active' : ''}`}>
+                  {ans ? <LatexText text={ans} /> : <span className="text-gray-300">터치</span>}
+                </span>
+              );
+            }
+          }
+          return <LatexText key={i} text={part} />;
+        });
+      };
+
+      const handleSelectWord = (word) => {
+        if (!activeBlank) return;
+        setStudentAnswers(prev => {
+          const newAns = { ...prev };
+          if (!newAns[activeBlank.qId]) newAns[activeBlank.qId] = [];
+          newAns[activeBlank.qId][activeBlank.index] = word;
+          return newAns;
+        });
+        setActiveBlank(null);
+      };
+
+      const handleSubmit = () => {
+        if (!confirm('정말 제출하시겠습니까?')) return;
+        setIsSubmitting(true);
+        let totalScore = 0;
+        const results = {};
+
+        questions.forEach(q => {
+          const correctAnswers = (q.content.match(/\{\{(.*?)\}\}/g) || []).map(s => s.replace(/[{}]/g, '').trim());
+          const userAnswers = studentAnswers[q.id] || [];
+          const qRubrics = rubrics[q.id] || [];
+          let scoreInfo = { grade: 'F', score: 0 };
+          let correctCount = 0;
+
+          if (q.type === 'value') {
+             const val = (userAnswers[0] || '').trim();
+             let matched = false;
+             for (let r of qRubrics) {
+               if (r.matchValue && r.matchValue.toString().trim() === val) {
+                 scoreInfo = { grade: r.grade, score: r.score };
+                 matched = true;
+                 correctCount = 1;
+                 break;
+               }
+             }
+             if (!matched) {
+               for (let r of qRubrics) {
+                 if (r.matchValue === '기타' || r.matchValue === '*') {
+                   scoreInfo = { grade: r.grade, score: r.score };
+                   break;
+                 }
+               }
+             }
+          } else {
+            correctAnswers.forEach((ans, idx) => {
+              if (userAnswers[idx] === ans) correctCount++;
+            });
+            for (let r of qRubrics) {
+              if (correctCount >= r.min && correctCount <= r.max) {
+                scoreInfo = { grade: r.grade, score: r.score };
+                break;
+              }
+            }
+          }
+          
+          results[q.id] = { correctCount, scoreInfo, type: q.type, userAnswers, correctAnswers };
+          totalScore += scoreInfo.score;
+        });
+
+        const finalData = {
+          id: currentUser.id,
+          name: currentUser.name,
+          results,
+          totalScore,
+          timestamp: new Date().toLocaleString(),
+          scores: questions.map(q => results[q.id].scoreInfo.score)
+        };
+
+        if (settings.gasUrl) {
           fetch(settings.gasUrl, {
             method: 'POST',
             mode: 'no-cors',
             headers: { 'Content-Type': 'text/plain' },
-            body: JSON.stringify({ action: 'saveConfig', data: { questions, rubrics } })
+            body: JSON.stringify({ action: "submit", data: { session: activeSession, ...finalData } })
+          }).then(() => {
+            alert('제출 완료!');
+            setView('result');
           });
-          setTimeout(() => setModal({ show: true, message: '동기화 요청을 전송했습니다.\n약 2~3초 후 구글 시트에 반영됩니다.', isAlert: true }), 100);
-        } catch(e) {
-          setTimeout(() => setModal({ show: true, message: '동기화 요청 중 오류가 발생했습니다.', isAlert: true }), 100);
+        } else {
+          setStudentsBySession(prev => {
+            const next = {...prev};
+            if(!next[activeSession]) next[activeSession] = [];
+            next[activeSession].push(finalData);
+            localStorage.setItem('aiMath_students', JSON.stringify(next));
+            return next;
+          });
+          setView('result');
         }
-      }
-    });
-  };
+      };
 
- const handleExportCSV = () => {
- const headers = ['학번', '이름'];
- questions.forEach(q => headers.push(q.title));
- headers.push('총점');
- let csvContent = "data:text/csv;charset=utf-8,\uFEFF";
- csvContent += headers.join(",") + "\n";
- studentsData.forEach(student => {
- const row = [student.id, student.name];
- questions.forEach(q => {
- const score = student.results[q.id] ? student.results[q.id].scoreInfo.score : 0;
- row.push(score);
- });
- row.push(student.totalScore);
- csvContent += row.join(",") + "\n";
- });
- const encodedUri = encodeURI(csvContent);
- const link = document.createElement("a");
- link.setAttribute("href", encodedUri);
- link.setAttribute("download", `수행평가결과_${new Date().toLocaleDateString()}.csv`);
- document.body.appendChild(link);
- link.click();
- document.body.removeChild(link);
- };
+      return (
+        <div className="min-h-screen bg-gray-100 p-4 md:p-8 flex flex-col items-center">
+          <div className="w-full max-w-3xl bg-white rounded-xl shadow-xl border-4 border-black p-6 md:p-10 mb-8">
+            <div className="flex justify-between items-center mb-6">
+              <span className="bg-black text-white px-3 py-1 rounded-full font-bold">{activeSession} - {currentQIndex + 1}/{questions.length}</span>
+              <span className="font-bold text-gray-500">[{currentUser.id}] {currentUser.name}</span>
+            </div>
+            <h2 className="text-2xl font-bold mb-6 break-keep">{currentQ.title}</h2>
+            <div className="text-xl md:text-2xl leading-loose font-medium mb-12">
+              {renderContentWithBlanks(currentQ)}
+            </div>
+            
+            {activeBlank && activeBlank.qId === currentQ.id && currentQ.type !== 'value' && (
+              <div className="bg-yellow-100 p-4 rounded-xl border-2 border-black mb-6">
+                <p className="font-bold mb-3">알맞은 단어를 선택하세요:</p>
+                <div className="flex flex-wrap gap-2">
+                  {currentQ.options.map((opt, i) => (
+                    <button key={i} onClick={() => handleSelectWord(opt)} className="bg-white px-4 py-2 border-2 border-black font-bold rounded hover:bg-blue-100">
+                      <LatexText text={opt} />
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
 
- const handleDeleteStudent = (id) => {
- setModal({
- show: true,
- isAlert: false,
- message: `${id} 학생의 기록을 정말 삭제하시겠습니까?\n삭제 시 학생이 다시 평가를 볼 수 있습니다.`,
- onConfirm: () => {
- const newData = studentsData.filter(s => s.id !== id);
- setStudentsData(newData);
- localStorage.setItem('aiMath_students', JSON.stringify(newData));
- if (settings.gasUrl) {
- try {
- fetch(settings.gasUrl, {
- method: 'POST',
- mode: 'no-cors',
- headers: { 'Content-Type': 'text/plain' },
- body: JSON.stringify({ action: "delete", data: { studentId: id } })
- });
- } catch(e) {}
- }
- }
- });
- };
+            <div className="flex justify-between mt-8 pt-8 border-t-2 border-dashed border-gray-300">
+              <button onClick={() => setCurrentQIndex(Math.max(0, currentQIndex - 1))} disabled={currentQIndex === 0} className="px-6 py-3 font-bold border-2 border-black rounded-lg disabled:opacity-30">이전</button>
+              {currentQIndex === questions.length - 1 ? (
+                <button onClick={handleSubmit} disabled={isSubmitting} className="bg-blue-500 text-white px-8 py-3 font-bold text-xl border-2 border-black rounded-lg shadow-[4px_4px_0_0_rgba(0,0,0,1)]">{isSubmitting ? '제출중...' : '제출하기'}</button>
+              ) : (
+                <button onClick={() => setCurrentQIndex(currentQIndex + 1)} className="bg-black text-white px-8 py-3 font-bold rounded-lg shadow-[4px_4px_0_0_rgba(0,0,0,0.5)]">다음</button>
+              )}
+            </div>
+          </div>
+        </div>
+      );
+    };
 
- const handleAddQuestion = () => {
- const newId = 'q' + Date.now();
- const newQ = [...questions, { id: newId, title: '새로운 영역', content: ' 내용을 입력하세요. {{정답}}', options: ['정답'] }];
- setQuestions(newQ);
- localStorage.setItem('aiMath_questions', JSON.stringify(newQ));
- const newR = {...rubrics, [newId]: [{ min: 0, max: 1, grade: 'A', score: 10 }]};
- setRubrics(newR);
- localStorage.setItem('aiMath_rubrics', JSON.stringify(newR));
- };
+    const ResultView = ({ activeSession, currentUser, studentsBySession, setView }) => {
+      const myData = studentsBySession[activeSession]?.slice().reverse().find(s => s.id === currentUser.id && s.name === currentUser.name);
+      if (!myData) return <div className="p-8">결과를 찾을 수 없습니다.</div>;
+      
+      return (
+        <div className="min-h-screen flex items-center justify-center bg-gray-100 p-4">
+          <div className="bg-white p-8 rounded-2xl shadow-xl border-4 border-black text-center w-full max-w-md">
+            <h1 className="text-3xl font-black mb-2">평가 완료</h1>
+            <p className="text-gray-500 font-bold mb-8">{activeSession} - {currentUser.name} 학생</p>
+            <div className="bg-yellow-300 rounded-xl p-6 border-2 border-black shadow-[4px_4px_0_0_rgba(0,0,0,1)] mb-8">
+              <p className="text-xl font-bold mb-2">총점</p>
+              <p className="text-6xl font-black">{myData.totalScore}점</p>
+            </div>
+            <div className="space-y-4 mb-8">
+              {Object.entries(myData.results).map(([qId, res], i) => (
+                <div key={qId} className="flex justify-between items-center border-b-2 border-dashed pb-2">
+                  <span className="font-bold">문항 {i+1}</span>
+                  <span className="font-bold px-3 py-1 bg-gray-200 rounded">{res.scoreInfo.grade}등급 ({res.scoreInfo.score}점)</span>
+                </div>
+              ))}
+            </div>
+            <button onClick={() => setView('login')} className="w-full bg-black text-white font-bold py-3 rounded-lg border-2 border-black">처음으로 돌아가기</button>
+          </div>
+        </div>
+      );
+    };
 
- const handleDeleteQuestion = (qId) => {
- setModal({
- show: true,
- isAlert: false,
- message: "정말 이 영역을 삭제하시겠습니까?\n(관련 루브릭도 함께 삭제됩니다)",
- onConfirm: () => {
- const newQ = questions.filter(q => q.id !== qId);
- setQuestions(newQ);
- localStorage.setItem('aiMath_questions', JSON.stringify(newQ));
- const newR = {...rubrics};
- delete newR[qId];
- setRubrics(newR);
- localStorage.setItem('aiMath_rubrics', JSON.stringify(newR));
- }
- });
- };
+    const AdminDashboard = ({ activeSession, setActiveSession, settings, setSettings, configBySession, setConfigBySession, studentsBySession, setStudentsBySession, setView, setIsTeacher, handleSyncConfig, isLoadingData }) => {
+      const [tab, setTab] = React.useState('settings');
+      const questions = configBySession[activeSession]?.questions || [];
+      const rubrics = configBySession[activeSession]?.rubrics || {};
+      const students = studentsBySession[activeSession] || [];
 
- return (
- <div className="flex flex-col md:flex-row gap-6">
- <div className="w-full md:w-48 flex flex-col gap-2">
- <button onClick={() => setTab('students')} className={`p-3 font-bold border-2 border-black text-left ${tab === 'students' ? 'bg-black text-white' : 'bg-white'}`}>학생 결과 확인</button>
- <button onClick={() => setTab('questions')} className={`p-3 font-bold border-2 border-black text-left ${tab === 'questions' ? 'bg-black text-white' : 'bg-white'}`}>문항 및 루브릭 관리</button>
- <button onClick={() => setTab('settings')} className={`p-3 font-bold border-2 border-black text-left ${tab === 'settings' ? 'bg-black text-white' : 'bg-white'}`}>설정 및 연동</button>
- </div>
- <div className="flex-1 worksheet-box p-4 sm:p-6 overflow-x-hidden">
- 
- {tab === 'students' && (
- <div>
- <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-4 mb-6 border-b-2 border-black pb-4">
- <h2 className="text-xl font-black">학생 결과 확인 ({studentsData.length}명)</h2>
- <div className="flex gap-2">
- {isLoadingData && <span className="font-bold text-blue-600 bg-blue-50 px-3 py-1 rounded">데이터 로딩 중...</span>}
- <button onClick={handleExportCSV} className="bg-white border-2 border-black px-4 py-2 font-bold btn-retro">엑셀 다운로드</button>
- </div>
- </div>
- <div className="overflow-x-auto">
- <table className="w-full border-collapse border-2 border-black text-sm whitespace-nowrap">
- <thead className="bg-gray-100">
- <tr>
- <th className="border-2 border-black p-2">학번</th>
- <th className="border-2 border-black p-2">이름</th>
- {questions.map((q, i) => <th key={i} className="border-2 border-black p-2">영역 {i+1}</th>)}
- <th className="border-2 border-black p-2 bg-gray-200">총점</th>
- <th className="border-2 border-black p-2">관리</th>
- </tr>
- </thead>
- <tbody>
- {studentsData.map((s, idx) => (
- <tr key={idx} className="text-center hover:bg-gray-50">
- <td className="border-2 border-black p-2 font-bold">{s.id}</td>
- <td className="border-2 border-black p-2">{s.name}</td>
- {questions.map((q, i) => (
- <td key={i} className="border-2 border-black p-2">
- {s.results[q.id] ? s.results[q.id].scoreInfo.score : 0}
- </td>
- ))}
- <td className="border-2 border-black p-2 font-black bg-gray-100">{s.totalScore}</td>
- <td className="border-2 border-black p-2">
- <button onClick={() => handleDeleteStudent(s.id)} className="text-xs font-bold bg-white border border-black px-2 py-1">기록 삭제</button>
- </td>
- </tr>
- ))}
- {studentsData.length === 0 && (
- <tr><td colSpan={questions.length + 4} className="p-8 text-center text-gray-500 font-bold border-2 border-black">제출된 데이터가 없습니다.</td></tr>
- )}
- </tbody>
- </table>
- </div>
- </div>
- )}
+      const handleAddSession = () => {
+         const name = prompt("새로운 평가 회차 이름을 입력하세요 (예: 3차)");
+         if (name && !settings.sessions.includes(name)) {
+           setSettings(s => ({...s, sessions: [...s.sessions, name]}));
+           setConfigBySession(prev => ({...prev, [name]: {questions: [], rubrics: {}}}));
+           setActiveSession(name);
+         }
+      };
+      const handleDelSession = () => {
+         if (settings.sessions.length <= 1) {
+           alert('최소 1개의 회차는 있어야 합니다.');
+           return;
+         }
+         if (confirm(`'${activeSession}' 회차를 삭제하시겠습니까? (학생 데이터는 구글 시트에 남아있습니다)`)) {
+           setSettings(s => {
+             const newS = s.sessions.filter(x => x !== activeSession);
+             setActiveSession(newS[0]);
+             return {...s, sessions: newS};
+           });
+         }
+      };
 
- {tab === 'questions' && (
- <div>
- <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 border-b-2 border-black pb-4 gap-4">
-    <div>
-      <h2 className="text-xl font-black">문항 및 루브릭 관리</h2>
-      <p className="text-xs font-bold text-gray-600 mt-1">이곳에서 수정한 내용은 현재 기기에 임시 저장됩니다.</p>
-    </div>
-    <div className="flex gap-2 w-full sm:w-auto">
-      <button onClick={handleSyncConfig} className="flex-1 sm:flex-none bg-blue-600 text-white px-4 py-2 font-bold btn-retro">모든 기기(시트)에 배포 저장</button>
-      <button onClick={handleAddQuestion} className="flex-1 sm:flex-none bg-black text-white px-4 py-2 font-bold btn-retro">+ 영역 추가</button>
-    </div>
- </div>
- <div className="space-y-8">
- {questions.map((q, qIndex) => (
- <div key={q.id} className="border-4 border-black p-4 relative bg-white">
- <button onClick={() => handleDeleteQuestion(q.id)} className="absolute top-2 sm:top-4 right-2 sm:right-4 bg-white border-2 border-black text-black px-2 py-1 sm:px-3 sm:py-1 font-bold text-xs sm:text-sm btn-retro">영역 삭제</button>
- <label className="block font-black mb-1 mt-6 sm:mt-0">영역 제목</label>
- <input type="text" value={q.title} onChange={(e) => {
- const newQ = [...questions];
- newQ[qIndex].title = e.target.value;
- setQuestions(newQ);
- localStorage.setItem('aiMath_questions', JSON.stringify(newQ));
- }} className="w-full text-base sm:text-lg font-bold p-2 border-2 border-black outline-none mb-4" />
- 
- <label className="block font-black mb-1">문항 내용 (빈칸은 {'{{정답}}'} 형태, 수식은 $$수식$$ 형태)</label>
- <textarea value={q.content} onChange={(e) => {
- const newQ = [...questions];
- newQ[qIndex].content = e.target.value;
- setQuestions(newQ);
- localStorage.setItem('aiMath_questions', JSON.stringify(newQ));
- }} className="w-full h-40 p-2 border-2 border-black outline-none mb-4 text-xs sm:text-sm whitespace-pre-wrap font-mono" />
- 
- <label className="block font-black mb-1">객관식 보기 (콤마로 구분, 수식 가능)</label>
- <input type="text" value={q.options.join(', ')} onChange={(e) => {
- const newQ = [...questions];
- newQ[qIndex].options = e.target.value.split(',').map(s => s.trim());
- setQuestions(newQ);
- localStorage.setItem('aiMath_questions', JSON.stringify(newQ));
- }} className="w-full p-2 border-2 border-black outline-none mb-4 text-xs sm:text-sm font-mono" />
- 
- <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center mb-2 mt-6 border-t-2 border-black pt-4 gap-2">
- <h3 className="font-black bg-gray-200 px-2 inline-block">루브릭 (채점 기준)</h3>
- <button onClick={() => {
- const newR = {...rubrics};
- if (!newR[q.id]) newR[q.id] = [];
- newR[q.id].push({ min: 0, max: 0, grade: 'C', score: 0 });
- setRubrics(newR);
- localStorage.setItem('aiMath_rubrics', JSON.stringify(newR));
- }} className="bg-white border-2 border-black px-3 py-1 font-bold text-sm btn-retro self-start sm:self-auto">+ 기준 추가</button>
- </div>
- <div className="overflow-x-auto">
- <table className="w-full border-collapse border-2 border-black text-xs sm:text-sm whitespace-nowrap">
- <thead className="bg-gray-100">
- <tr>
- <th className="border-2 border-black p-1 sm:p-2">최소(개)</th>
- <th className="border-2 border-black p-1 sm:p-2">최대(개)</th>
- <th className="border-2 border-black p-1 sm:p-2">등급</th>
- <th className="border-2 border-black p-1 sm:p-2">부여 점수</th>
- <th className="border-2 border-black p-1 sm:p-2">관리</th>
- </tr>
- </thead>
- <tbody>
- {(rubrics[q.id] || []).map((r, rIndex) => (
- <tr key={rIndex} className="text-center">
- <td className="border-2 border-black p-1">
- <input type="number" value={r.min} onChange={(e) => {
- const newR = {...rubrics};
- newR[q.id][rIndex].min = Number(e.target.value);
- setRubrics(newR);
- localStorage.setItem('aiMath_rubrics', JSON.stringify(newR));
- }} className="w-12 sm:w-16 text-center outline-none bg-transparent" />
- </td>
- <td className="border-2 border-black p-1">
- <input type="number" value={r.max} onChange={(e) => {
- const newR = {...rubrics};
- newR[q.id][rIndex].max = Number(e.target.value);
- setRubrics(newR);
- localStorage.setItem('aiMath_rubrics', JSON.stringify(newR));
- }} className="w-12 sm:w-16 text-center outline-none bg-transparent" />
- </td>
- <td className="border-2 border-black p-1">
- <input type="text" value={r.grade} onChange={(e) => {
- const newR = {...rubrics};
- newR[q.id][rIndex].grade = e.target.value;
- setRubrics(newR);
- localStorage.setItem('aiMath_rubrics', JSON.stringify(newR));
- }} className="w-12 sm:w-16 text-center outline-none bg-transparent font-bold" />
- </td>
- <td className="border-2 border-black p-1">
- <input type="number" value={r.score} onChange={(e) => {
- const newR = {...rubrics};
- newR[q.id][rIndex].score = Number(e.target.value);
- setRubrics(newR);
- localStorage.setItem('aiMath_rubrics', JSON.stringify(newR));
- }} className="w-12 sm:w-16 text-center outline-none bg-transparent font-bold" />
- </td>
- <td className="border-2 border-black p-1">
- <button onClick={() => {
- const newR = {...rubrics};
- newR[q.id].splice(rIndex, 1);
- setRubrics(newR);
- localStorage.setItem('aiMath_rubrics', JSON.stringify(newR));
- }} className="text-xs font-bold px-2 py-1 bg-gray-200 border border-black">삭제</button>
- </td>
- </tr>
- ))}
- </tbody>
- </table>
- </div>
- </div>
- ))}
- </div>
- </div>
- )}
+      const handleAddQuestion = (type) => {
+        const newId = 'q' + Date.now();
+        const newQ = { id: newId, type: type, title: '새로운 영역', content: '내용을 입력하세요. 정답: {{빈칸}}', options: type === 'count' ? ['빈칸'] : [] };
+        const newConfig = { ...configBySession };
+        if(!newConfig[activeSession]) newConfig[activeSession] = {questions:[], rubrics:{}};
+        newConfig[activeSession].questions.push(newQ);
+        
+        if (type === 'count') {
+          newConfig[activeSession].rubrics[newId] = [{ min: 0, max: 1, grade: 'A', score: 10 }];
+        } else {
+          newConfig[activeSession].rubrics[newId] = [
+            { matchValue: '15', grade: 'A', score: 10 },
+            { matchValue: '기타', grade: 'C', score: 0 }
+          ];
+        }
+        setConfigBySession(newConfig);
+      };
 
- {tab === 'settings' && (
- <div>
- <h2 className="text-xl font-black mb-6 border-b-2 border-black pb-2">설정 및 연동</h2>
- <div className="mb-6 p-4 border-4 border-black bg-white">
- <h3 className="font-black mb-2">교사 비밀번호 설정</h3>
- <input type="text" value={settings.password} onChange={(e) => setSettings({...settings, password: e.target.value})} className="w-full p-2 border-2 border-black outline-none font-bold" />
- <p className="text-xs font-bold text-gray-500 mt-1">로그인 시 사용할 암호를 입력하세요.</p>
- </div>
- <div className="mb-6 p-4 border-4 border-black bg-white">
- <h3 className="font-black mb-2">구글 시트 연동 URL (선택)</h3>
- <input type="text" value={settings.gasUrl} onChange={(e) => setSettings({...settings, gasUrl: e.target.value})} className="w-full p-2 border-2 border-black outline-none text-xs sm:text-sm font-mono text-gray-600" placeholder="https://script.google.com/..." />
- <p className="text-xs font-bold text-gray-500 mt-1">제공된 구글 앱스 스크립트 웹 앱 URL을 입력하세요.</p>
- </div>
- <button onClick={() => {
- localStorage.setItem('aiMath_settings', JSON.stringify(settings));
- setModal({ show: true, message: '설정이 저장되었습니다.', isAlert: true });
- }} className="w-full bg-black text-white py-3 font-black text-lg btn-retro">변경사항 저장</button>
- </div>
- )}
- </div>
- </div>
- );
- }
+      const handleDeleteQuestion = (id) => {
+        const newConfig = { ...configBySession };
+        newConfig[activeSession].questions = newConfig[activeSession].questions.filter(q => q.id !== id);
+        delete newConfig[activeSession].rubrics[id];
+        setConfigBySession(newConfig);
+      };
 
- const root = ReactDOM.createRoot(document.getElementById('root'));
- root.render(<App />);
- </script>
+      const handlePrintWorksheet = () => {
+        const printContent = document.getElementById('pdf-content');
+        const opt = {
+          margin: 10,
+          filename: `학생용학습지_${activeSession}.pdf`,
+          image: { type: 'jpeg', quality: 0.98 },
+          html2canvas: { scale: 2, useCORS: true },
+          jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+        };
+        document.body.classList.add('printing');
+        html2pdf().set(opt).from(printContent).save().then(() => {
+          document.body.classList.remove('printing');
+        });
+      };
+
+      return (
+        <div className="min-h-screen bg-gray-100 no-print">
+          <nav className="bg-black text-white p-4 flex justify-between items-center">
+            <div className="flex items-center gap-4">
+              <h1 className="font-bold text-xl">관리자 대시보드</h1>
+              <select value={activeSession} onChange={e => setActiveSession(e.target.value)} className="text-black font-bold px-2 py-1 outline-none">
+                {settings.sessions.map(s => <option key={s} value={s}>{s} 관리</option>)}
+              </select>
+            </div>
+            <div>
+              <button onClick={handleSyncConfig} className="bg-blue-500 hover:bg-blue-400 text-white font-bold px-4 py-2 rounded mr-4">구글 시트에 배포 저장</button>
+              <button onClick={() => { setIsTeacher(false); setView('login'); }} className="bg-red-500 text-white font-bold px-4 py-2 rounded">로그아웃</button>
+            </div>
+          </nav>
+          
+          <div className="flex">
+            <aside className="w-48 bg-white min-h-screen border-r-2 border-black font-bold">
+              <button onClick={()=>setTab('settings')} className={`w-full text-left p-4 ${tab==='settings'?'bg-blue-100':''}`}>설정 / 연동</button>
+              <button onClick={()=>setTab('questions')} className={`w-full text-left p-4 ${tab==='questions'?'bg-blue-100':''}`}>문항 및 루브릭 ({activeSession})</button>
+              <button onClick={()=>setTab('worksheet')} className={`w-full text-left p-4 ${tab==='worksheet'?'bg-blue-100':''}`}>학습지 인쇄 ({activeSession})</button>
+              <button onClick={()=>setTab('students')} className={`w-full text-left p-4 ${tab==='students'?'bg-blue-100':''}`}>학생 결과 ({activeSession})</button>
+            </aside>
+            <main className="flex-1 p-8">
+              
+              {tab === 'settings' && (
+                <div className="bg-white p-8 rounded-xl shadow border-2 border-black max-w-2xl">
+                  <h2 className="text-2xl font-bold mb-6">설정 및 연동 관리</h2>
+                  <div className="mb-6 border-b-2 pb-6">
+                    <label className="block font-bold mb-2">평가 회차 목록 관리</label>
+                    <div className="flex gap-2 flex-wrap mb-2">
+                      {settings.sessions.map(s => <span key={s} className="bg-gray-200 px-3 py-1 rounded font-bold">{s}</span>)}
+                    </div>
+                    <button onClick={handleAddSession} className="bg-blue-500 text-white px-4 py-2 rounded font-bold mr-2">+ 새 회차 추가</button>
+                    <button onClick={handleDelSession} className="bg-red-500 text-white px-4 py-2 rounded font-bold">현재 회차 삭제</button>
+                  </div>
+                  <div className="mb-6">
+                    <label className="block font-bold mb-2">교사 비밀번호 (시트 동기화됨)</label>
+                    <input type="text" value={settings.password} onChange={e => setSettings({...settings, password: e.target.value})} className="w-full p-2 border-2 border-black outline-none" />
+                  </div>
+                  <div className="mb-6">
+                    <label className="block font-bold mb-2 text-blue-600">Google Apps Script URL (기기에만 저장됨)</label>
+                    <input type="text" value={settings.gasUrl} onChange={e => setSettings({...settings, gasUrl: e.target.value})} className="w-full p-2 border-2 border-blue-600 outline-none" placeholder="https://script.google.com/macros/s/.../exec" />
+                    <p className="text-sm mt-2 text-gray-500">* 해가 바뀌면 이 주소만 새로운 구글 시트 주소로 교체하세요.</p>
+                  </div>
+                </div>
+              )}
+
+              {tab === 'questions' && (
+                <div>
+                  <div className="flex gap-4 mb-6">
+                    <button onClick={() => handleAddQuestion('count')} className="bg-blue-500 text-white font-bold py-2 px-4 rounded shadow-md border-2 border-black">+ 선택형(개수 채점) 추가</button>
+                    <button onClick={() => handleAddQuestion('value')} className="bg-green-500 text-white font-bold py-2 px-4 rounded shadow-md border-2 border-black">+ 직접입력형(값 채점) 추가</button>
+                  </div>
+                  {questions.map((q, qIndex) => (
+                    <div key={q.id} className="bg-white p-6 rounded-xl shadow border-2 border-black mb-8 relative">
+                      <span className="absolute -top-4 -left-4 bg-yellow-300 border-2 border-black font-black w-8 h-8 flex items-center justify-center rounded-full rotate-[-10deg]">{qIndex+1}</span>
+                      <span className="absolute top-2 right-2 bg-gray-200 text-xs px-2 py-1 rounded font-bold border border-gray-400">{q.type === 'value' ? '직접입력형' : '단어선택형'}</span>
+                      <div className="flex justify-between items-start mb-4 mt-2">
+                        <input type="text" value={q.title} onChange={e => {
+                          const newConfig = {...configBySession};
+                          newConfig[activeSession].questions[qIndex].title = e.target.value;
+                          setConfigBySession(newConfig);
+                        }} className="text-xl font-bold border-b-2 border-gray-300 w-3/4 outline-none" placeholder="제목/평가요소 입력" />
+                        <button onClick={() => handleDeleteQuestion(q.id)} className="text-red-500 font-bold underline">삭제</button>
+                      </div>
+                      <textarea value={q.content} onChange={e => {
+                        const newConfig = {...configBySession};
+                        newConfig[activeSession].questions[qIndex].content = e.target.value;
+                        setConfigBySession(newConfig);
+                      }} className="w-full p-2 border-2 border-black mb-2 h-24 outline-none" placeholder="내용을 입력하세요. 빈칸은 {{단어}} 형태로 만드세요." />
+                      
+                      {q.type === 'count' && (
+                        <div className="mb-4">
+                          <label className="font-bold text-sm text-gray-600 block mb-1">보기 (쉼표로 구분)</label>
+                          <input type="text" value={q.options.join(', ')} onChange={e => {
+                            const newConfig = {...configBySession};
+                            newConfig[activeSession].questions[qIndex].options = e.target.value.split(',').map(s=>s.trim()).filter(s=>s);
+                            setConfigBySession(newConfig);
+                          }} className="w-full p-2 border-2 border-black outline-none" />
+                        </div>
+                      )}
+
+                      <div className="bg-gray-50 p-4 border border-gray-300 rounded">
+                        <h4 className="font-bold mb-2">루브릭 (채점 기준)</h4>
+                        {rubrics[q.id]?.map((r, rIndex) => (
+                          <div key={rIndex} className="flex gap-2 items-center mb-2">
+                            {q.type === 'value' ? (
+                              <>
+                                <input type="text" value={r.matchValue} onChange={e => {
+                                  const newConfig = {...configBySession};
+                                  newConfig[activeSession].rubrics[q.id][rIndex].matchValue = e.target.value;
+                                  setConfigBySession(newConfig);
+                                }} className="w-24 p-1 border border-black" placeholder="정답값" />
+                                <span className="font-bold text-sm">와 일치하면</span>
+                              </>
+                            ) : (
+                              <>
+                                <input type="number" value={r.min} onChange={e => {
+                                  const newConfig = {...configBySession};
+                                  newConfig[activeSession].rubrics[q.id][rIndex].min = Number(e.target.value);
+                                  setConfigBySession(newConfig);
+                                }} className="w-16 p-1 border border-black" /> 개 ~ 
+                                <input type="number" value={r.max} onChange={e => {
+                                  const newConfig = {...configBySession};
+                                  newConfig[activeSession].rubrics[q.id][rIndex].max = Number(e.target.value);
+                                  setConfigBySession(newConfig);
+                                }} className="w-16 p-1 border border-black" /> 개 맞히면
+                              </>
+                            )}
+                            <input type="text" value={r.grade} onChange={e => {
+                              const newConfig = {...configBySession};
+                              newConfig[activeSession].rubrics[q.id][rIndex].grade = e.target.value;
+                              setConfigBySession(newConfig);
+                            }} className="w-16 p-1 border border-black ml-4" placeholder="등급" /> 등급,
+                            <input type="number" value={r.score} onChange={e => {
+                              const newConfig = {...configBySession};
+                              newConfig[activeSession].rubrics[q.id][rIndex].score = Number(e.target.value);
+                              setConfigBySession(newConfig);
+                            }} className="w-16 p-1 border border-black" /> 점
+                            <button onClick={() => {
+                              const newConfig = {...configBySession};
+                              newConfig[activeSession].rubrics[q.id].splice(rIndex, 1);
+                              setConfigBySession(newConfig);
+                            }} className="ml-auto text-red-500 font-bold text-sm bg-gray-200 px-2 rounded hover:bg-gray-300">X</button>
+                          </div>
+                        ))}
+                        <button onClick={() => {
+                          const newConfig = {...configBySession};
+                          if (q.type === 'value') {
+                            newConfig[activeSession].rubrics[q.id].push({ matchValue: '입력', grade: 'C', score: 0 });
+                          } else {
+                            newConfig[activeSession].rubrics[q.id].push({ min: 0, max: 0, grade: 'C', score: 0 });
+                          }
+                          setConfigBySession(newConfig);
+                        }} className="text-sm font-bold bg-white border-2 border-black px-3 py-1 rounded mt-2">+ 기준 추가</button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {tab === 'worksheet' && (
+                <div>
+                  <button onClick={handlePrintWorksheet} className="bg-blue-500 text-white font-bold py-2 px-6 rounded shadow-md border-2 border-black mb-6 flex items-center gap-2">PDF 저장 / 인쇄</button>
+                  <div id="pdf-content" className="bg-white p-10 border-2 border-gray-300 shadow-xl max-w-4xl print-area">
+                    <h1 className="text-center text-3xl font-black mb-8 underline underline-offset-8">AI 활용 수학 활동지 ({activeSession})</h1>
+                    <div className="flex justify-between mb-8 text-lg font-bold">
+                      <span>학번: _________________</span>
+                      <span>이름: _________________</span>
+                    </div>
+                    <div className="worksheet-grid">
+                      {questions.map((q, i) => (
+                        <div key={q.id} className="question-box border-2 border-black p-4 rounded-lg bg-gray-50">
+                          <h3 className="font-bold text-lg mb-4">{q.title}</h3>
+                          <p className="leading-loose mb-6">
+                            {q.content.split(/\{\{.*?\}\}/g).map((part, idx, arr) => (
+                              <React.Fragment key={idx}>
+                                <LatexText text={part} />
+                                {idx < arr.length - 1 && <span className="inline-block border-b-2 border-black w-16 mx-1"></span>}
+                              </React.Fragment>
+                            ))}
+                          </p>
+                          {q.type === 'count' && q.options.length > 0 && (
+                            <div className="bg-white p-3 border border-gray-300 text-sm">
+                              <span className="font-bold mr-2">&lt;보기&gt;</span>
+                              {q.options.map((opt, idx) => (
+                                <span key={idx} className="mr-3 inline-block">
+                                  <LatexText text={opt} />
+                                </span>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {tab === 'students' && (
+                <div className="bg-white p-6 rounded-xl shadow border-2 border-black">
+                  <div className="flex justify-between items-center mb-6">
+                    <h2 className="text-2xl font-bold">학생 결과 모아보기 ({activeSession})</h2>
+                    {isLoadingData && <span className="text-blue-500 font-bold animate-pulse">구글 시트에서 불러오는 중...</span>}
+                  </div>
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-left border-collapse">
+                      <thead>
+                        <tr className="bg-gray-200">
+                          <th className="p-3 border-2 border-black">학번</th>
+                          <th className="p-3 border-2 border-black">이름</th>
+                          <th className="p-3 border-2 border-black">총점</th>
+                          <th className="p-3 border-2 border-black">제출시간</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {students.length === 0 ? (
+                          <tr><td colSpan="4" className="text-center p-8 text-gray-500 font-bold border-2 border-black">제출된 데이터가 없습니다.</td></tr>
+                        ) : (
+                          students.slice().reverse().map((s, i) => (
+                            <tr key={i} className="hover:bg-blue-50 cursor-pointer border-2 border-black">
+                              <td className="p-3 border-2 border-black font-bold">{s.id}</td>
+                              <td className="p-3 border-2 border-black">{s.name}</td>
+                              <td className="p-3 border-2 border-black text-blue-600 font-bold">{s.totalScore}점</td>
+                              <td className="p-3 border-2 border-black text-sm text-gray-500">{s.timestamp}</td>
+                            </tr>
+                          ))
+                        )}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              )}
+            </main>
+          </div>
+        </div>
+      );
+    };
+
+    ReactDOM.render(<App />, document.getElementById('root'));
+  </script>
 </body>
 </html>
