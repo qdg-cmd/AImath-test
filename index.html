@@ -209,6 +209,15 @@
  return (
  <div className="max-w-3xl mx-auto p-4 md:p-6 min-h-screen relative">
  
+ {isSyncingConfig && (
+    <div className="fixed inset-0 bg-white flex flex-col items-center justify-center z-[200]">
+      <div className="worksheet-box p-8 text-center animate-pulse">
+        <h2 className="text-2xl font-black mb-4">최신 설정을 불러오는 중입니다...</h2>
+        <p className="font-bold text-gray-600">구글 시트와 동기화 중입니다. 잠시만 기다려주세요.</p>
+      </div>
+    </div>
+  )}
+
  {/* 공통 모달 (alert/confirm 대체) */}
  {modal.show && (
  <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[100] p-4">
@@ -475,6 +484,32 @@
  function AdminDashboard({ questions, setQuestions, rubrics, setRubrics, studentsData, setStudentsData, settings, setSettings, setModal, isLoadingData }) {
  const [tab, setTab] = React.useState('students');
 
+ const handleSyncConfig = () => {
+    setModal({
+      show: true,
+      isAlert: false,
+      message: '현재 작성한 문항과 루브릭 설정을 중앙 구글 시트에 덮어쓰시겠습니까?\n모든 기기(학생)가 이 설정으로 동기화됩니다.',
+      onConfirm: () => {
+        if (!settings.gasUrl) {
+          setTimeout(() => setModal({ show: true, message: '구글 시트 연동 URL이 설정되지 않았습니다.', isAlert: true }), 100);
+          return;
+        }
+        
+        try {
+          fetch(settings.gasUrl, {
+            method: 'POST',
+            mode: 'no-cors',
+            headers: { 'Content-Type': 'text/plain' },
+            body: JSON.stringify({ action: 'saveConfig', data: { questions, rubrics } })
+          });
+          setTimeout(() => setModal({ show: true, message: '동기화 요청을 전송했습니다.\n약 2~3초 후 구글 시트에 반영됩니다.', isAlert: true }), 100);
+        } catch(e) {
+          setTimeout(() => setModal({ show: true, message: '동기화 요청 중 오류가 발생했습니다.', isAlert: true }), 100);
+        }
+      }
+    });
+  };
+
  const handleExportCSV = () => {
  const headers = ['학번', '이름'];
  questions.forEach(q => headers.push(q.title));
@@ -605,9 +640,15 @@
 
  {tab === 'questions' && (
  <div>
- <div className="flex justify-between items-center mb-6 border-b-2 border-black pb-2">
- <h2 className="text-xl font-black">문항 및 루브릭 관리</h2>
- <button onClick={handleAddQuestion} className="bg-black text-white px-4 py-2 font-bold btn-retro">+ 영역 추가</button>
+ <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 border-b-2 border-black pb-4 gap-4">
+    <div>
+      <h2 className="text-xl font-black">문항 및 루브릭 관리</h2>
+      <p className="text-xs font-bold text-gray-600 mt-1">이곳에서 수정한 내용은 현재 기기에 임시 저장됩니다.</p>
+    </div>
+    <div className="flex gap-2 w-full sm:w-auto">
+      <button onClick={handleSyncConfig} className="flex-1 sm:flex-none bg-blue-600 text-white px-4 py-2 font-bold btn-retro">모든 기기(시트)에 배포 저장</button>
+      <button onClick={handleAddQuestion} className="flex-1 sm:flex-none bg-black text-white px-4 py-2 font-bold btn-retro">+ 영역 추가</button>
+    </div>
  </div>
  <div className="space-y-8">
  {questions.map((q, qIndex) => (
