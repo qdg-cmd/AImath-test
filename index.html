@@ -92,6 +92,20 @@
         sessions: ["1차"]
       });
       const [activeSession, setActiveSession] = React.useState("1차");
+      const [modalState, setModalState] = React.useState({ show: false, type: 'alert', title: '', message: '', inputPlaceholder: '', onConfirm: null, onCancel: null, defaultValue: '' });
+      const [modalInput, setModalInput] = React.useState('');
+
+      const showModal = (type, title, message, inputPlaceholder = '', defaultValue = '') => {
+        return new Promise((resolve) => {
+          setModalInput(defaultValue);
+          setModalState({
+            show: true,
+            type, title, message, inputPlaceholder, defaultValue,
+            onConfirm: (val) => { setModalState(prev => ({...prev, show: false})); resolve(val); },
+            onCancel: () => { setModalState(prev => ({...prev, show: false})); resolve(null); }
+          });
+        });
+      };
 
       React.useEffect(() => {
         let savedConfigBySession = { "1차": { questions: defaultQuestions, rubrics: defaultRubrics } };
@@ -185,7 +199,7 @@
 
       const handleSyncConfig = () => {
         if (!settings.gasUrl) {
-          alert('구글 앱스 스크립트 웹 앱 URL을 먼저 저장해주세요.');
+          showModal('alert', '오류', '구글 앱스 스크립트 웹 앱 URL을 먼저 저장해주세요.');
           return;
         }
         const configData = {
@@ -200,9 +214,9 @@
           headers: { 'Content-Type': 'text/plain' },
           body: JSON.stringify({ action: "saveConfig", data: configData })
         }).then(() => {
-          alert('구글 시트에 모든 설정과 문항/루브릭 배포가 완료되었습니다.');
+          showModal('alert', '성공', '구글 시트에 모든 설정과 문항/루브릭 배포가 완료되었습니다.');
         }).catch(err => {
-          alert('저장 중 오류가 발생했습니다.');
+          showModal('alert', '오류', '저장 중 오류가 발생했습니다.');
         });
       };
 
@@ -216,29 +230,49 @@
         );
       }
 
-      if (view === 'login') {
-        return <LoginView setActiveSession={setActiveSession} activeSession={activeSession} settings={settings} setView={setView} setCurrentUser={setCurrentUser} setIsTeacher={setIsTeacher} />;
-      }
-      if (view === 'quiz') {
-        return <QuizView activeSession={activeSession} settings={settings} configBySession={configBySession} currentUser={currentUser} setView={setView} setStudentsBySession={setStudentsBySession} />;
-      }
-      if (view === 'result') {
-        return <ResultView activeSession={activeSession} currentUser={currentUser} studentsBySession={studentsBySession} setView={setView} />;
-      }
-      if (view === 'admin') {
-        return <AdminDashboard 
-          activeSession={activeSession} setActiveSession={setActiveSession}
-          settings={settings} setSettings={setSettings}
-          configBySession={configBySession} setConfigBySession={setConfigBySession}
-          studentsBySession={studentsBySession} setStudentsBySession={setStudentsBySession}
-          setView={setView} setIsTeacher={setIsTeacher}
-          handleSyncConfig={handleSyncConfig} isLoadingData={isLoadingData}
-        />;
-      }
-      return <div>Error</div>;
+      return (
+        <React.Fragment>
+          {view === 'login' && <LoginView setActiveSession={setActiveSession} activeSession={activeSession} settings={settings} setView={setView} setCurrentUser={setCurrentUser} setIsTeacher={setIsTeacher} showModal={showModal} />}
+          {view === 'quiz' && <QuizView activeSession={activeSession} settings={settings} configBySession={configBySession} currentUser={currentUser} setView={setView} setStudentsBySession={setStudentsBySession} showModal={showModal} />}
+          {view === 'result' && <ResultView activeSession={activeSession} currentUser={currentUser} studentsBySession={studentsBySession} setView={setView} />}
+          {view === 'admin' && (
+            <AdminDashboard 
+              activeSession={activeSession} setActiveSession={setActiveSession}
+              settings={settings} setSettings={setSettings}
+              configBySession={configBySession} setConfigBySession={setConfigBySession}
+              studentsBySession={studentsBySession} setStudentsBySession={setStudentsBySession}
+              setView={setView} setIsTeacher={setIsTeacher}
+              handleSyncConfig={handleSyncConfig} isLoadingData={isLoadingData}
+              showModal={showModal}
+            />
+          )}
+
+          {modalState.show && (
+            <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+              <div className="bg-white p-6 rounded-xl border-4 border-black w-full max-w-sm shadow-[8px_8px_0_0_rgba(0,0,0,1)]">
+                <h3 className="font-black text-2xl mb-4 bg-yellow-300 inline-block px-3 py-1 shadow-[2px_2px_0_0_rgba(0,0,0,1)] -rotate-1">{modalState.title}</h3>
+                <p className="mb-6 font-bold text-lg leading-snug">{modalState.message}</p>
+                {modalState.type === 'input' && (
+                  <input 
+                    type="text" value={modalInput} onChange={e => setModalInput(e.target.value)}
+                    placeholder={modalState.inputPlaceholder}
+                    className="w-full p-3 border-4 border-black mb-6 font-bold outline-none focus:bg-blue-50"
+                  />
+                )}
+                <div className="flex gap-3">
+                  {modalState.type !== 'alert' && (
+                    <button onClick={modalState.onCancel} className="flex-1 p-3 border-4 border-black font-black bg-white hover:bg-gray-100 shadow-[4px_4px_0_0_rgba(0,0,0,1)] hover:translate-y-1 hover:shadow-none transition-all">취소</button>
+                  )}
+                  <button onClick={() => modalState.onConfirm(modalInput)} className="flex-1 p-3 border-4 border-black bg-blue-500 text-white font-black hover:bg-blue-600 shadow-[4px_4px_0_0_rgba(0,0,0,1)] hover:translate-y-1 hover:shadow-none transition-all">확인</button>
+                </div>
+              </div>
+            </div>
+          )}
+        </React.Fragment>
+      );
     };
 
-    const LoginView = ({ setActiveSession, activeSession, settings, setView, setCurrentUser, setIsTeacher }) => {
+    const LoginView = ({ setActiveSession, activeSession, settings, setView, setCurrentUser, setIsTeacher, showModal }) => {
       const [id, setId] = React.useState('');
       const [name, setName] = React.useState('');
       const handleLogin = (e) => {
@@ -249,13 +283,14 @@
         }
       };
       const handleTeacherLogin = () => {
-        const pwd = prompt('교사 비밀번호를 입력하세요:');
-        if (pwd === settings.password) {
-          setIsTeacher(true);
-          setView('admin');
-        } else if (pwd !== null) {
-          alert('비밀번호가 일치하지 않습니다.');
-        }
+        showModal('input', '교사 접속', '교사 비밀번호를 입력하세요:').then(pwd => {
+          if (pwd === settings.password) {
+            setIsTeacher(true);
+            setView('admin');
+          } else if (pwd !== null) {
+            showModal('alert', '오류', '비밀번호가 일치하지 않습니다.');
+          }
+        });
       };
       
       return (
@@ -341,102 +376,107 @@
       };
 
       const handleSubmit = () => {
-        if (!confirm('정말 제출하시겠습니까?')) return;
-        setIsSubmitting(true);
-        let totalScore = 0;
-        const results = {};
+        showModal('confirm', '제출 확인', '정말 제출하시겠습니까?').then(confirmed => {
+          if (!confirmed) return;
+          setIsSubmitting(true);
+          let totalScore = 0;
+          const results = {};
 
-        questions.forEach(q => {
-          const correctAnswers = ((q.content || '').match(/\{\{(.*?)\}\}/g) || []).map(s => s.replace(/[{}]/g, '').trim());
-          const userAnswers = studentAnswers[q.id] || [];
-          const qRubrics = rubrics[q.id] || [];
-          let scoreInfo = { grade: 'F', score: 0 };
-          let correctCount = 0;
+          questions.forEach(q => {
+            const correctAnswers = ((q.content || '').match(/\{\{(.*?)\}\}/g) || []).map(s => s.replace(/[{}]/g, '').trim());
+            const userAnswers = studentAnswers[q.id] || [];
+            const qRubrics = rubrics[q.id] || [];
+            let scoreInfo = { grade: 'F', score: 0 };
+            let correctCount = 0;
 
-          if (q.type === 'value') {
-             const val = (userAnswers[0] || '').trim();
-             let matched = false;
-             for (let r of qRubrics) {
-               if (r.matchValue && r.matchValue.toString().trim() === val) {
-                 scoreInfo = { grade: r.grade, score: r.score };
-                 matched = true;
-                 correctCount = 1;
-                 break;
-               }
-             }
-             if (!matched) {
+            if (q.type === 'value') {
+               const val = (userAnswers[0] || '').trim();
+               let matched = false;
                for (let r of qRubrics) {
-                 if (r.matchValue === '기타' || r.matchValue === '*') {
+                 if (r.matchValue && r.matchValue.toString().trim() === val) {
                    scoreInfo = { grade: r.grade, score: r.score };
+                   matched = true;
+                   correctCount = 1;
                    break;
                  }
                }
-             }
-          } else {
-            correctAnswers.forEach((ans, idx) => {
-              if (userAnswers[idx] === ans) correctCount++;
-            });
-            for (let r of qRubrics) {
-              if (correctCount >= r.min && correctCount <= r.max) {
-                scoreInfo = { grade: r.grade, score: r.score };
-                break;
+               if (!matched) {
+                 for (let r of qRubrics) {
+                   if (r.matchValue === '기타' || r.matchValue === '*') {
+                     scoreInfo = { grade: r.grade, score: r.score };
+                     break;
+                   }
+                 }
+               }
+            } else {
+              correctAnswers.forEach((ans, idx) => {
+                if (userAnswers[idx] === ans) correctCount++;
+              });
+              for (let r of qRubrics) {
+                if (correctCount >= r.min && correctCount <= r.max) {
+                  scoreInfo = { grade: r.grade, score: r.score };
+                  break;
+                }
               }
             }
-          }
-          
-          results[q.id] = { correctCount, scoreInfo, type: q.type, userAnswers, correctAnswers };
-          totalScore += scoreInfo.score;
-        });
+            
+            results[q.id] = { correctCount, scoreInfo, type: q.type, userAnswers, correctAnswers };
+            totalScore += scoreInfo.score;
+          });
 
-        const finalData = {
-          id: currentUser.id,
-          name: currentUser.name,
-          results,
-          totalScore,
-          timestamp: new Date().toLocaleString(),
-          scores: questions.map(q => results[q.id].scoreInfo.score)
-        };
+          const finalData = {
+            id: currentUser.id,
+            name: currentUser.name,
+            results,
+            totalScore,
+            timestamp: new Date().toLocaleString(),
+            scores: questions.map(q => results[q.id].scoreInfo.score)
+          };
 
-        if (settings.gasUrl) {
-          fetch(settings.gasUrl, {
-            method: 'POST',
-            mode: 'no-cors',
-            headers: { 'Content-Type': 'text/plain' },
-            body: JSON.stringify({ action: "submit", data: { session: activeSession, ...finalData } })
-          }).then(() => {
-            alert('제출 완료!');
+          if (settings.gasUrl) {
+            fetch(settings.gasUrl, {
+              method: 'POST',
+              mode: 'no-cors',
+              headers: { 'Content-Type': 'text/plain' },
+              body: JSON.stringify({ action: "submit", data: { session: activeSession, ...finalData } })
+            }).then(() => {
+              showModal('alert', '제출 완료', '제출이 완료되었습니다!').then(() => setView('result'));
+            });
+          } else {
+            setStudentsBySession(prev => {
+              const next = {...prev};
+              if(!next[activeSession]) next[activeSession] = [];
+              next[activeSession].push(finalData);
+              localStorage.setItem('aiMath_students', JSON.stringify(next));
+              return next;
+            });
             setView('result');
-          });
-        } else {
-          setStudentsBySession(prev => {
-            const next = {...prev};
-            if(!next[activeSession]) next[activeSession] = [];
-            next[activeSession].push(finalData);
-            localStorage.setItem('aiMath_students', JSON.stringify(next));
-            return next;
-          });
-          setView('result');
-        }
+          }
+        });
       };
 
       return (
-        <div className="min-h-screen bg-gray-100 p-4 md:p-8 flex flex-col items-center">
-          <div className="w-full max-w-3xl bg-white rounded-xl shadow-xl border-4 border-black p-6 md:p-10 mb-8">
-            <div className="flex justify-between items-center mb-6">
-              <span className="bg-black text-white px-3 py-1 rounded-full font-bold">{activeSession} - {currentQIndex + 1}/{questions.length}</span>
-              <span className="font-bold text-gray-500">[{currentUser.id}] {currentUser.name}</span>
+        <div className="min-h-screen bg-gray-100 p-4 flex flex-col items-center">
+          <div className="w-full max-w-4xl bg-white rounded-xl border-4 border-black flex flex-col h-[85vh] shadow-[8px_8px_0_0_rgba(0,0,0,1)]">
+            <div className="p-4 sm:p-6 flex-shrink-0 flex justify-between items-center border-b-4 border-black bg-blue-50 rounded-t-lg">
+              <span className="bg-black text-white px-4 py-1 rounded-full font-bold text-sm sm:text-base shadow-[2px_2px_0_0_rgba(0,0,0,0.5)]">{activeSession} - {currentQIndex + 1}/{questions.length}</span>
+              <span className="font-black text-gray-700 bg-white px-3 py-1 border-2 border-black rounded-lg text-sm sm:text-base">[{currentUser.id}] {currentUser.name}</span>
             </div>
-            <h2 className="text-2xl font-bold mb-6 break-keep">{currentQ.title}</h2>
-            <div className="text-xl md:text-2xl leading-loose font-medium mb-12">
+            
+            <div className="p-4 sm:p-6 flex-shrink-0">
+              <h2 className="text-xl sm:text-2xl font-black break-keep">{currentQ.title}</h2>
+            </div>
+
+            <div className="flex-1 overflow-y-auto px-4 sm:px-6 pb-6 text-lg sm:text-xl md:text-2xl leading-loose font-medium whitespace-pre-wrap break-keep">
               {renderContentWithBlanks(currentQ)}
             </div>
             
             {activeBlank && activeBlank.qId === currentQ.id && currentQ.type !== 'value' && (
-              <div className="bg-yellow-100 p-4 rounded-xl border-2 border-black mb-6">
-                <p className="font-bold mb-3">알맞은 단어를 선택하세요:</p>
-                <div className="flex flex-wrap gap-2">
+              <div className="flex-shrink-0 bg-yellow-300 p-4 border-t-4 border-black shadow-[0_-4px_0_0_rgba(0,0,0,0.1)]">
+                <p className="font-black mb-3">알맞은 단어를 선택하세요:</p>
+                <div className="flex flex-wrap gap-3">
                   {(currentQ.options || []).map((opt, i) => (
-                    <button key={i} onClick={() => handleSelectWord(opt)} className="bg-white px-4 py-2 border-2 border-black font-bold rounded hover:bg-blue-100">
+                    <button key={i} onClick={() => handleSelectWord(opt)} className="bg-white px-4 py-2 border-2 border-black font-black rounded hover:bg-black hover:text-white transition-all shadow-[2px_2px_0_0_rgba(0,0,0,1)] hover:shadow-none hover:translate-y-0.5 hover:translate-x-0.5">
                       <LatexText text={opt} />
                     </button>
                   ))}
@@ -444,12 +484,12 @@
               </div>
             )}
 
-            <div className="flex justify-between mt-8 pt-8 border-t-2 border-dashed border-gray-300">
-              <button onClick={() => setCurrentQIndex(Math.max(0, currentQIndex - 1))} disabled={currentQIndex === 0} className="px-6 py-3 font-bold border-2 border-black rounded-lg disabled:opacity-30">이전</button>
+            <div className="flex-shrink-0 flex justify-between p-4 sm:p-6 border-t-4 border-black bg-gray-50 rounded-b-lg">
+              <button onClick={() => { setCurrentQIndex(Math.max(0, currentQIndex - 1)); setActiveBlank(null); }} disabled={currentQIndex === 0} className="px-6 py-3 font-black border-2 border-black rounded-lg bg-white shadow-[4px_4px_0_0_rgba(0,0,0,1)] disabled:opacity-30 disabled:shadow-none transition-all">이전 영역</button>
               {currentQIndex === questions.length - 1 ? (
-                <button onClick={handleSubmit} disabled={isSubmitting} className="bg-blue-500 text-white px-8 py-3 font-bold text-xl border-2 border-black rounded-lg shadow-[4px_4px_0_0_rgba(0,0,0,1)]">{isSubmitting ? '제출중...' : '제출하기'}</button>
+                <button onClick={handleSubmit} disabled={isSubmitting} className="bg-blue-500 text-white px-8 py-3 font-black text-xl border-2 border-black rounded-lg shadow-[4px_4px_0_0_rgba(0,0,0,1)] hover:translate-y-1 hover:shadow-none transition-all">{isSubmitting ? '제출중...' : '최종 제출하기'}</button>
               ) : (
-                <button onClick={() => setCurrentQIndex(currentQIndex + 1)} className="bg-black text-white px-8 py-3 font-bold rounded-lg shadow-[4px_4px_0_0_rgba(0,0,0,0.5)]">다음</button>
+                <button onClick={() => { setCurrentQIndex(currentQIndex + 1); setActiveBlank(null); }} className="bg-black text-white px-8 py-3 font-black rounded-lg shadow-[4px_4px_0_0_rgba(0,0,0,0.5)] hover:translate-y-1 hover:shadow-none transition-all">다음 영역</button>
               )}
             </div>
           </div>
@@ -491,25 +531,28 @@
       const students = studentsBySession[activeSession] || [];
 
       const handleAddSession = () => {
-         const name = prompt("새로운 평가 회차 이름을 입력하세요 (예: 3차)");
-         if (name && !settings.sessions.includes(name)) {
-           setSettings(s => ({...s, sessions: [...s.sessions, name]}));
-           setConfigBySession(prev => ({...prev, [name]: {questions: [], rubrics: {}}}));
-           setActiveSession(name);
-         }
+         showModal('input', '회차 추가', '새로운 평가 회차 이름을 입력하세요 (예: 3차)', '회차 이름').then(name => {
+           if (name && !settings.sessions.includes(name)) {
+             setSettings(s => ({...s, sessions: [...s.sessions, name]}));
+             setConfigBySession(prev => ({...prev, [name]: {questions: [], rubrics: {}}}));
+             setActiveSession(name);
+           }
+         });
       };
       const handleDelSession = () => {
          if (settings.sessions.length <= 1) {
-           alert('최소 1개의 회차는 있어야 합니다.');
+           showModal('alert', '삭제 불가', '최소 1개의 회차는 있어야 합니다.');
            return;
          }
-         if (confirm(`'${activeSession}' 회차를 삭제하시겠습니까? (학생 데이터는 구글 시트에 남아있습니다)`)) {
-           setSettings(s => {
-             const newS = s.sessions.filter(x => x !== activeSession);
-             setActiveSession(newS[0]);
-             return {...s, sessions: newS};
-           });
-         }
+         showModal('confirm', '회차 삭제', `'${activeSession}' 회차를 삭제하시겠습니까? (학생 데이터는 구글 시트에 남아있습니다)`).then(confirmed => {
+           if (confirmed) {
+             setSettings(s => {
+               const newS = s.sessions.filter(x => x !== activeSession);
+               setActiveSession(newS[0]);
+               return {...s, sessions: newS};
+             });
+           }
+         });
       };
 
       const handleAddQuestion = (type) => {
