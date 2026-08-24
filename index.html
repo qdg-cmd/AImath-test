@@ -103,8 +103,10 @@
           try {
             const pq = JSON.parse(oldQuestions);
             const pr = JSON.parse(oldRubrics || "{}");
-            pq.forEach(q => { if(!q.type) q.type = 'count'; });
-            savedConfigBySession["1차"] = { questions: pq, rubrics: pr };
+            if (Array.isArray(pq)) {
+              pq.forEach(q => { if(!q.type) q.type = 'count'; });
+              savedConfigBySession["1차"] = { questions: pq, rubrics: pr };
+            }
           } catch(e) {}
         }
         
@@ -278,7 +280,7 @@
       if (!currentQ) return <div className="p-8 font-bold">문항이 없습니다.</div>;
 
       const renderContentWithBlanks = (q) => {
-        const parts = q.content.split(/(\{\{.*?\}\})/g);
+        const parts = (q.content || '').split(/(\{\{.*?\}\})/g);
         let blankIdx = 0;
         return parts.map((part, i) => {
           if (part.startsWith('{{') && part.endsWith('}}')) {
@@ -332,7 +334,7 @@
         const results = {};
 
         questions.forEach(q => {
-          const correctAnswers = (q.content.match(/\{\{(.*?)\}\}/g) || []).map(s => s.replace(/[{}]/g, '').trim());
+          const correctAnswers = ((q.content || '').match(/\{\{(.*?)\}\}/g) || []).map(s => s.replace(/[{}]/g, '').trim());
           const userAnswers = studentAnswers[q.id] || [];
           const qRubrics = rubrics[q.id] || [];
           let scoreInfo = { grade: 'F', score: 0 };
@@ -420,7 +422,7 @@
               <div className="bg-yellow-100 p-4 rounded-xl border-2 border-black mb-6">
                 <p className="font-bold mb-3">알맞은 단어를 선택하세요:</p>
                 <div className="flex flex-wrap gap-2">
-                  {currentQ.options.map((opt, i) => (
+                  {(currentQ.options || []).map((opt, i) => (
                     <button key={i} onClick={() => handleSelectWord(opt)} className="bg-white px-4 py-2 border-2 border-black font-bold rounded hover:bg-blue-100">
                       <LatexText text={opt} />
                     </button>
@@ -611,7 +613,7 @@
                       {q.type === 'count' && (
                         <div className="mb-4">
                           <label className="font-bold text-sm text-gray-600 block mb-1">보기 (쉼표로 구분)</label>
-                          <input type="text" value={q.options.join(', ')} onChange={e => {
+                          <input type="text" value={(q.options || []).join(', ')} onChange={e => {
                             const newConfig = {...configBySession};
                             newConfig[activeSession].questions[qIndex].options = e.target.value.split(',').map(s=>s.trim()).filter(s=>s);
                             setConfigBySession(newConfig);
@@ -624,16 +626,16 @@
                         {rubrics[q.id]?.map((r, rIndex) => (
                           <div key={rIndex} className="flex gap-2 items-center mb-2">
                             {q.type === 'value' ? (
-                              <>
+                              <React.Fragment>
                                 <input type="text" value={r.matchValue} onChange={e => {
                                   const newConfig = {...configBySession};
                                   newConfig[activeSession].rubrics[q.id][rIndex].matchValue = e.target.value;
                                   setConfigBySession(newConfig);
                                 }} className="w-24 p-1 border border-black" placeholder="정답값" />
                                 <span className="font-bold text-sm">와 일치하면</span>
-                              </>
+                              </React.Fragment>
                             ) : (
-                              <>
+                              <React.Fragment>
                                 <input type="number" value={r.min} onChange={e => {
                                   const newConfig = {...configBySession};
                                   newConfig[activeSession].rubrics[q.id][rIndex].min = Number(e.target.value);
@@ -644,7 +646,7 @@
                                   newConfig[activeSession].rubrics[q.id][rIndex].max = Number(e.target.value);
                                   setConfigBySession(newConfig);
                                 }} className="w-16 p-1 border border-black" /> 개 맞히면
-                              </>
+                              </React.Fragment>
                             )}
                             <input type="text" value={r.grade} onChange={e => {
                               const newConfig = {...configBySession};
@@ -692,17 +694,17 @@
                         <div key={q.id} className="question-box border-2 border-black p-4 rounded-lg bg-gray-50">
                           <h3 className="font-bold text-lg mb-4">{q.title}</h3>
                           <p className="leading-loose mb-6">
-                            {q.content.split(/\{\{.*?\}\}/g).map((part, idx, arr) => (
+                            {(q.content || '').split(/\{\{.*?\}\}/g).map((part, idx, arr) => (
                               <React.Fragment key={idx}>
                                 <LatexText text={part} />
                                 {idx < arr.length - 1 && <span className="inline-block border-b-2 border-black w-16 mx-1"></span>}
                               </React.Fragment>
                             ))}
                           </p>
-                          {q.type === 'count' && q.options.length > 0 && (
+                          {q.type === 'count' && (q.options || []).length > 0 && (
                             <div className="bg-white p-3 border border-gray-300 text-sm">
                               <span className="font-bold mr-2">&lt;보기&gt;</span>
-                              {q.options.map((opt, idx) => (
+                              {(q.options || []).map((opt, idx) => (
                                 <span key={idx} className="mr-3 inline-block">
                                   <LatexText text={opt} />
                                 </span>
