@@ -183,7 +183,9 @@
       React.useEffect(() => {
         if (isTeacher && view === 'admin' && settings.gasUrl) {
           setIsLoadingData(true);
-          fetch(settings.gasUrl)
+          let fetchUrl = settings.gasUrl.trim();
+          if (!fetchUrl.startsWith('http')) fetchUrl = 'https://' + fetchUrl;
+          fetch(fetchUrl)
             .then(res => res.json())
             .then(json => {
               if (json.status === 'success') {
@@ -215,7 +217,9 @@
           sessions: settings.sessions,
           configBySession: configBySession
         };
-        fetch(settings.gasUrl, {
+        let fetchUrl = settings.gasUrl.trim();
+        if (!fetchUrl.startsWith('http')) fetchUrl = 'https://' + fetchUrl;
+        fetch(fetchUrl, {
           method: 'POST',
           mode: 'no-cors',
           headers: { 'Content-Type': 'text/plain' },
@@ -441,7 +445,9 @@
           };
 
           if (settings.gasUrl) {
-            fetch(settings.gasUrl, {
+            let fetchUrl = settings.gasUrl.trim();
+            if (!fetchUrl.startsWith('http')) fetchUrl = 'https://' + fetchUrl;
+            fetch(fetchUrl, {
               method: 'POST',
               mode: 'no-cors',
               headers: { 'Content-Type': 'text/plain' },
@@ -453,7 +459,12 @@
                 next[activeSession].push(finalData);
                 return next;
               });
+              setIsSubmitting(false);
               showModal('alert', '제출 완료', '제출이 완료되었습니다!').then(() => setView('result'));
+            }).catch(e => {
+              console.error(e);
+              setIsSubmitting(false);
+              showModal('alert', '제출 실패', '제출 중 오류가 발생했습니다. 네트워크 연결이나 앱스 스크립트 주소를 확인해주세요.');
             });
           } else {
             setStudentsBySession(prev => {
@@ -463,6 +474,7 @@
               localStorage.setItem('aiMath_students', JSON.stringify(next));
               return next;
             });
+            setIsSubmitting(false);
             setView('result');
           }
         });
@@ -537,7 +549,7 @@
       );
     };
 
-    const AdminDashboard = ({ activeSession, setActiveSession, settings, setSettings, configBySession, setConfigBySession, studentsBySession, setStudentsBySession, setView, setIsTeacher, handleSyncConfig, isLoadingData }) => {
+    const AdminDashboard = ({ activeSession, setActiveSession, settings, setSettings, configBySession, setConfigBySession, studentsBySession, setStudentsBySession, setView, setIsTeacher, handleSyncConfig, isLoadingData, showModal }) => {
       const [tab, setTab] = React.useState('settings');
       const questions = (configBySession[activeSession] && configBySession[activeSession].questions) || [];
       const rubrics = (configBySession[activeSession] && configBySession[activeSession].rubrics) || {};
@@ -548,7 +560,9 @@
         showModal('confirm', '학생 기록 삭제', '정말 이 학생의 제출 기록을 삭제하시겠습니까?').then(confirmed => {
           if (confirmed) {
             if (settings.gasUrl) {
-              fetch(settings.gasUrl, {
+              let fetchUrl = settings.gasUrl.trim();
+              if (!fetchUrl.startsWith('http')) fetchUrl = 'https://' + fetchUrl;
+              fetch(fetchUrl, {
                 method: 'POST',
                 mode: 'no-cors',
                 headers: { 'Content-Type': 'text/plain' },
@@ -562,6 +576,9 @@
                   return next;
                 });
                 showModal('alert', '삭제 완료', '기록이 삭제되었습니다.');
+              }).catch(e => {
+                console.error(e);
+                showModal('alert', '삭제 실패', '네트워크 연결이나 웹 앱 주소를 확인해주세요.');
               });
             } else {
               setStudentsBySession(prev => {
@@ -759,6 +776,9 @@
                         ))}
                         <button onClick={() => {
                           const newConfig = {...configBySession};
+                          if (!newConfig[activeSession].rubrics[q.id]) {
+                            newConfig[activeSession].rubrics[q.id] = [];
+                          }
                           if (q.type === 'value') {
                             newConfig[activeSession].rubrics[q.id].push({ matchValue: '입력', grade: 'C', score: 0 });
                           } else {
