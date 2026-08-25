@@ -108,8 +108,8 @@
           setModalState({
             show: true,
             type, title, message, inputPlaceholder, defaultValue,
-            onConfirm: (val) => { setModalState(prev => ({...prev, show: false})); resolve(val); },
-            onCancel: () => { setModalState(prev => ({...prev, show: false})); resolve(null); }
+            onConfirm: (val) => { setModalState(prev => ({...prev, show: false})); resolve(type === 'input' ? val : true); },
+            onCancel: () => { setModalState(prev => ({...prev, show: false})); resolve(type === 'input' ? null : false); }
           });
         });
       };
