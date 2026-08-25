@@ -68,7 +68,7 @@
       );
     };
 
-    const DEFAULT_GAS_URL = "";
+    const DEFAULT_GAS_URL = "https://script.google.com/macros/s/AKfycbzo3r9NJ-G3azQlUUmJMNhIqJiKkG-5857m9bbp6GfOspDqwiPLd9GffJTpY7lR1jhP0w/exec";
 
     const App = () => {
       const [view, setView] = React.useState('login');
@@ -150,7 +150,11 @@
         const oldSettings = localStorage.getItem('aiMath_settings');
         let currentSettings = { ...settings };
         if (oldSettings) {
-          currentSettings = { ...currentSettings, ...JSON.parse(oldSettings) };
+          const parsed = JSON.parse(oldSettings);
+          currentSettings = { ...currentSettings, ...parsed };
+          if (DEFAULT_GAS_URL) {
+            currentSettings.gasUrl = DEFAULT_GAS_URL;
+          }
         }
         if (!currentSettings.sessions || currentSettings.sessions.length === 0) currentSettings.sessions = ["1차"];
         
