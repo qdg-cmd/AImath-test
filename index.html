@@ -343,6 +343,27 @@
       if (!currentQ) return <div className="p-8 font-bold">문항이 없습니다.</div>;
 
       const renderContentWithBlanks = (q) => {
+        if (q.type === 'essay') {
+          return (
+            <React.Fragment>
+              <div className="mb-4 whitespace-pre-wrap">{q.content}</div>
+              <textarea 
+                value={(studentAnswers[q.id] && studentAnswers[q.id][0]) || ''}
+                onChange={(e) => {
+                  setStudentAnswers(prev => {
+                    const newAns = { ...prev };
+                    if (!newAns[q.id]) newAns[q.id] = [];
+                    newAns[q.id][0] = e.target.value;
+                    return newAns;
+                  });
+                }}
+                className="w-full p-4 border-4 border-black font-bold outline-none h-40 resize-none rounded focus:bg-blue-50"
+                placeholder="답안을 서술하세요."
+              />
+            </React.Fragment>
+          );
+        }
+
         const parts = (q.content || '').split(/(\{\{.*?\}\})/g);
         let blankIdx = 0;
         return parts.map((part, i) => {
@@ -357,6 +378,31 @@
                   onChange={(e) => {
                     setStudentAnswers(prev => {
                       const newAns = { ...prev };
+                      if (!newAns[q.id]) newAns[q.id] = [];
+                      newAns[q.id][currentIdx] = e.target.value;
+                      return newAns;
+                    });
+                  }}
+                  className="border-b-2 border-black bg-transparent w-24 text-center font-bold outline-none focus:bg-blue-50"
+                  placeholder="입력"
+                />
+              );
+            } else {
+              const isActive = activeBlank && activeBlank.qId === q.id && activeBlank.index === currentIdx;
+              return (
+                <span 
+                  key={i} 
+                  onClick={() => setActiveBlank({ qId: q.id, index: currentIdx })}
+                  className={`inline-block min-w-[3rem] text-center border-b-4 ${isActive ? 'border-red-500 text-red-500' : 'border-black'} font-black cursor-pointer mx-1 pb-1`}
+                >
+                  {ans || '?'}
+                </span>
+              );
+            }
+          }
+          return <span key={i}>{part}</span>;
+        });
+      };
                       if (!newAns[q.id]) newAns[q.id] = [];
                       newAns[q.id][currentIdx] = e.target.value;
                       return newAns;
@@ -398,39 +444,86 @@
           const results = {};
 
           questions.forEach(q => {
-            const correctAnswers = ((q.content || '').match(/\{\{(.*?)\}\}/g) || []).map(s => s.replace(/[{}]/g, '').trim());
             const userAnswers = studentAnswers[q.id] || [];
+            const correctAnswers = q.type === 'essay' ? [] : ((q.content || '').match(/\{\{(.*?)\}\}/g) || []).map(s => s.replace(/[{}]/g, '').trim());
             const qRubrics = rubrics[q.id] || [];
+            
             let scoreInfo = { grade: 'F', score: 0 };
             let correctCount = 0;
-
-            if (q.type === 'value') {
-               const val = (userAnswers[0] || '').trim();
-               let matched = false;
-               for (let r of qRubrics) {
-                 if (r.matchValue && r.matchValue.toString().trim() === val) {
-                   scoreInfo = { grade: r.grade, score: r.score };
-                   matched = true;
-                   correctCount = 1;
-                   break;
-                 }
-               }
-               if (!matched) {
-                 for (let r of qRubrics) {
-                   if (r.matchValue === '기타' || r.matchValue === '*') {
-                     scoreInfo = { grade: r.grade, score: r.score };
+            
+            if (q.type === 'essay') {
+              const text = (userAnswers[0] || '').trim();
+              let matchedR = null;
+              // sort rubrics by score descending so higher score matches first
+              const sortedRubrics = [...qRubrics].sort((a,b) => b.score - a.score);
+              for (let r of sortedRubrics) {
+                if (r.type === 'keyword') {
+                  const keywords = (r.keywords || '').split(',').map(k => k.trim()).filter(k => k);
+                  let allMatch = true;
+                  for (let k of keywords) {
+                    if (text.indexOf(k) === -1) { allMatch = false; break; }
+                  }
+                  if (allMatch && keywords.length > 0) {
+                     matchedR = r;
                      break;
-                   }
-                 }
-               }
+                  }
+                }
+              }
+              if (matchedR) scoreInfo = { grade: matchedR.grade, score: matchedR.score };
+            } else if (q.type === 'value') {
+              const mode = q.gradingMode || 'count';
+              if (mode === 'count') {
+                correctAnswers.forEach((ans, idx) => {
+                  if ((userAnswers[idx] || '').trim() === ans) correctCount++;
+                });
+                for (let r of qRubrics) {
+                  if (r.type === 'count' && correctCount >= r.min && correctCount <= r.max) {
+                    scoreInfo = { grade: r.grade, score: r.score };
+                    break;
+                  }
+                }
+              } else if (mode === 'individual') {
+                let totalScore = 0;
+                let grades = [];
+                for (let r of qRubrics) {
+                  if (r.type === 'individual') {
+                    const uAns = (userAnswers[r.blankIndex] || '').trim();
+                    if (uAns === r.matchValue.toString().trim()) {
+                      totalScore += r.score;
+                      if(r.grade) grades.push(r.grade);
+                      correctCount++;
+                    }
+                  }
+                }
+                scoreInfo = { grade: grades.join('/') || '완료', score: totalScore };
+              } else if (mode === 'combination') {
+                let maxScoreR = null;
+                for (let r of qRubrics) {
+                  if (r.type === 'combination') {
+                    const indices = (r.indices || '').split(',').map(n => parseInt(n.trim(), 10)).filter(n => !isNaN(n));
+                    let allCorrect = true;
+                    for (let idx of indices) {
+                      const uAns = (userAnswers[idx] || '').trim();
+                      const cAns = correctAnswers[idx];
+                      if (uAns !== cAns) { allCorrect = false; break; }
+                    }
+                    if (allCorrect && indices.length > 0) {
+                      if (!maxScoreR || r.score > maxScoreR.score) maxScoreR = r;
+                    }
+                  }
+                }
+                if (maxScoreR) scoreInfo = { grade: maxScoreR.grade, score: maxScoreR.score };
+              }
             } else {
               correctAnswers.forEach((ans, idx) => {
                 if (userAnswers[idx] === ans) correctCount++;
               });
               for (let r of qRubrics) {
-                if (correctCount >= r.min && correctCount <= r.max) {
-                  scoreInfo = { grade: r.grade, score: r.score };
-                  break;
+                if (r.type === 'count' || !r.type) {
+                  if (correctCount >= r.min && correctCount <= r.max) {
+                    scoreInfo = { grade: r.grade, score: r.score };
+                    break;
+                  }
                 }
               }
             }
@@ -717,6 +810,248 @@
                         }} className="text-xl font-bold border-b-2 border-gray-300 w-3/4 outline-none" placeholder="제목/평가요소 입력" />
                         <button onClick={() => handleDeleteQuestion(q.id)} className="text-red-500 font-bold underline">삭제</button>
                       </div>
+                      <textarea value={q.content} onChange={e => {
+                        const newConfig = {...configBySession};
+                        newConfig[activeSession].questions[qIndex].content = e.target.value;
+                        setConfigBySession(newConfig);
+                      }} className="w-full p-2 border-2 border-black mb-2 h-24 outline-none" placeholder="내용을 입력하세요. 빈칸은 {{단어}} 형태로 만드세요." />
+                      
+                      {q.type === 'count' && (
+                          <div className="mb-4">
+                            <label className="font-bold text-sm text-gray-600 block mb-1">보기 (쉼표로 구분)</label>
+                            <input type="text" value={(q.options || []).join(', ')} onChange={e => {
+                              const newConfig = {...configBySession};
+                              newConfig[activeSession].questions[qIndex].options = e.target.value.split(',').map(s=>s.trim()).filter(s=>s);
+                              setConfigBySession(newConfig);
+                            }} className="w-full p-2 border-2 border-black outline-none" />
+                          </div>
+                        )}
+                        
+                        <div className="bg-gray-50 p-4 border border-gray-300 rounded">
+                          <h4 className="font-bold mb-2">루브릭 (채점 기준)</h4>
+                          
+                          {q.type === 'count' && (
+                            <React.Fragment>
+                              {(rubrics[q.id] || []).map((r, rIndex) => (
+                                <div key={rIndex} className="flex gap-2 items-center mb-2">
+                                  <input type="number" value={r.min} onChange={e => {
+                                    const newConfig = {...configBySession};
+                                    newConfig[activeSession].rubrics[q.id][rIndex].min = Number(e.target.value);
+                                    setConfigBySession(newConfig);
+                                  }} className="w-16 p-1 border border-black" /> 개 ~ 
+                                  <input type="number" value={r.max} onChange={e => {
+                                    const newConfig = {...configBySession};
+                                    newConfig[activeSession].rubrics[q.id][rIndex].max = Number(e.target.value);
+                                    setConfigBySession(newConfig);
+                                  }} className="w-16 p-1 border border-black" /> 개 일치 시
+                                  <input type="text" value={r.grade} onChange={e => {
+                                    const newConfig = {...configBySession};
+                                    newConfig[activeSession].rubrics[q.id][rIndex].grade = e.target.value;
+                                    setConfigBySession(newConfig);
+                                  }} className="w-16 p-1 border border-black" placeholder="등급" />
+                                  <input type="number" value={r.score} onChange={e => {
+                                    const newConfig = {...configBySession};
+                                    newConfig[activeSession].rubrics[q.id][rIndex].score = Number(e.target.value);
+                                    setConfigBySession(newConfig);
+                                  }} className="w-16 p-1 border border-black" placeholder="점수" />
+                                  <button onClick={() => {
+                                    const newConfig = {...configBySession};
+                                    newConfig[activeSession].rubrics[q.id].splice(rIndex, 1);
+                                    setConfigBySession(newConfig);
+                                  }} className="text-red-500 font-bold ml-2">X</button>
+                                </div>
+                              ))}
+                              <button onClick={() => {
+                                const newConfig = {...configBySession};
+                                if(!newConfig[activeSession].rubrics[q.id]) newConfig[activeSession].rubrics[q.id] = [];
+                                newConfig[activeSession].rubrics[q.id].push({ type: 'count', min: 0, max: 0, grade: 'C', score: 0 });
+                                setConfigBySession(newConfig);
+                              }} className="bg-gray-200 px-2 py-1 border border-gray-400 text-sm font-bold mt-2">+ 기준 추가</button>
+                            </React.Fragment>
+                          )}
+                          
+                          {q.type === 'value' && (
+                            <React.Fragment>
+                              <div className="mb-4 flex items-center gap-2">
+                                <span className="font-bold">채점 모드:</span>
+                                <select value={q.gradingMode || 'count'} onChange={e => {
+                                  const newConfig = {...configBySession};
+                                  newConfig[activeSession].questions[qIndex].gradingMode = e.target.value;
+                                  if (e.target.value === 'count') {
+                                    newConfig[activeSession].rubrics[q.id] = [{ type: 'count', min: 0, max: 1, grade: 'A', score: 10 }];
+                                  } else if (e.target.value === 'individual') {
+                                    newConfig[activeSession].rubrics[q.id] = [];
+                                    const blanks = (q.content || '').match(/\{\{(.*?)\}\}/g) || [];
+                                    blanks.forEach((b, idx) => {
+                                      newConfig[activeSession].rubrics[q.id].push({ type: 'individual', blankIndex: idx, matchValue: b.replace(/[{}]/g, '').trim(), grade: 'A', score: 10 });
+                                    });
+                                  } else if (e.target.value === 'combination') {
+                                    newConfig[activeSession].rubrics[q.id] = [{ type: 'combination', indices: '0,1', grade: 'A', score: 10 }];
+                                  }
+                                  setConfigBySession(newConfig);
+                                }} className="border border-black p-1">
+                                  <option value="count">정답 개수 채점</option>
+                                  <option value="individual">빈칸 개별 채점</option>
+                                  <option value="combination">특정 빈칸 조합 채점</option>
+                                </select>
+                              </div>
+                              
+                              {(q.gradingMode || 'count') === 'count' && (
+                                <React.Fragment>
+                                  <p className="text-sm text-gray-500 mb-2">정답 텍스트가 일치하는 개수를 셉니다.</p>
+                                  {(rubrics[q.id] || []).map((r, rIndex) => (
+                                    <div key={rIndex} className="flex gap-2 items-center mb-2">
+                                      <input type="number" value={r.min} onChange={e => {
+                                        const newConfig = {...configBySession};
+                                        newConfig[activeSession].rubrics[q.id][rIndex].min = Number(e.target.value);
+                                        setConfigBySession(newConfig);
+                                      }} className="w-16 p-1 border border-black" /> 개 ~ 
+                                      <input type="number" value={r.max} onChange={e => {
+                                        const newConfig = {...configBySession};
+                                        newConfig[activeSession].rubrics[q.id][rIndex].max = Number(e.target.value);
+                                        setConfigBySession(newConfig);
+                                      }} className="w-16 p-1 border border-black" /> 개 일치 시
+                                      <input type="text" value={r.grade} onChange={e => {
+                                        const newConfig = {...configBySession};
+                                        newConfig[activeSession].rubrics[q.id][rIndex].grade = e.target.value;
+                                        setConfigBySession(newConfig);
+                                      }} className="w-16 p-1 border border-black" placeholder="등급" />
+                                      <input type="number" value={r.score} onChange={e => {
+                                        const newConfig = {...configBySession};
+                                        newConfig[activeSession].rubrics[q.id][rIndex].score = Number(e.target.value);
+                                        setConfigBySession(newConfig);
+                                      }} className="w-16 p-1 border border-black" placeholder="점수" />
+                                      <button onClick={() => {
+                                        const newConfig = {...configBySession};
+                                        newConfig[activeSession].rubrics[q.id].splice(rIndex, 1);
+                                        setConfigBySession(newConfig);
+                                      }} className="text-red-500 font-bold ml-2">X</button>
+                                    </div>
+                                  ))}
+                                  <button onClick={() => {
+                                    const newConfig = {...configBySession};
+                                    if(!newConfig[activeSession].rubrics[q.id]) newConfig[activeSession].rubrics[q.id] = [];
+                                    newConfig[activeSession].rubrics[q.id].push({ type: 'count', min: 0, max: 0, grade: 'C', score: 0 });
+                                    setConfigBySession(newConfig);
+                                  }} className="bg-gray-200 px-2 py-1 border border-gray-400 text-sm font-bold mt-2">+ 개수 채점 추가</button>
+                                </React.Fragment>
+                              )}
+                              
+                              {q.gradingMode === 'individual' && (
+                                <React.Fragment>
+                                  <p className="text-sm text-gray-500 mb-2">빈칸 번호는 0번부터 시작합니다.</p>
+                                  {(rubrics[q.id] || []).map((r, rIndex) => (
+                                    <div key={rIndex} className="flex gap-2 items-center mb-2">
+                                      빈칸번호: <input type="number" value={r.blankIndex} onChange={e => {
+                                        const newConfig = {...configBySession};
+                                        newConfig[activeSession].rubrics[q.id][rIndex].blankIndex = Number(e.target.value);
+                                        setConfigBySession(newConfig);
+                                      }} className="w-16 p-1 border border-black" />
+                                      정답: <input type="text" value={r.matchValue || ''} onChange={e => {
+                                        const newConfig = {...configBySession};
+                                        newConfig[activeSession].rubrics[q.id][rIndex].matchValue = e.target.value;
+                                        setConfigBySession(newConfig);
+                                      }} className="w-24 p-1 border border-black" />
+                                      등급: <input type="text" value={r.grade} onChange={e => {
+                                        const newConfig = {...configBySession};
+                                        newConfig[activeSession].rubrics[q.id][rIndex].grade = e.target.value;
+                                        setConfigBySession(newConfig);
+                                      }} className="w-16 p-1 border border-black" />
+                                      점수: <input type="number" value={r.score} onChange={e => {
+                                        const newConfig = {...configBySession};
+                                        newConfig[activeSession].rubrics[q.id][rIndex].score = Number(e.target.value);
+                                        setConfigBySession(newConfig);
+                                      }} className="w-16 p-1 border border-black" />
+                                      <button onClick={() => {
+                                        const newConfig = {...configBySession};
+                                        newConfig[activeSession].rubrics[q.id].splice(rIndex, 1);
+                                        setConfigBySession(newConfig);
+                                      }} className="text-red-500 font-bold ml-2">X</button>
+                                    </div>
+                                  ))}
+                                  <button onClick={() => {
+                                    const newConfig = {...configBySession};
+                                    if(!newConfig[activeSession].rubrics[q.id]) newConfig[activeSession].rubrics[q.id] = [];
+                                    newConfig[activeSession].rubrics[q.id].push({ type: 'individual', blankIndex: 0, matchValue: '', grade: 'C', score: 0 });
+                                    setConfigBySession(newConfig);
+                                  }} className="bg-gray-200 px-2 py-1 border border-gray-400 text-sm font-bold mt-2">+ 개별 정답 추가</button>
+                                </React.Fragment>
+                              )}
+                              
+                              {q.gradingMode === 'combination' && (
+                                <React.Fragment>
+                                  <p className="text-sm text-gray-500 mb-2">필수 빈칸을 콤마(,)로 구분 (예: 0,1)</p>
+                                  {(rubrics[q.id] || []).map((r, rIndex) => (
+                                    <div key={rIndex} className="flex gap-2 items-center mb-2">
+                                      필수빈칸: <input type="text" value={r.indices || ''} onChange={e => {
+                                        const newConfig = {...configBySession};
+                                        newConfig[activeSession].rubrics[q.id][rIndex].indices = e.target.value;
+                                        setConfigBySession(newConfig);
+                                      }} className="w-32 p-1 border border-black" placeholder="0,1" />
+                                      등급: <input type="text" value={r.grade} onChange={e => {
+                                        const newConfig = {...configBySession};
+                                        newConfig[activeSession].rubrics[q.id][rIndex].grade = e.target.value;
+                                        setConfigBySession(newConfig);
+                                      }} className="w-16 p-1 border border-black" />
+                                      점수: <input type="number" value={r.score} onChange={e => {
+                                        const newConfig = {...configBySession};
+                                        newConfig[activeSession].rubrics[q.id][rIndex].score = Number(e.target.value);
+                                        setConfigBySession(newConfig);
+                                      }} className="w-16 p-1 border border-black" />
+                                      <button onClick={() => {
+                                        const newConfig = {...configBySession};
+                                        newConfig[activeSession].rubrics[q.id].splice(rIndex, 1);
+                                        setConfigBySession(newConfig);
+                                      }} className="text-red-500 font-bold ml-2">X</button>
+                                    </div>
+                                  ))}
+                                  <button onClick={() => {
+                                    const newConfig = {...configBySession};
+                                    if(!newConfig[activeSession].rubrics[q.id]) newConfig[activeSession].rubrics[q.id] = [];
+                                    newConfig[activeSession].rubrics[q.id].push({ type: 'combination', indices: '', grade: 'C', score: 0 });
+                                    setConfigBySession(newConfig);
+                                  }} className="bg-gray-200 px-2 py-1 border border-gray-400 text-sm font-bold mt-2">+ 조합 기준 추가</button>
+                                </React.Fragment>
+                              )}
+                            </React.Fragment>
+                          )}
+                          
+                          {q.type === 'essay' && (
+                            <React.Fragment>
+                              <p className="text-sm text-gray-500 mb-2">아래의 필수 키워드가 모두 포함되었을 때 점수를 부여합니다.</p>
+                              {(rubrics[q.id] || []).map((r, rIndex) => (
+                                <div key={rIndex} className="flex gap-2 items-center mb-2">
+                                  필수키워드: <input type="text" value={r.keywords || ''} onChange={e => {
+                                    const newConfig = {...configBySession};
+                                    newConfig[activeSession].rubrics[q.id][rIndex].keywords = e.target.value;
+                                    setConfigBySession(newConfig);
+                                  }} className="w-48 p-1 border border-black" placeholder="사과,바나나" />
+                                  등급: <input type="text" value={r.grade} onChange={e => {
+                                    const newConfig = {...configBySession};
+                                    newConfig[activeSession].rubrics[q.id][rIndex].grade = e.target.value;
+                                    setConfigBySession(newConfig);
+                                  }} className="w-16 p-1 border border-black" />
+                                  점수: <input type="number" value={r.score} onChange={e => {
+                                    const newConfig = {...configBySession};
+                                    newConfig[activeSession].rubrics[q.id][rIndex].score = Number(e.target.value);
+                                    setConfigBySession(newConfig);
+                                  }} className="w-16 p-1 border border-black" />
+                                  <button onClick={() => {
+                                    const newConfig = {...configBySession};
+                                    newConfig[activeSession].rubrics[q.id].splice(rIndex, 1);
+                                    setConfigBySession(newConfig);
+                                  }} className="text-red-500 font-bold ml-2">X</button>
+                                </div>
+                              ))}
+                              <button onClick={() => {
+                                const newConfig = {...configBySession};
+                                if(!newConfig[activeSession].rubrics[q.id]) newConfig[activeSession].rubrics[q.id] = [];
+                                newConfig[activeSession].rubrics[q.id].push({ type: 'keyword', keywords: '', grade: 'C', score: 0 });
+                                setConfigBySession(newConfig);
+                              }} className="bg-gray-200 px-2 py-1 border border-gray-400 text-sm font-bold mt-2">+ 키워드 기준 추가</button>
+                            </React.Fragment>
+                          )}
+                        </div>
                       <textarea value={q.content} onChange={e => {
                         const newConfig = {...configBySession};
                         newConfig[activeSession].questions[qIndex].content = e.target.value;
