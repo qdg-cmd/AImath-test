@@ -1,4 +1,385 @@
-questions.forEach(q => {
+﻿<!DOCTYPE html>
+<html lang="ko">
+<head>
+ <meta charset="UTF-8">
+ <meta name="viewport" content="width=device-width, initial-scale=1.0">
+ <title>?멸났吏?μ닔???섑뻾?됯? ?쒖뒪??/title>
+ <script src="https://cdn.tailwindcss.com"></script>
+ <script src="https://unpkg.com/react@18/umd/react.development.js" crossorigin></script>
+ <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js" crossorigin></script>
+ <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+ <!-- KaTeX for Math Rendering -->
+ <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.css">
+ <script src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.js"></script>
+ <style>
+ body { font-family: 'KoPub Batang', 'Malgun Gothic', serif; background-color: #f5f5f5; color: #111; }
+ .worksheet-box { background-color: #fff; border: 3px solid #000; box-shadow: 6px 6px 0px 0px #000; }
+ .btn-retro { border: 2px solid #000; box-shadow: 3px 3px 0px 0px #000; transition: all 0.1s; }
+ .btn-retro:active { transform: translate(3px, 3px); box-shadow: 0px 0px 0px 0px #000; }
+ .blank-input { border-bottom: 2px solid #000; display: inline-block; min-width: 60px; text-align: center; font-weight: bold; padding: 0 5px; cursor: pointer; min-height: 24px; }
+ .blank-active { background-color: #e5e5e5; border-bottom: 3px solid #000; }
+ </style>
+</head>
+<body>
+ <div id="root"></div>
+ <script type="text/babel">
+ const APP_VERSION = 'v11';
+ const DEFAULT_GAS_URL = "https://script.google.com/macros/s/AKfycbzo3r9NJ-G3azQlUUmJMNhIqJiKkG-5857m9bbp6GfOspDqwiPLd9GffJTpY7lR1jhP0w/exec";
+ 
+ const defaultQuestions = [
+ {
+ id: 'q1',
+ title: '01. ?띿뒪???먮즺???쒗쁽 諛?泥섎━',
+ content: `??愿李곗씠??痢≪젙 ?깆쓣 ?듯빐 ?산쾶 ?섎뒗 媛怨듬릺吏 ?딆? ?뺣낫瑜?( {{鍮꾩젙??} )?쇨퀬 ?쒕떎.
+??( {{?뺥삎}} ) ?먮즺???쇱젙???뺤떇??媛뽰텣 ?먮즺?닿퀬, ( {{鍮꾩젙??} ) ?먮즺???쇱젙???뺤떇??媛뽰텛吏 ?딆? ?먮즺?대떎.
+
+???띿뒪???먮즺??吏묓빀?대굹 ( {{踰≫꽣}} )濡??섑??????덈떎.
+??n媛쒖쓽 ??x?? x?? ..., x?숈쓣 愿꾪샇 ?띿뿉 ?쒖꽌?濡??섏뿴?섏뿬 ?섑???
+  X = (x?? x?? ..., x??
+  ??踰≫꽣???섍퀬, x?? x?? ..., x?숈쓣 踰≫꽣 X??( {{?깅텇}} )?대씪怨??쒕떎.
+
+??鍮꾩젙???띿뒪???먮즺?먯꽌 ?⑥뼱??( {{鍮덈룄??} )瑜?援ы븯硫?洹??먮즺?먯꽌 二쇱젣?대? 李얠쓣 ???덈떎.
+
+???⑥뼱 鍮덈룄?섎? ?댁슜?섏뿬 TF쨌IDF瑜?援ы븯硫??띿뒪???먮즺???좎슜???뺣낫瑜??뚯븘?????덈떎.
+??TF쨌IDF媛 ?묒쑝硫?以묒슂?꾧? ( {{???}} ) ?⑥뼱?닿퀬, TF쨌IDF媛 ?щ㈃ 以묒슂?꾧? ( {{?믪?}} ) ?⑥뼱?대떎.
+
+???먮즺??遺꾩꽍 寃곌낵瑜??쎄쾶 ?댄빐?????덈룄濡??쒓컖?곸쑝濡??쒗쁽?섏뿬 ?④낵?곸쑝濡??꾨떖?섎뒗 怨쇱젙??( {{?쒓컖??} )?쇨퀬 ?쒕떎.
+???쒓컖??諛⑸쾿 ?좏삎?먮뒗 ?쒓컙 ?쒓컖?? 遺꾪룷 ?쒓컖?? 愿怨??쒓컖?? 鍮꾧탳 ?쒓컖?? 怨듦컙 ?쒓컖?? 援ъ“ ?쒓컖?붽? ?덈떎.
+
+???띿뒪???먮즺???⑥뼱 鍮덈룄?섎? ?댁슜?섏뿬 ?? 留됰?洹몃옒?? ?먭렇?섑봽, ( {{?⑥뼱 援щ쫫}} ) ?깆쑝濡??쒓컖?뷀븷 ???덈떎.`,
+ options: ["鍮덈룄??, "?쒓컖??, "?먮즺", "???", "?믪?", "?깅텇", "?뺥삎", "鍮꾩젙??, "踰≫꽣", "?⑥뼱 援щ쫫"]
+ },
+ {
+ id: 'q2',
+ title: '02. ?대?吏 ?먮즺???쒗쁽 諛?泥섎━',
+ content: `?????먮뒗 臾몄옄瑜?吏곸궗媛곹삎 紐⑥뼇?쇰줈 諛곗뿴?섏뿬 愿꾪샇濡?臾띠? 寃껋쓣 ( {{?됰젹}} )?대씪怨??쒕떎.
+???됰젹 A????i?됯낵 ??j?댁씠 留뚮굹???꾩튂???덈뒗 ?깅텇???됰젹 A??(i, j) ?깅텇?대씪 ?섍퀬, 湲고샇濡?( $$a_{ij}$$ )? 媛숈씠 ?섑??몃떎.
+
+???묐갚 ?대?吏??媛??쎌??먯꽌 寃??됱? ( {{0}} ), ?곗깋? 255濡??섑??닿퀬, 洹??ъ씠???뚯깋? ( {{1}} )遺??254源뚯????섎줈 ?섑??????덈떎.
+??而щ윭 ?대?吏?먯꽌 媛??쎌????됱긽 ?뺣낫??RGB 梨꾨꼸??愿묒썝???멸린瑜??섑??대뒗 ?섎? ( $$(R, G, B)$$ )???쒖꽌?띿쑝濡??섑??몃떎.
+
+???대?吏瑜??⑹꽦?섏뿬 ?덈줈???대?吏瑜?留뚮뱾 ?? ?대?吏瑜??됰젹濡??쒗쁽?섍퀬 ?곗궛???섏뿬 ?섑??????덈떎.
+???대?吏???⑹꽦???댁슜?섎뒗 ?됰젹???곗궛? ( {{?㏃뀍怨?類꾩뀍}} )?대떎.
+
+???대?吏??諛앷린瑜?議곗젅?????댁슜?섎뒗 ?됰젹???곗궛? ( {{?ㅼ닔諛?} )?대떎.
+
+??而щ윭 ?대?吏瑜??묐갚 ?대?吏濡?諛붽? ?? ?묐갚 ?대?吏瑜??섑??대뒗 ?됰젹??媛??깅텇? 而щ윭 ?대?吏瑜??섑??대뒗 ???됰젹 R, G, B????묓븯???깅텇??( {{?됯퇏}} )?쇰줈 援ы븳??
+
+???대?吏???됲뻾?대룞怨??移?씠?숈뿉 ?댁슜?섎뒗 ?됰젹???곗궛? ( {{怨깆뀍}} )?대떎.`,
+ options: ["0", "1", "$$a_{ij}$$", "$$(R, G, B)$$", "?됰젹", "?ㅼ닔諛?, "?㏃뀍怨?類꾩뀍", "?됯퇏", "怨깆뀍"]
+ },
+ {
+ id: 'q3',
+ title: '03. ?먯떎?⑥닔? 理쒖쟻??,
+ content: `?낅젰媛?x?? x?? ..., x?숈뿉 ???痢≪젙媛믪씠 y?? y?? ..., y?숈씠怨? 異붿꽭??f(x)=ax (a???곸닔)???곕Ⅸ ?덉륫媛믪씠 ax?? ax?? ..., ax?숈씠??????
+???ㅼ감: y??ax?? y??ax?? ..., y??ax?????먯떎?⑥닔: L(a) = ( $$(y_1-ax_1)^2 + \\cdots + (y_n-ax_n)^2$$ ) / n
+
+???ㅽ빆?⑥닔 y=f(x)?먯꽌 x??媛믪씠 a媛 ?꾨땲硫댁꽌 a???쒖뾾??媛源뚯썙吏????⑥닽媛?f(x)媛 ?쇱젙????L???쒖뾾??媛源뚯썙吏硫? ?⑥닔 y=f(x)??L??( {{?섎졃}} )?쒕떎怨??섍퀬, ?닿쾬??湲고샇濡?( $$\\lim_{x \\to a}f(x)=L$$ )怨?媛숈씠 ?섑??몃떎.
+
+???ㅽ빆?⑥닔 y=f(x)?먯꽌 x??媛믪씠 a?먯꽌 b源뚯? 蹂???뚯쓽 ( {{?됯퇏蹂?붿쑉}} )? ?ㅼ쓬怨?媛숇떎.
+  (f(b)-f(a)) / (b-a) = (f(a+?x)-f(a)) / ?x
+
+???ㅽ빆?⑥닔 y=f(x)?먯꽌 x=a?먯꽌??誘몃텇怨꾩닔 ( $$f'(a)$$ )????(a, f(a))?먯꽌 怨≪꽑 y=f(x)???묒꽑??( {{湲곗슱湲?} )? 媛숇떎.
+
+???먯떎?⑥닔??媛믪쓣 理쒖냼?뷀븯??異붿꽭?좎쓽 湲곗슱湲곕? 李얜뒗 怨쇱젙???먯떎?⑥닔??( {{理쒖쟻??} )???섍퀬, ?먯떎?⑥닔??媛믪씠 理쒖냼媛 ?섎룄濡??섎뒗 異붿꽭?좎쓣 ( {{理쒖쟻 異붿꽭??} )?대씪怨??쒕떎.
+
+???먯떎?⑥닔??媛믪씠 媛먯냼?섎뒗 諛⑺뼢??李얘퀬 珥덇퉫媛믪쓣 諛섎났?곸쑝濡??대룞?쒗궎硫댁꽌 理쒖쟻?뷀븯??諛⑸쾿??( {{寃쎌궗?섍컯踰?} )?대씪怨??쒕떎.
+??( {{?숈뒿瑜?} )???ш린瑜??곸젅??議곗젅?섎㈃ 誘몃텇怨꾩닔???ш린??愿怨꾩뾾???먯떎?⑥닔??媛믪씠 蹂?섎뒗 ?뺣룄瑜?議곗젅?????덈떎.`,
+ options: ["?됯퇏蹂?붿쑉", "理쒖쟻??, "寃쎌궗?섍컯踰?, "$$\\lim_{x \\to a}f(x)=L$$", "$$f'(a)$$", "理쒖쟻 異붿꽭??, "湲곗슱湲?, "?숈뒿瑜?, "$$(y_1-ax_1)^2 + \\cdots + (y_n-ax_n)^2$$", "?섎졃"]
+ }
+ ];
+
+ const defaultRubrics = {
+ 'q1': [
+ { min: 9, max: 10, grade: 'A', score: 10 },
+ { min: 7, max: 8, grade: 'B', score: 8 },
+ { min: 0, max: 6, grade: 'C', score: 6 }
+ ],
+ 'q2': [
+ { min: 8, max: 9, grade: 'A', score: 10 },
+ { min: 5, max: 7, grade: 'B', score: 8 },
+ { min: 0, max: 4, grade: 'C', score: 6 }
+ ],
+ 'q3': [
+ { min: 9, max: 10, grade: 'A', score: 10 },
+ { min: 7, max: 8, grade: 'B', score: 8 },
+ { min: 0, max: 6, grade: 'C', score: 6 }
+ ]
+ };
+
+ const LatexText = ({ text }) => {
+ if (!text) return null;
+ const parts = text.split(/(\$\$.*?\$\$)/g);
+ return (
+ <span>
+ {parts.map((part, index) => {
+ if (part.startsWith('$$') && part.endsWith('$$')) {
+ const math = part.slice(2, -2);
+ try {
+ const html = katex.renderToString(math, { throwOnError: false });
+ return <span key={index} dangerouslySetInnerHTML={{ __html: html }} />;
+ } catch (e) {
+ return <span key={index}>{part}</span>;
+ }
+ }
+ return <span key={index}>{part}</span>;
+ })}
+ </span>
+ );
+ };
+
+ function App() {
+ const [view, setView] = React.useState('login'); 
+ const [currentUser, setCurrentUser] = React.useState({ id: '', name: '' });
+ const [studentsData, setStudentsData] = React.useState([]);
+ const [questions, setQuestions] = React.useState(defaultQuestions);
+ const [rubrics, setRubrics] = React.useState(defaultRubrics);
+ 
+ const [settings, setSettings] = React.useState({
+ gasUrl: DEFAULT_GAS_URL,
+ password: 'admin'
+ });
+ const [isTeacher, setIsTeacher] = React.useState(false);
+ const [showLoginModal, setShowLoginModal] = React.useState(false);
+ const [teacherPwdInput, setTeacherPwdInput] = React.useState('');
+ 
+  const [modal, setModal] = React.useState({ show: false, message: '', onConfirm: null, isAlert: true });
+  const [isLoadingData, setIsLoadingData] = React.useState(false);
+  const [isSyncingConfig, setIsSyncingConfig] = React.useState(true);
+
+  React.useEffect(() => {
+    const ver = localStorage.getItem('aiMath_version');
+    if (ver !== APP_VERSION) {
+      localStorage.clear();
+      localStorage.setItem('aiMath_version', APP_VERSION);
+    }
+    
+    // 濡쒖뺄 ?ㅽ넗由ъ? ?곗꽑 遺덈윭?ㅺ린 (?ㅽ봽?쇱씤 ?鍮?
+    const savedStudents = localStorage.getItem('aiMath_students');
+    if (savedStudents) setStudentsData(JSON.parse(savedStudents));
+    const savedQuestions = localStorage.getItem('aiMath_questions');
+    if (savedQuestions) setQuestions(JSON.parse(savedQuestions));
+    const savedRubrics = localStorage.getItem('aiMath_rubrics');
+    if (savedRubrics) setRubrics(JSON.parse(savedRubrics));
+    const savedSettings = localStorage.getItem('aiMath_settings');
+    let currentGasUrl = DEFAULT_GAS_URL;
+    if (savedSettings) {
+      const parsedSettings = JSON.parse(savedSettings);
+      setSettings(parsedSettings);
+      currentGasUrl = parsedSettings.gasUrl;
+    }
+    
+    // ?쒗듃?먯꽌 理쒖떊 ?ㅼ젙 ?숆린??    if (currentGasUrl) {
+      fetch(currentGasUrl + '?action=getConfig')
+        .then(res => res.json())
+        .then(json => {
+          if (json && json.status === 'success' && json.data.questions && json.data.questions.length > 0) {
+            setQuestions(json.data.questions);
+            setRubrics(json.data.rubrics);
+            localStorage.setItem('aiMath_questions', JSON.stringify(json.data.questions));
+            localStorage.setItem('aiMath_rubrics', JSON.stringify(json.data.rubrics));
+          }
+        })
+        .catch(e => console.error("Config sync error:", e))
+        .finally(() => setIsSyncingConfig(false));
+    } else {
+      setIsSyncingConfig(false);
+    }
+  }, []);
+ 
+ // ?좎깮???묒냽 ??援ш? ?쒗듃?먯꽌 理쒖떊 ?곗씠??遺덈윭?ㅺ린
+ React.useEffect(() => {
+ if (isTeacher && view === 'admin' && settings.gasUrl) {
+ setIsLoadingData(true);
+ fetch(settings.gasUrl)
+ .then(res => res.json())
+ .then(json => {
+ if (json.status === 'success') {
+ setStudentsData(json.data);
+ localStorage.setItem('aiMath_students', JSON.stringify(json.data));
+ }
+ })
+ .catch(e => console.error("Data load error:", e))
+ .finally(() => setIsLoadingData(false));
+ }
+ }, [isTeacher, view, settings.gasUrl]);
+
+ const handleTeacherLogin = () => {
+ if (teacherPwdInput === settings.password) {
+ setIsTeacher(true);
+ setShowLoginModal(false);
+ setTeacherPwdInput('');
+ setView('admin');
+ } else {
+ setModal({ show: true, message: '鍮꾨?踰덊샇媛 ?쇱튂?섏? ?딆뒿?덈떎.', isAlert: true });
+ }
+ };
+
+ const handleStudentStart = (e) => {
+ e.preventDefault();
+ if (!currentUser.id || !currentUser.name) {
+ setModal({ show: true, message: '?숇쾲怨??대쫫??紐⑤몢 ?낅젰?댁＜?몄슂.', isAlert: true });
+ return;
+ }
+ const existing = studentsData.find(s => s.id === currentUser.id);
+ if (existing) {
+ setModal({ show: true, message: '?대? ?됯?瑜??쒖텧???숇쾲?낅땲??', isAlert: true });
+ return;
+ }
+ setView('quiz');
+ };
+
+ return (
+ <div className="max-w-3xl mx-auto p-4 md:p-6 min-h-screen relative">
+ 
+ {isSyncingConfig && (
+    <div className="fixed inset-0 bg-white flex flex-col items-center justify-center z-[200]">
+      <div className="worksheet-box p-8 text-center animate-pulse">
+        <h2 className="text-2xl font-black mb-4">理쒖떊 ?ㅼ젙??遺덈윭?ㅻ뒗 以묒엯?덈떎...</h2>
+        <p className="font-bold text-gray-600">援ш? ?쒗듃? ?숆린??以묒엯?덈떎. ?좎떆留?湲곕떎?ㅼ＜?몄슂.</p>
+      </div>
+    </div>
+  )}
+
+ {/* 怨듯넻 紐⑤떖 (alert/confirm ?泥? */}
+ {modal.show && (
+ <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[100] p-4">
+ <div className="worksheet-box p-6 w-full max-w-sm text-center bg-white">
+ <p className="font-bold text-lg mb-6 whitespace-pre-wrap">{modal.message}</p>
+ <div className="flex gap-2 justify-center">
+ {modal.isAlert ? (
+ <button onClick={() => setModal({ show: false, message: '' })} className="bg-black text-white px-6 py-2 font-bold shadow-[2px_2px_0_0_#666]">?뺤씤</button>
+ ) : (
+ <>
+ <button onClick={() => { 
+ if (modal.onConfirm) modal.onConfirm(); 
+ setModal({ show: false, message: '', onConfirm: null }); 
+ }} className="bg-red-500 text-white px-6 py-2 font-bold border-2 border-black">??吏꾪뻾)</button>
+ <button onClick={() => setModal({ show: false, message: '', onConfirm: null })} className="bg-white border-2 border-black px-6 py-2 font-bold">痍⑥냼</button>
+ </>
+ )}
+ </div>
+ </div>
+ </div>
+ )}
+
+ {/* 援먯궗 濡쒓렇??紐⑤떖 */}
+ {showLoginModal && (
+ <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[50] p-4">
+ <div className="worksheet-box p-6 w-full max-w-sm bg-white">
+ <h2 className="text-xl font-black mb-4">援먯궗 ?섏씠吏 ?묒냽</h2>
+ <input 
+ type="password" 
+ placeholder="鍮꾨?踰덊샇 ?낅젰" 
+ className="w-full p-3 border-2 border-black font-bold mb-4 outline-none"
+ value={teacherPwdInput}
+ onChange={e => setTeacherPwdInput(e.target.value)}
+ onKeyDown={e => e.key === 'Enter' && handleTeacherLogin()}
+ />
+ <div className="flex gap-2">
+ <button onClick={handleTeacherLogin} className="flex-1 bg-black text-white py-3 font-bold border-2 border-black">?묒냽</button>
+ <button onClick={() => setShowLoginModal(false)} className="flex-1 bg-white border-2 border-black py-3 font-bold">痍⑥냼</button>
+ </div>
+ </div>
+ </div>
+ )}
+
+ <header className="flex justify-between items-center mb-6 pb-4 border-b-4 border-black">
+ <div>
+ <h1 className="text-xl sm:text-2xl font-black tracking-tighter">?멸났吏?μ닔???섑뻾?됯?</h1>
+ <p className="text-xs sm:text-sm font-bold text-gray-600 mt-1">?숇쾲怨??대쫫???뺥솗???낅젰?섏꽭??</p>
+ </div>
+ {view !== 'admin' && (
+ <button onClick={() => setShowLoginModal(true)} className="text-xs font-bold px-3 py-1 border-2 border-black hover:bg-gray-200">援먯궗?묒냽</button>
+ )}
+ {view === 'admin' && (
+ <button onClick={() => { setIsTeacher(false); setView('login'); }} className="text-xs font-bold px-3 py-1 border-2 border-black bg-black text-white">濡쒓렇?꾩썐</button>
+ )}
+ </header>
+
+ {/* ?쇱슦??*/}
+ {view === 'login' && (
+ <div className="worksheet-box p-6 sm:p-8 max-w-md mx-auto mt-10">
+ <form onSubmit={handleStudentStart} className="space-y-6">
+ <div>
+ <label className="block font-black text-lg mb-2">?숇쾲 (4?먮━)</label>
+ <input type="text" pattern="[0-9]{4}" placeholder="?? 3501" className="w-full p-4 border-2 border-black font-bold text-xl outline-none" value={currentUser.id} onChange={e => setCurrentUser({...currentUser, id: e.target.value})} required />
+ </div>
+ <div>
+ <label className="block font-black text-lg mb-2">?대쫫</label>
+ <input type="text" placeholder="?대쫫 ?낅젰" className="w-full p-4 border-2 border-black font-bold text-xl outline-none" value={currentUser.name} onChange={e => setCurrentUser({...currentUser, name: e.target.value})} required />
+ </div>
+ <button type="submit" className="w-full bg-black text-white py-4 font-black text-xl btn-retro">?됯? ?쒖옉?섍린</button>
+ </form>
+ </div>
+ )}
+
+ {view === 'quiz' && (
+ <QuizView 
+ currentUser={currentUser} 
+ questions={questions} 
+ rubrics={rubrics}
+ studentsData={studentsData}
+ setStudentsData={setStudentsData}
+ settings={settings}
+ setView={setView}
+ setModal={setModal}
+ />
+ )}
+
+ {view === 'result' && (
+ <ResultView currentUser={currentUser} studentsData={studentsData} onBack={() => { setView('login'); setCurrentUser({id:'', name:''}); }} />
+ )}
+
+ {view === 'admin' && isTeacher && (
+ <AdminDashboard 
+ questions={questions} setQuestions={setQuestions}
+ rubrics={rubrics} setRubrics={setRubrics}
+ studentsData={studentsData} setStudentsData={setStudentsData}
+ settings={settings} setSettings={setSettings}
+ setModal={setModal} isLoadingData={isLoadingData}
+ />
+ )}
+ </div>
+ );
+ }
+
+ function QuizView({ currentUser, questions, rubrics, studentsData, setStudentsData, settings, setView, setModal }) {
+ const [currentPage, setCurrentPage] = React.useState(0);
+ const [studentAnswers, setStudentAnswers] = React.useState({}); 
+ const [activeBlank, setActiveBlank] = React.useState(null); 
+
+ React.useEffect(() => {
+ const initAnswers = {};
+ questions.forEach(q => {
+ const blankCount = (q.content.match(/\{\{.*?\}\}/g) || []).length;
+ initAnswers[q.id] = Array(blankCount).fill('');
+ });
+ setStudentAnswers(initAnswers);
+ }, [questions]);
+
+ const currentQ = questions[currentPage];
+ if (!currentQ) return null;
+
+ const handleWordSelect = (word) => {
+ if (!activeBlank) return;
+ setStudentAnswers(prev => {
+ const newAns = { ...prev };
+ newAns[activeBlank.qId][activeBlank.index] = word;
+ return newAns;
+ });
+ setActiveBlank(null);
+ };
+
+ const handleSubmit = () => {
+ setModal({
+ show: true,
+ isAlert: false,
+ message: "?뺣쭚 ?쒖텧?섏떆寃좎뒿?덇퉴?\n?쒖텧 ?꾩뿉???섏젙?????놁뒿?덈떎.",
+ onConfirm: () => {
+ let totalScore = 0;
+ const results = {};
+ questions.forEach(q => {
             const userAnswers = studentAnswers[q.id] || [];
             const correctAnswers = q.type === 'essay' ? [] : ((q.content || '').match(/\{\{(.*?)\}\}/g) || []).map(s => s.replace(/[{}]/g, '').trim());
             const qRubrics = rubrics[q.id] || [];
@@ -83,7 +464,433 @@ questions.forEach(q => {
               }
             }
             
-            results[q.id] = { correctCount, scoreInfo, type: q.type, userAnswers, correctAnswers };eturn (
+            results[q.id] = { correctCount, scoreInfo, type: q.type, userAnswers, correctAnswers };port" content="width=device-width, initial-scale=1.0">
+ <title>?멸났吏?μ닔???섑뻾?됯? ?쒖뒪??/title>
+ <script src="https://cdn.tailwindcss.com"></script>
+ <script src="https://unpkg.com/react@18/umd/react.development.js" crossorigin></script>
+ <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js" crossorigin></script>
+ <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+ <!-- KaTeX for Math Rendering -->
+ <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.css">
+ <script src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.js"></script>
+ <style>
+ body { font-family: 'KoPub Batang', 'Malgun Gothic', serif; background-color: #f5f5f5; color: #111; }
+ .worksheet-box { background-color: #fff; border: 3px solid #000; box-shadow: 6px 6px 0px 0px #000; }
+ .btn-retro { border: 2px solid #000; box-shadow: 3px 3px 0px 0px #000; transition: all 0.1s; }
+ .btn-retro:active { transform: translate(3px, 3px); box-shadow: 0px 0px 0px 0px #000; }
+ .blank-input { border-bottom: 2px solid #000; display: inline-block; min-width: 60px; text-align: center; font-weight: bold; padding: 0 5px; cursor: pointer; min-height: 24px; }
+ .blank-active { background-color: #e5e5e5; border-bottom: 3px solid #000; }
+ </style>
+</head>
+<body>
+ <div id="root"></div>
+ <script type="text/babel">
+ const APP_VERSION = 'v11';
+ const DEFAULT_GAS_URL = "https://script.google.com/macros/s/AKfycbzo3r9NJ-G3azQlUUmJMNhIqJiKkG-5857m9bbp6GfOspDqwiPLd9GffJTpY7lR1jhP0w/exec";
+ 
+ const defaultQuestions = [
+ {
+ id: 'q1',
+ title: '01. ?띿뒪???먮즺???쒗쁽 諛?泥섎━',
+ content: `??愿李곗씠??痢≪젙 ?깆쓣 ?듯빐 ?산쾶 ?섎뒗 媛怨듬릺吏 ?딆? ?뺣낫瑜?( {{鍮꾩젙??} )?쇨퀬 ?쒕떎.
+??( {{?뺥삎}} ) ?먮즺???쇱젙???뺤떇??媛뽰텣 ?먮즺?닿퀬, ( {{鍮꾩젙??} ) ?먮즺???쇱젙???뺤떇??媛뽰텛吏 ?딆? ?먮즺?대떎.
+
+???띿뒪???먮즺??吏묓빀?대굹 ( {{踰≫꽣}} )濡??섑??????덈떎.
+??n媛쒖쓽 ??x?? x?? ..., x?숈쓣 愿꾪샇 ?띿뿉 ?쒖꽌?濡??섏뿴?섏뿬 ?섑???
+  X = (x?? x?? ..., x??
+  ??踰≫꽣???섍퀬, x?? x?? ..., x?숈쓣 踰≫꽣 X??( {{?깅텇}} )?대씪怨??쒕떎.
+
+??鍮꾩젙???띿뒪???먮즺?먯꽌 ?⑥뼱??( {{鍮덈룄??} )瑜?援ы븯硫?洹??먮즺?먯꽌 二쇱젣?대? 李얠쓣 ???덈떎.
+
+???⑥뼱 鍮덈룄?섎? ?댁슜?섏뿬 TF쨌IDF瑜?援ы븯硫??띿뒪???먮즺???좎슜???뺣낫瑜??뚯븘?????덈떎.
+??TF쨌IDF媛 ?묒쑝硫?以묒슂?꾧? ( {{???}} ) ?⑥뼱?닿퀬, TF쨌IDF媛 ?щ㈃ 以묒슂?꾧? ( {{?믪?}} ) ?⑥뼱?대떎.
+
+???먮즺??遺꾩꽍 寃곌낵瑜??쎄쾶 ?댄빐?????덈룄濡??쒓컖?곸쑝濡??쒗쁽?섏뿬 ?④낵?곸쑝濡??꾨떖?섎뒗 怨쇱젙??( {{?쒓컖??} )?쇨퀬 ?쒕떎.
+???쒓컖??諛⑸쾿 ?좏삎?먮뒗 ?쒓컙 ?쒓컖?? 遺꾪룷 ?쒓컖?? 愿怨??쒓컖?? 鍮꾧탳 ?쒓컖?? 怨듦컙 ?쒓컖?? 援ъ“ ?쒓컖?붽? ?덈떎.
+
+???띿뒪???먮즺???⑥뼱 鍮덈룄?섎? ?댁슜?섏뿬 ?? 留됰?洹몃옒?? ?먭렇?섑봽, ( {{?⑥뼱 援щ쫫}} ) ?깆쑝濡??쒓컖?뷀븷 ???덈떎.`,
+ options: ["鍮덈룄??, "?쒓컖??, "?먮즺", "???", "?믪?", "?깅텇", "?뺥삎", "鍮꾩젙??, "踰≫꽣", "?⑥뼱 援щ쫫"]
+ },
+ {
+ id: 'q2',
+ title: '02. ?대?吏 ?먮즺???쒗쁽 諛?泥섎━',
+ content: `?????먮뒗 臾몄옄瑜?吏곸궗媛곹삎 紐⑥뼇?쇰줈 諛곗뿴?섏뿬 愿꾪샇濡?臾띠? 寃껋쓣 ( {{?됰젹}} )?대씪怨??쒕떎.
+???됰젹 A????i?됯낵 ??j?댁씠 留뚮굹???꾩튂???덈뒗 ?깅텇???됰젹 A??(i, j) ?깅텇?대씪 ?섍퀬, 湲고샇濡?( $$a_{ij}$$ )? 媛숈씠 ?섑??몃떎.
+
+???묐갚 ?대?吏??媛??쎌??먯꽌 寃??됱? ( {{0}} ), ?곗깋? 255濡??섑??닿퀬, 洹??ъ씠???뚯깋? ( {{1}} )遺??254源뚯????섎줈 ?섑??????덈떎.
+??而щ윭 ?대?吏?먯꽌 媛??쎌????됱긽 ?뺣낫??RGB 梨꾨꼸??愿묒썝???멸린瑜??섑??대뒗 ?섎? ( $$(R, G, B)$$ )???쒖꽌?띿쑝濡??섑??몃떎.
+
+???대?吏瑜??⑹꽦?섏뿬 ?덈줈???대?吏瑜?留뚮뱾 ?? ?대?吏瑜??됰젹濡??쒗쁽?섍퀬 ?곗궛???섏뿬 ?섑??????덈떎.
+???대?吏???⑹꽦???댁슜?섎뒗 ?됰젹???곗궛? ( {{?㏃뀍怨?類꾩뀍}} )?대떎.
+
+???대?吏??諛앷린瑜?議곗젅?????댁슜?섎뒗 ?됰젹???곗궛? ( {{?ㅼ닔諛?} )?대떎.
+
+??而щ윭 ?대?吏瑜??묐갚 ?대?吏濡?諛붽? ?? ?묐갚 ?대?吏瑜??섑??대뒗 ?됰젹??媛??깅텇? 而щ윭 ?대?吏瑜??섑??대뒗 ???됰젹 R, G, B????묓븯???깅텇??( {{?됯퇏}} )?쇰줈 援ы븳??
+
+???대?吏???됲뻾?대룞怨??移?씠?숈뿉 ?댁슜?섎뒗 ?됰젹???곗궛? ( {{怨깆뀍}} )?대떎.`,
+ options: ["0", "1", "$$a_{ij}$$", "$$(R, G, B)$$", "?됰젹", "?ㅼ닔諛?, "?㏃뀍怨?類꾩뀍", "?됯퇏", "怨깆뀍"]
+ },
+ {
+ id: 'q3',
+ title: '03. ?먯떎?⑥닔? 理쒖쟻??,
+ content: `?낅젰媛?x?? x?? ..., x?숈뿉 ???痢≪젙媛믪씠 y?? y?? ..., y?숈씠怨? 異붿꽭??f(x)=ax (a???곸닔)???곕Ⅸ ?덉륫媛믪씠 ax?? ax?? ..., ax?숈씠??????
+???ㅼ감: y??ax?? y??ax?? ..., y??ax?????먯떎?⑥닔: L(a) = ( $$(y_1-ax_1)^2 + \\cdots + (y_n-ax_n)^2$$ ) / n
+
+???ㅽ빆?⑥닔 y=f(x)?먯꽌 x??媛믪씠 a媛 ?꾨땲硫댁꽌 a???쒖뾾??媛源뚯썙吏????⑥닽媛?f(x)媛 ?쇱젙????L???쒖뾾??媛源뚯썙吏硫? ?⑥닔 y=f(x)??L??( {{?섎졃}} )?쒕떎怨??섍퀬, ?닿쾬??湲고샇濡?( $$\\lim_{x \\to a}f(x)=L$$ )怨?媛숈씠 ?섑??몃떎.
+
+???ㅽ빆?⑥닔 y=f(x)?먯꽌 x??媛믪씠 a?먯꽌 b源뚯? 蹂???뚯쓽 ( {{?됯퇏蹂?붿쑉}} )? ?ㅼ쓬怨?媛숇떎.
+  (f(b)-f(a)) / (b-a) = (f(a+?x)-f(a)) / ?x
+
+???ㅽ빆?⑥닔 y=f(x)?먯꽌 x=a?먯꽌??誘몃텇怨꾩닔 ( $$f'(a)$$ )????(a, f(a))?먯꽌 怨≪꽑 y=f(x)???묒꽑??( {{湲곗슱湲?} )? 媛숇떎.
+
+???먯떎?⑥닔??媛믪쓣 理쒖냼?뷀븯??異붿꽭?좎쓽 湲곗슱湲곕? 李얜뒗 怨쇱젙???먯떎?⑥닔??( {{理쒖쟻??} )???섍퀬, ?먯떎?⑥닔??媛믪씠 理쒖냼媛 ?섎룄濡??섎뒗 異붿꽭?좎쓣 ( {{理쒖쟻 異붿꽭??} )?대씪怨??쒕떎.
+
+???먯떎?⑥닔??媛믪씠 媛먯냼?섎뒗 諛⑺뼢??李얘퀬 珥덇퉫媛믪쓣 諛섎났?곸쑝濡??대룞?쒗궎硫댁꽌 理쒖쟻?뷀븯??諛⑸쾿??( {{寃쎌궗?섍컯踰?} )?대씪怨??쒕떎.
+??( {{?숈뒿瑜?} )???ш린瑜??곸젅??議곗젅?섎㈃ 誘몃텇怨꾩닔???ш린??愿怨꾩뾾???먯떎?⑥닔??媛믪씠 蹂?섎뒗 ?뺣룄瑜?議곗젅?????덈떎.`,
+ options: ["?됯퇏蹂?붿쑉", "理쒖쟻??, "寃쎌궗?섍컯踰?, "$$\\lim_{x \\to a}f(x)=L$$", "$$f'(a)$$", "理쒖쟻 異붿꽭??, "湲곗슱湲?, "?숈뒿瑜?, "$$(y_1-ax_1)^2 + \\cdots + (y_n-ax_n)^2$$", "?섎졃"]
+ }
+ ];
+
+ const defaultRubrics = {
+ 'q1': [
+ { min: 9, max: 10, grade: 'A', score: 10 },
+ { min: 7, max: 8, grade: 'B', score: 8 },
+ { min: 0, max: 6, grade: 'C', score: 6 }
+ ],
+ 'q2': [
+ { min: 8, max: 9, grade: 'A', score: 10 },
+ { min: 5, max: 7, grade: 'B', score: 8 },
+ { min: 0, max: 4, grade: 'C', score: 6 }
+ ],
+ 'q3': [
+ { min: 9, max: 10, grade: 'A', score: 10 },
+ { min: 7, max: 8, grade: 'B', score: 8 },
+ { min: 0, max: 6, grade: 'C', score: 6 }
+ ]
+ };
+
+ const LatexText = ({ text }) => {
+ if (!text) return null;
+ const parts = text.split(/(\$\$.*?\$\$)/g);
+ return (
+ <span>
+ {parts.map((part, index) => {
+ if (part.startsWith('$$') && part.endsWith('$$')) {
+ const math = part.slice(2, -2);
+ try {
+ const html = katex.renderToString(math, { throwOnError: false });
+ return <span key={index} dangerouslySetInnerHTML={{ __html: html }} />;
+ } catch (e) {
+ return <span key={index}>{part}</span>;
+ }
+ }
+ return <span key={index}>{part}</span>;
+ })}
+ </span>
+ );
+ };
+
+ function App() {
+ const [view, setView] = React.useState('login'); 
+ const [currentUser, setCurrentUser] = React.useState({ id: '', name: '' });
+ const [studentsData, setStudentsData] = React.useState([]);
+ const [questions, setQuestions] = React.useState(defaultQuestions);
+ const [rubrics, setRubrics] = React.useState(defaultRubrics);
+ 
+ const [settings, setSettings] = React.useState({
+ gasUrl: DEFAULT_GAS_URL,
+ password: 'admin'
+ });
+ const [isTeacher, setIsTeacher] = React.useState(false);
+ const [showLoginModal, setShowLoginModal] = React.useState(false);
+ const [teacherPwdInput, setTeacherPwdInput] = React.useState('');
+ 
+  const [modal, setModal] = React.useState({ show: false, message: '', onConfirm: null, isAlert: true });
+  const [isLoadingData, setIsLoadingData] = React.useState(false);
+  const [isSyncingConfig, setIsSyncingConfig] = React.useState(true);
+
+  React.useEffect(() => {
+    const ver = localStorage.getItem('aiMath_version');
+    if (ver !== APP_VERSION) {
+      localStorage.clear();
+      localStorage.setItem('aiMath_version', APP_VERSION);
+    }
+    
+    // 濡쒖뺄 ?ㅽ넗由ъ? ?곗꽑 遺덈윭?ㅺ린 (?ㅽ봽?쇱씤 ?鍮?
+    const savedStudents = localStorage.getItem('aiMath_students');
+    if (savedStudents) setStudentsData(JSON.parse(savedStudents));
+    const savedQuestions = localStorage.getItem('aiMath_questions');
+    if (savedQuestions) setQuestions(JSON.parse(savedQuestions));
+    const savedRubrics = localStorage.getItem('aiMath_rubrics');
+    if (savedRubrics) setRubrics(JSON.parse(savedRubrics));
+    const savedSettings = localStorage.getItem('aiMath_settings');
+    let currentGasUrl = DEFAULT_GAS_URL;
+    if (savedSettings) {
+      const parsedSettings = JSON.parse(savedSettings);
+      setSettings(parsedSettings);
+      currentGasUrl = parsedSettings.gasUrl;
+    }
+    
+    // ?쒗듃?먯꽌 理쒖떊 ?ㅼ젙 ?숆린??    if (currentGasUrl) {
+      fetch(currentGasUrl + '?action=getConfig')
+        .then(res => res.json())
+        .then(json => {
+          if (json && json.status === 'success' && json.data.questions && json.data.questions.length > 0) {
+            setQuestions(json.data.questions);
+            setRubrics(json.data.rubrics);
+            localStorage.setItem('aiMath_questions', JSON.stringify(json.data.questions));
+            localStorage.setItem('aiMath_rubrics', JSON.stringify(json.data.rubrics));
+          }
+        })
+        .catch(e => console.error("Config sync error:", e))
+        .finally(() => setIsSyncingConfig(false));
+    } else {
+      setIsSyncingConfig(false);
+    }
+  }, []);
+ 
+ // ?좎깮???묒냽 ??援ш? ?쒗듃?먯꽌 理쒖떊 ?곗씠??遺덈윭?ㅺ린
+ React.useEffect(() => {
+ if (isTeacher && view === 'admin' && settings.gasUrl) {
+ setIsLoadingData(true);
+ fetch(settings.gasUrl)
+ .then(res => res.json())
+ .then(json => {
+ if (json.status === 'success') {
+ setStudentsData(json.data);
+ localStorage.setItem('aiMath_students', JSON.stringify(json.data));
+ }
+ })
+ .catch(e => console.error("Data load error:", e))
+ .finally(() => setIsLoadingData(false));
+ }
+ }, [isTeacher, view, settings.gasUrl]);
+
+ const handleTeacherLogin = () => {
+ if (teacherPwdInput === settings.password) {
+ setIsTeacher(true);
+ setShowLoginModal(false);
+ setTeacherPwdInput('');
+ setView('admin');
+ } else {
+ setModal({ show: true, message: '鍮꾨?踰덊샇媛 ?쇱튂?섏? ?딆뒿?덈떎.', isAlert: true });
+ }
+ };
+
+ const handleStudentStart = (e) => {
+ e.preventDefault();
+ if (!currentUser.id || !currentUser.name) {
+ setModal({ show: true, message: '?숇쾲怨??대쫫??紐⑤몢 ?낅젰?댁＜?몄슂.', isAlert: true });
+ return;
+ }
+ const existing = studentsData.find(s => s.id === currentUser.id);
+ if (existing) {
+ setModal({ show: true, message: '?대? ?됯?瑜??쒖텧???숇쾲?낅땲??', isAlert: true });
+ return;
+ }
+ setView('quiz');
+ };
+
+ return (
+ <div className="max-w-3xl mx-auto p-4 md:p-6 min-h-screen relative">
+ 
+ {isSyncingConfig && (
+    <div className="fixed inset-0 bg-white flex flex-col items-center justify-center z-[200]">
+      <div className="worksheet-box p-8 text-center animate-pulse">
+        <h2 className="text-2xl font-black mb-4">理쒖떊 ?ㅼ젙??遺덈윭?ㅻ뒗 以묒엯?덈떎...</h2>
+        <p className="font-bold text-gray-600">援ш? ?쒗듃? ?숆린??以묒엯?덈떎. ?좎떆留?湲곕떎?ㅼ＜?몄슂.</p>
+      </div>
+    </div>
+  )}
+
+ {/* 怨듯넻 紐⑤떖 (alert/confirm ?泥? */}
+ {modal.show && (
+ <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[100] p-4">
+ <div className="worksheet-box p-6 w-full max-w-sm text-center bg-white">
+ <p className="font-bold text-lg mb-6 whitespace-pre-wrap">{modal.message}</p>
+ <div className="flex gap-2 justify-center">
+ {modal.isAlert ? (
+ <button onClick={() => setModal({ show: false, message: '' })} className="bg-black text-white px-6 py-2 font-bold shadow-[2px_2px_0_0_#666]">?뺤씤</button>
+ ) : (
+ <>
+ <button onClick={() => { 
+ if (modal.onConfirm) modal.onConfirm(); 
+ setModal({ show: false, message: '', onConfirm: null }); 
+ }} className="bg-red-500 text-white px-6 py-2 font-bold border-2 border-black">??吏꾪뻾)</button>
+ <button onClick={() => setModal({ show: false, message: '', onConfirm: null })} className="bg-white border-2 border-black px-6 py-2 font-bold">痍⑥냼</button>
+ </>
+ )}
+ </div>
+ </div>
+ </div>
+ )}
+
+ {/* 援먯궗 濡쒓렇??紐⑤떖 */}
+ {showLoginModal && (
+ <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[50] p-4">
+ <div className="worksheet-box p-6 w-full max-w-sm bg-white">
+ <h2 className="text-xl font-black mb-4">援먯궗 ?섏씠吏 ?묒냽</h2>
+ <input 
+ type="password" 
+ placeholder="鍮꾨?踰덊샇 ?낅젰" 
+ className="w-full p-3 border-2 border-black font-bold mb-4 outline-none"
+ value={teacherPwdInput}
+ onChange={e => setTeacherPwdInput(e.target.value)}
+ onKeyDown={e => e.key === 'Enter' && handleTeacherLogin()}
+ />
+ <div className="flex gap-2">
+ <button onClick={handleTeacherLogin} className="flex-1 bg-black text-white py-3 font-bold border-2 border-black">?묒냽</button>
+ <button onClick={() => setShowLoginModal(false)} className="flex-1 bg-white border-2 border-black py-3 font-bold">痍⑥냼</button>
+ </div>
+ </div>
+ </div>
+ )}
+
+ <header className="flex justify-between items-center mb-6 pb-4 border-b-4 border-black">
+ <div>
+ <h1 className="text-xl sm:text-2xl font-black tracking-tighter">?멸났吏?μ닔???섑뻾?됯?</h1>
+ <p className="text-xs sm:text-sm font-bold text-gray-600 mt-1">?숇쾲怨??대쫫???뺥솗???낅젰?섏꽭??</p>
+ </div>
+ {view !== 'admin' && (
+ <button onClick={() => setShowLoginModal(true)} className="text-xs font-bold px-3 py-1 border-2 border-black hover:bg-gray-200">援먯궗?묒냽</button>
+ )}
+ {view === 'admin' && (
+ <button onClick={() => { setIsTeacher(false); setView('login'); }} className="text-xs font-bold px-3 py-1 border-2 border-black bg-black text-white">濡쒓렇?꾩썐</button>
+ )}
+ </header>
+
+ {/* ?쇱슦??*/}
+ {view === 'login' && (
+ <div className="worksheet-box p-6 sm:p-8 max-w-md mx-auto mt-10">
+ <form onSubmit={handleStudentStart} className="space-y-6">
+ <div>
+ <label className="block font-black text-lg mb-2">?숇쾲 (4?먮━)</label>
+ <input type="text" pattern="[0-9]{4}" placeholder="?? 3501" className="w-full p-4 border-2 border-black font-bold text-xl outline-none" value={currentUser.id} onChange={e => setCurrentUser({...currentUser, id: e.target.value})} required />
+ </div>
+ <div>
+ <label className="block font-black text-lg mb-2">?대쫫</label>
+ <input type="text" placeholder="?대쫫 ?낅젰" className="w-full p-4 border-2 border-black font-bold text-xl outline-none" value={currentUser.name} onChange={e => setCurrentUser({...currentUser, name: e.target.value})} required />
+ </div>
+ <button type="submit" className="w-full bg-black text-white py-4 font-black text-xl btn-retro">?됯? ?쒖옉?섍린</button>
+ </form>
+ </div>
+ )}
+
+ {view === 'quiz' && (
+ <QuizView 
+ currentUser={currentUser} 
+ questions={questions} 
+ rubrics={rubrics}
+ studentsData={studentsData}
+ setStudentsData={setStudentsData}
+ settings={settings}
+ setView={setView}
+ setModal={setModal}
+ />
+ )}
+
+ {view === 'result' && (
+ <ResultView currentUser={currentUser} studentsData={studentsData} onBack={() => { setView('login'); setCurrentUser({id:'', name:''}); }} />
+ )}
+
+ {view === 'admin' && isTeacher && (
+ <AdminDashboard 
+ questions={questions} setQuestions={setQuestions}
+ rubrics={rubrics} setRubrics={setRubrics}
+ studentsData={studentsData} setStudentsData={setStudentsData}
+ settings={settings} setSettings={setSettings}
+ setModal={setModal} isLoadingData={isLoadingData}
+ />
+ )}
+ </div>
+ );
+ }
+
+ function QuizView({ currentUser, questions, rubrics, studentsData, setStudentsData, settings, setView, setModal }) {
+ const [currentPage, setCurrentPage] = React.useState(0);
+ const [studentAnswers, setStudentAnswers] = React.useState({}); 
+ const [activeBlank, setActiveBlank] = React.useState(null); 
+
+ React.useEffect(() => {
+ const initAnswers = {};
+ questions.forEach(q => {
+ const blankCount = (q.content.match(/\{\{.*?\}\}/g) || []).length;
+ initAnswers[q.id] = Array(blankCount).fill('');
+ });
+ setStudentAnswers(initAnswers);
+ }, [questions]);
+
+ const currentQ = questions[currentPage];
+ if (!currentQ) return null;
+
+ const handleWordSelect = (word) => {
+ if (!activeBlank) return;
+ setStudentAnswers(prev => {
+ const newAns = { ...prev };
+ newAns[activeBlank.qId][activeBlank.index] = word;
+ return newAns;
+ });
+ setActiveBlank(null);
+ };
+
+ const handleSubmit = () => {
+ setModal({
+ show: true,
+ isAlert: false,
+ message: "?뺣쭚 ?쒖텧?섏떆寃좎뒿?덇퉴?\n?쒖텧 ?꾩뿉???섏젙?????놁뒿?덈떎.",
+ onConfirm: () => {
+ let totalScore = 0;
+ const results = {};
+ questions.forEach(q => {
+ const correctAnswers = (q.content.match(/\{\{(.*?)\}\}/g) || []).map(s => s.replace(/[{}]/g, '').trim());
+ const userAnswers = studentAnswers[q.id] || [];
+ let correctCount = 0;
+ correctAnswers.forEach((ans, idx) => {
+ if (userAnswers[idx] === ans) correctCount++;
+ });
+ const qRubrics = rubrics[q.id] || [];
+ let scoreInfo = { grade: 'F', score: 0 };
+ for (let r of qRubrics) {
+ if (correctCount >= r.min && correctCount <= r.max) {
+ scoreInfo = { grade: r.grade, score: r.score };
+ break;
+ }
+ }
+ results[q.id] = { correctCount, scoreInfo };
+ totalScore += scoreInfo.score;
+ });
+
+ const finalData = {
+ id: currentUser.id,
+ name: currentUser.name,
+ results,
+ totalScore,
+ timestamp: new Date().toLocaleString(),
+ scores: questions.map(q => results[q.id].scoreInfo.score)
+ };
+
+ const newData = [...studentsData, finalData];
+ setStudentsData(newData);
+ localStorage.setItem('aiMath_students', JSON.stringify(newData));
+ 
+ if (settings.gasUrl) {
+ try {
+ fetch(settings.gasUrl, {
+ method: 'POST',
+ mode: 'no-cors',
+ headers: { 'Content-Type': 'text/plain' },
+ body: JSON.stringify({ action: "submit", data: finalData })
+ });
+ } catch(e) { console.error("Sheet Error:", e); }
+ }
+ setView('result');
+ }
+ });
+ };
+
+ const renderContentWithBlanks = (q) => {
+        if (q.type === 'essay') {
+          return (
             <React.Fragment>
               <div className="mb-4 whitespace-pre-wrap">{q.content}</div>
               <textarea 
@@ -142,6 +949,257 @@ questions.forEach(q => {
           return <span key={i}>{part}</span>;
         });
       };
+
+ return (
+ <div className="flex flex-col h-[80vh]">
+ <div className="flex justify-between items-center mb-4">
+ <h2 className="text-xl font-black">{currentQ.title}</h2>
+ <span className="font-bold border-2 border-black px-3 py-1 bg-white">{currentPage + 1} / {questions.length}</span>
+ </div>
+ <div className="worksheet-box p-4 sm:p-6 flex-1 overflow-y-auto leading-loose text-base sm:text-lg whitespace-pre-wrap">
+ {renderContentWithBlanks(currentQ)}
+ </div>
+
+ {activeBlank && activeBlank.qId === currentQ.id && (
+ <div className="mt-4 p-4 worksheet-box bg-gray-50 border-t-0">
+ <p className="text-sm font-bold mb-2">?⑥뼱瑜??좏깮?섏꽭??</p>
+ <div className="flex flex-wrap gap-2">
+ {currentQ.options.map((opt, idx) => (
+ <button key={idx} onClick={() => handleWordSelect(opt)} className="border-2 border-black bg-white px-3 py-2 font-bold hover:bg-black hover:text-white transition-colors">
+ <LatexText text={opt} />
+ </button>
+ ))}
+ </div>
+ </div>
+ )}
+
+ <div className="mt-6 flex justify-between gap-4">
+ {currentPage > 0 ? (
+ <button onClick={() => {setCurrentPage(p => p - 1); setActiveBlank(null);}} className="flex-1 bg-white border-2 border-black py-4 font-black btn-retro text-sm sm:text-base">? ?댁쟾 ?곸뿭</button>
+ ) : <div className="flex-1"></div>}
+ {currentPage < questions.length - 1 ? (
+ <button onClick={() => {setCurrentPage(p => p + 1); setActiveBlank(null);}} className="flex-1 bg-black text-white border-2 border-black py-4 font-black btn-retro text-sm sm:text-base">?ㅼ쓬 ?곸뿭 ??/button>
+ ) : (
+ <button onClick={handleSubmit} className="flex-1 bg-black text-white border-2 border-black py-4 font-black btn-retro text-sm sm:text-base">理쒖쥌 ?쒖텧?섍린</button>
+ )}
+ </div>
+ </div>
+ );
+ }
+
+ function ResultView({ currentUser, studentsData, onBack }) {
+ const result = studentsData.find(s => s.id === currentUser.id);
+ if (!result) return <div className="p-4 font-bold text-center">寃곌낵瑜?李얠쓣 ???놁뒿?덈떎.</div>;
+ return (
+ <div className="worksheet-box p-6 sm:p-8 max-w-lg mx-auto text-center mt-10">
+ <h2 className="text-2xl sm:text-3xl font-black mb-2">{result.name} ?숈깮</h2>
+ <p className="text-lg font-bold mb-8 pb-4 border-b-2 border-black">珥앹젏: <span className="text-3xl">{result.totalScore}</span>??/p>
+ <div className="space-y-4 mb-8 text-left">
+ {Object.entries(result.results).map(([qId, data], idx) => (
+ <div key={idx} className="flex flex-col sm:flex-row justify-between sm:items-center border-2 border-black p-4 bg-gray-50 gap-2">
+ <span className="font-bold">?곸뿭 {idx + 1}</span>
+ <div className="text-right sm:text-left">
+ <span className="font-black text-xl">{data.scoreInfo.score}??/span>
+ <span className="text-sm font-bold text-gray-600 ml-2">({data.scoreInfo.grade}?깃툒 / {data.correctCount}媛??뺣떟)</span>
+ </div>
+ </div>
+ ))}
+ </div>
+ <button onClick={onBack} className="w-full bg-black text-white py-4 font-black text-xl btn-retro">泥섏쓬?쇰줈 ?뚯븘媛湲?/button>
+ </div>
+ );
+ }
+
+ function AdminDashboard({ questions, setQuestions, rubrics, setRubrics, studentsData, setStudentsData, settings, setSettings, setModal, isLoadingData }) {
+ const [tab, setTab] = React.useState('students');
+
+ const handleSyncConfig = () => {
+    setModal({
+      show: true,
+      isAlert: false,
+      message: '?꾩옱 ?묒꽦??臾명빆怨?猷⑤툕由??ㅼ젙??以묒븰 援ш? ?쒗듃????뼱?곗떆寃좎뒿?덇퉴?\n紐⑤뱺 湲곌린(?숈깮)媛 ???ㅼ젙?쇰줈 ?숆린?붾맗?덈떎.',
+      onConfirm: () => {
+        if (!settings.gasUrl) {
+          setTimeout(() => setModal({ show: true, message: '援ш? ?쒗듃 ?곕룞 URL???ㅼ젙?섏? ?딆븯?듬땲??', isAlert: true }), 100);
+          return;
+        }
+        
+        try {
+          fetch(settings.gasUrl, {
+            method: 'POST',
+            mode: 'no-cors',
+            headers: { 'Content-Type': 'text/plain' },
+            body: JSON.stringify({ action: 'saveConfig', data: { questions, rubrics } })
+          });
+          setTimeout(() => setModal({ show: true, message: '?숆린???붿껌???꾩넚?덉뒿?덈떎.\n??2~3珥???援ш? ?쒗듃??諛섏쁺?⑸땲??', isAlert: true }), 100);
+        } catch(e) {
+          setTimeout(() => setModal({ show: true, message: '?숆린???붿껌 以??ㅻ쪟媛 諛쒖깮?덉뒿?덈떎.', isAlert: true }), 100);
+        }
+      }
+    });
+  };
+
+ const handleExportCSV = () => {
+ const headers = ['?숇쾲', '?대쫫'];
+ questions.forEach(q => headers.push(q.title));
+ headers.push('珥앹젏');
+ let csvContent = "data:text/csv;charset=utf-8,\uFEFF";
+ csvContent += headers.join(",") + "\n";
+ studentsData.forEach(student => {
+ const row = [student.id, student.name];
+ questions.forEach(q => {
+ const score = student.results[q.id] ? student.results[q.id].scoreInfo.score : 0;
+ row.push(score);
+ });
+ row.push(student.totalScore);
+ csvContent += row.join(",") + "\n";
+ });
+ const encodedUri = encodeURI(csvContent);
+ const link = document.createElement("a");
+ link.setAttribute("href", encodedUri);
+ link.setAttribute("download", `?섑뻾?됯?寃곌낵_${new Date().toLocaleDateString()}.csv`);
+ document.body.appendChild(link);
+ link.click();
+ document.body.removeChild(link);
+ };
+
+ const handleDeleteStudent = (id) => {
+ setModal({
+ show: true,
+ isAlert: false,
+ message: `${id} ?숈깮??湲곕줉???뺣쭚 ??젣?섏떆寃좎뒿?덇퉴?\n??젣 ???숈깮???ㅼ떆 ?됯?瑜?蹂????덉뒿?덈떎.`,
+ onConfirm: () => {
+ const newData = studentsData.filter(s => s.id !== id);
+ setStudentsData(newData);
+ localStorage.setItem('aiMath_students', JSON.stringify(newData));
+ if (settings.gasUrl) {
+ try {
+ fetch(settings.gasUrl, {
+ method: 'POST',
+ mode: 'no-cors',
+ headers: { 'Content-Type': 'text/plain' },
+ body: JSON.stringify({ action: "delete", data: { studentId: id } })
+ });
+ } catch(e) {}
+ }
+ }
+ });
+ };
+
+ const handleAddQuestion = () => {
+ const newId = 'q' + Date.now();
+ const newQ = [...questions, { id: newId, title: '?덈줈???곸뿭', content: ' ?댁슜???낅젰?섏꽭?? {{?뺣떟}}', options: ['?뺣떟'] }];
+ setQuestions(newQ);
+ localStorage.setItem('aiMath_questions', JSON.stringify(newQ));
+ const newR = {...rubrics, [newId]: [{ min: 0, max: 1, grade: 'A', score: 10 }]};
+ setRubrics(newR);
+ localStorage.setItem('aiMath_rubrics', JSON.stringify(newR));
+ };
+
+ const handleDeleteQuestion = (qId) => {
+ setModal({
+ show: true,
+ isAlert: false,
+ message: "?뺣쭚 ???곸뿭????젣?섏떆寃좎뒿?덇퉴?\n(愿??猷⑤툕由?룄 ?④퍡 ??젣?⑸땲??",
+ onConfirm: () => {
+ const newQ = questions.filter(q => q.id !== qId);
+ setQuestions(newQ);
+ localStorage.setItem('aiMath_questions', JSON.stringify(newQ));
+ const newR = {...rubrics};
+ delete newR[qId];
+ setRubrics(newR);
+ localStorage.setItem('aiMath_rubrics', JSON.stringify(newR));
+ }
+ });
+ };
+
+ return (
+ <div className="flex flex-col md:flex-row gap-6">
+ <div className="w-full md:w-48 flex flex-col gap-2">
+ <button onClick={() => setTab('students')} className={`p-3 font-bold border-2 border-black text-left ${tab === 'students' ? 'bg-black text-white' : 'bg-white'}`}>?숈깮 寃곌낵 ?뺤씤</button>
+ <button onClick={() => setTab('questions')} className={`p-3 font-bold border-2 border-black text-left ${tab === 'questions' ? 'bg-black text-white' : 'bg-white'}`}>臾명빆 諛?猷⑤툕由?愿由?/button>
+ <button onClick={() => setTab('settings')} className={`p-3 font-bold border-2 border-black text-left ${tab === 'settings' ? 'bg-black text-white' : 'bg-white'}`}>?ㅼ젙 諛??곕룞</button>
+ </div>
+ <div className="flex-1 worksheet-box p-4 sm:p-6 overflow-x-hidden">
+ 
+ {tab === 'students' && (
+ <div>
+ <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-4 mb-6 border-b-2 border-black pb-4">
+ <h2 className="text-xl font-black">?숈깮 寃곌낵 ?뺤씤 ({studentsData.length}紐?</h2>
+ <div className="flex gap-2">
+ {isLoadingData && <span className="font-bold text-blue-600 bg-blue-50 px-3 py-1 rounded">?곗씠??濡쒕뵫 以?..</span>}
+ <button onClick={handleExportCSV} className="bg-white border-2 border-black px-4 py-2 font-bold btn-retro">?묒? ?ㅼ슫濡쒕뱶</button>
+ </div>
+ </div>
+ <div className="overflow-x-auto">
+ <table className="w-full border-collapse border-2 border-black text-sm whitespace-nowrap">
+ <thead className="bg-gray-100">
+ <tr>
+ <th className="border-2 border-black p-2">?숇쾲</th>
+ <th className="border-2 border-black p-2">?대쫫</th>
+ {questions.map((q, i) => <th key={i} className="border-2 border-black p-2">?곸뿭 {i+1}</th>)}
+ <th className="border-2 border-black p-2 bg-gray-200">珥앹젏</th>
+ <th className="border-2 border-black p-2">愿由?/th>
+ </tr>
+ </thead>
+ <tbody>
+ {studentsData.map((s, idx) => (
+ <tr key={idx} className="text-center hover:bg-gray-50">
+ <td className="border-2 border-black p-2 font-bold">{s.id}</td>
+ <td className="border-2 border-black p-2">{s.name}</td>
+ {questions.map((q, i) => (
+ <td key={i} className="border-2 border-black p-2">
+ {s.results[q.id] ? s.results[q.id].scoreInfo.score : 0}
+ </td>
+ ))}
+ <td className="border-2 border-black p-2 font-black bg-gray-100">{s.totalScore}</td>
+ <td className="border-2 border-black p-2">
+ <button onClick={() => handleDeleteStudent(s.id)} className="text-xs font-bold bg-white border border-black px-2 py-1">湲곕줉 ??젣</button>
+ </td>
+ </tr>
+ ))}
+ {studentsData.length === 0 && (
+ <tr><td colSpan={questions.length + 4} className="p-8 text-center text-gray-500 font-bold border-2 border-black">?쒖텧???곗씠?곌? ?놁뒿?덈떎.</td></tr>
+ )}
+ </tbody>
+ </table>
+ </div>
+ </div>
+ )}
+
+ {tab === 'questions' && (
+ <div>
+ <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 border-b-2 border-black pb-4 gap-4">
+    <div>
+      <h2 className="text-xl font-black">臾명빆 諛?猷⑤툕由?愿由?/h2>
+      <p className="text-xs font-bold text-gray-600 mt-1">?닿납?먯꽌 ?섏젙???댁슜? ?꾩옱 湲곌린???꾩떆 ??λ맗?덈떎.</p>
+    </div>
+    <div className="flex gap-2 w-full sm:w-auto">
+      <button onClick={handleSyncConfig} className="flex-1 sm:flex-none bg-blue-600 text-white px-4 py-2 font-bold btn-retro">紐⑤뱺 湲곌린(?쒗듃)??諛고룷 ???/button>
+      <button onClick={handleAddQuestion} className="flex-1 sm:flex-none bg-black text-white px-4 py-2 font-bold btn-retro">+ ?곸뿭 異붽?</button>
+    </div>
+ </div>
+ <div className="space-y-8">
+ {q.type === 'count' && (
+                          <div className="mb-4">
+                            <label className="font-bold text-sm text-gray-600 block mb-1">보기 (쉼표로 구분)</label>
+                            <input type="text" value={(q.options || []).join(', ')} onChange={e => {
+                              const newConfig = {...configBySession};
+                              newConfig[activeSession].questions[qIndex].options = e.target.value.split(',').map(s=>s.trim()).filter(s=>s);
+                              setConfigBySession(newConfig);
+                            }} className="w-full p-2 border-2 border-black outline-none" />
+                          </div>
+                        )}
+                        
+                        <div className="bg-gray-50 p-4 border border-gray-300 rounded">
+                          <h4 className="font-bold mb-2">루브릭 (채점 기준)</h4>
+                          
+                          {q.type === 'count' && (
+                            <React.Fragment>
+                              {(rubrics[q.id] || []).map((r, rIndex) => (
+                                <div key={rIndex} className="flex gap-2 items-center mb-2">
+                                  <input type="number" value={r.min} onChange={e => {
+                                    const newConfig = {...configBySession};
                                     newConfig[activeSession].rubrics[q.id][rIndex].min = Number(e.target.value);
                                     setConfigBySession(newConfig);
                                   }} className="w-16 p-1 border border-black" /> 개 ~ 
@@ -160,11 +1218,10 @@ questions.forEach(q => {
                                     newConfig[activeSession].rubrics[q.id][rIndex].score = Number(e.target.value);
                                     setConfigBySession(newConfig);
                                   }} className="w-16 p-1 border border-black" placeholder="점수" />
-                                  <button onClick={() => {
-                                    const newConfig = {...configBySession};
-                                    newConfig[activeSession].rubrics[q.id].splice(rIndex, 1);
-                                    setConfigBySession(newConfig);
-                                  }} className="text-red-500 font-bold ml-2">X</button>
+                                  <button onClick={() => handleAddQuestion('count')} className="bg-blue-500 text-white font-bold py-2 px-4 rounded shadow-md border-2 border-black">+ 선택형(개수 채점) 추가</button>
+                    <button onClick={() => handleAddQuestion('value')} className="bg-green-500 text-white font-bold py-2 px-4 rounded shadow-md border-2 border-black">+ 직접입력형(값 채점) 추가</button>
+                    <button onClick={() => handleAddQuestion('essay')} className="bg-yellow-500 text-white font-bold py-2 px-4 rounded shadow-md border-2 border-black">+ 서술형(키워드 채점) 추가</button>
+                    
                                 </div>
                               ))}
                               <button onClick={() => {
@@ -357,811 +1414,98 @@ questions.forEach(q => {
                               }} className="bg-gray-200 px-2 py-1 border border-gray-400 text-sm font-bold mt-2">+ 키워드 기준 추가</button>
                             </React.Fragment>
                           )}
-                        </div>��< ! D O C T Y P E   h t m l >  
- < h t m l   l a n g = " k o " >  
- < h e a d >  
-   < m e t a   c h a r s e t = " U T F - 8 " >  
-   < m e t a   n a m e = " v i e w p o r t "   c o n t e n t = " w i d t h = d e v i c e - w i d t h ,   i n i t i a l - s c a l e = 1 . 0 " >  
-   < t i t l e > ? x������ ? �Բ? ? ? ���? /�?   ? �Ī�? ? / t i t l e >  
-   < s c r i p t   s r c = " h t t p s : / / c d n . t a i l w i n d c s s . c o m " > < / s c r i p t >  
-   < s c r i p t   s r c = " h t t p s : / / u n p k g . c o m / r e a c t @ 1 8 / u m d / r e a c t . d e v e l o p m e n t . j s "   c r o s s o r i g i n > < / s c r i p t >  
-   < s c r i p t   s r c = " h t t p s : / / u n p k g . c o m / r e a c t - d o m @ 1 8 / u m d / r e a c t - d o m . d e v e l o p m e n t . j s "   c r o s s o r i g i n > < / s c r i p t >  
-   < s c r i p t   s r c = " h t t p s : / / u n p k g . c o m / @ b a b e l / s t a n d a l o n e / b a b e l . m i n . j s " > < / s c r i p t >  
-   < ! - -   K a T e X   f o r   M a t h   R e n d e r i n g   - - >  
-   < l i n k   r e l = " s t y l e s h e e t "   h r e f = " h t t p s : / / c d n . j s d e l i v r . n e t / n p m / k a t e x @ 0 . 1 6 . 8 / d i s t / k a t e x . m i n . c s s " >  
-   < s c r i p t   s r c = " h t t p s : / / c d n . j s d e l i v r . n e t / n p m / k a t e x @ 0 . 1 6 . 8 / d i s t / k a t e x . m i n . j s " > < / s c r i p t >  
-   < s t y l e >  
-   b o d y   {   f o n t - f a m i l y :   ' K o P u b   B a t a n g ' ,   ' M a l g u n   G o t h i c ' ,   s e r i f ;   b a c k g r o u n d - c o l o r :   # f 5 f 5 f 5 ;   c o l o r :   # 1 1 1 ;   }  
-   . w o r k s h e e t - b o x   {   b a c k g r o u n d - c o l o r :   # f f f ;   b o r d e r :   3 p x   s o l i d   # 0 0 0 ;   b o x - s h a d o w :   6 p x   6 p x   0 p x   0 p x   # 0 0 0 ;   }  
-   . b t n - r e t r o   {   b o r d e r :   2 p x   s o l i d   # 0 0 0 ;   b o x - s h a d o w :   3 p x   3 p x   0 p x   0 p x   # 0 0 0 ;   t r a n s i t i o n :   a l l   0 . 1 s ;   }  
-   . b t n - r e t r o : a c t i v e   {   t r a n s f o r m :   t r a n s l a t e ( 3 p x ,   3 p x ) ;   b o x - s h a d o w :   0 p x   0 p x   0 p x   0 p x   # 0 0 0 ;   }  
-   . b l a n k - i n p u t   {   b o r d e r - b o t t o m :   2 p x   s o l i d   # 0 0 0 ;   d i s p l a y :   i n l i n e - b l o c k ;   m i n - w i d t h :   6 0 p x ;   t e x t - a l i g n :   c e n t e r ;   f o n t - w e i g h t :   b o l d ;   p a d d i n g :   0   5 p x ;   c u r s o r :   p o i n t e r ;   m i n - h e i g h t :   2 4 p x ;   }  
-   . b l a n k - a c t i v e   {   b a c k g r o u n d - c o l o r :   # e 5 e 5 e 5 ;   b o r d e r - b o t t o m :   3 p x   s o l i d   # 0 0 0 ;   }  
-   < / s t y l e >  
- < / h e a d >  
- < b o d y >  
-   < d i v   i d = " r o o t " > < / d i v >  
-   < s c r i p t   t y p e = " t e x t / b a b e l " >  
-   c o n s t   A P P _ V E R S I O N   =   ' v 1 1 ' ;  
-   c o n s t   D E F A U L T _ G A S _ U R L   =   " h t t p s : / / s c r i p t . g o o g l e . c o m / m a c r o s / s / A K f y c b z o 3 r 9 N J - G 3 a z Q l U U m J M N h I q J i K k G - 5 8 5 7 m 9 b b p 6 G f O s p D q w i P L d 9 G f f J T p Y 7 l R 1 j h P 0 w / e x e c " ;  
-    
-   c o n s t   d e f a u l t Q u e s t i o n s   =   [  
-   {  
-   i d :   ' q 1 ' ,  
-   t i t l e :   ' 0 1 .   ? ���? ? ? .���? ? ? ��}�  ۊ? ���%' ,  
-   c o n t e n t :   ` ? ? ?a� ��׬ �? ? ��j"�  ? F���  ? �P�  ? ����  ? ���  �Z� (`촺����   ? �?   ? ����\t? (   { { n����? ? }   ) ? ��,�  ? �Ď�.  
- ? ? (   { { ? ����} }   )   ? .���? ? ? ���? ? ? ����? ? �Zp�c�  ? .���? ��,�,   (   { { n����? ? }   )   ? .���? ? ? ���? ? ? ����? ? �Zp�[����   ? �?   ? .���?  ���.  
-  
- ? ? ? ���? ? ? .���? ? ���@�?  �y�  (   { { 0�k"c�} }   ) �o? ? �? ? ? ? ? ? H���.  
- ? ? n �Z����  ? ? x ? ?   x ? ?   . . . ,   x ? ���  ?a����  ? �ɿ  ? ��L�? � �o? ? ���? ��  ? �? ? ?  
-     X   =   ( x ? ?   x ? ?   . . . ,   x ? ?  
-     ? ? 0�k"c�? ? ? �,�,   x ? ?   x ? ?   . . . ,   x ? ���  0�k"c�  X ? ? (   { { ? E�G�} }   ) ?  �*�(`? ? �Ď�.  
-  
- ? ? n����? ? ? ���? ? ? .���? /�L�  ? e$1�? ? (   { { n�H�ĸ? ? }   ) \t? �cK/���? 9m? ? .���? /�L�  �N��#�?  �?   ������  ? ? ? H���.  
-  
- ? ? ? e$1�  n�H�ĸ? �?   ? ���? ��  T F �I D F \t? �cK/���? ? ���? ? ? .���? ? ? �Ȝ�? ? ? ����\t? ? ���? ? ? ? ? H���.  
- ? ? T F �I D F �Z�   ? �]���? �N���? ��?   (   { { ? ? ? } }   )   ? e$1�? ��,�,   T F �I D F �Z�   ? I2  �N���? ��?   (   { { ? �? } }   )   ? e$1�?  ���.  
-  
- ? ? ? .���? ? z���M�  �[̬��\t? ? �ö�  ? �P�? ? ? ? ? H�ĸ�o? ? ����? ��]��o? ? ��}�? ��  ? c$��? ��]��o? ? ����? ���  (`���? ? (   { { ? ����? ? }   ) ? ��,�  ? �Ď�.  
- ? ? ? ����? ? ۊx$��  ? �Ȏ�? .���  ? ����  ? ����? ?   z�����  ? ����? ?   ?a� (`? ? ����? ?   n�����  ? ����? ?   (`���  ? ����? ?   �cJ   ? ����? ��?   ? H���.  
-  
- ? ? ? ���? ? ? .���? ? ? e$1�  n�H�ĸ? �?   ? ���? ��  ? ?   ��0�? 9m���? ?   ? -��? �=�,   (   { { ? e$1�  �cI��} }   )   ? F�]��o? ? ����? ��7�  ? ? ? H���. ` ,  
-   o p t i o n s :   [ " n�H�ĸ? ? ,   " ? ����? ? ,   " ? .���" ,   " ? ? ? " ,   " ? �? " ,   " ? E�G�" ,   " ? ����" ,   " n����? ? ,   " 0�k"c�" ,   " ? e$1�  �cI��" ]  
-   } ,  
-   {  
-   i d :   ' q 2 ' ,  
-   t i t l e :   ' 0 2 .   ?  �? ���   ? .���? ? ? ��}�  ۊ? ���%' ,  
-   c o n t e n t :   ` ? ? ? ? ? .���  �����\t? �������Z����  ��e$�? ���  ۊ׬��? ��  ?a�����o? ��`�?   �[ˮ��  (   { { ? 0�9�} }   ) ?  �*�(`? ? �Ď�.  
- ? ? ? 0�9�  A ? ? ? ? i ? /���  ? ? j ? � �  ����y�? ? ? ����? ? ? H���  ? E�G�? ? ? 0�9�  A ? ? ( i ,   j )   ? E�G�?  �*�  ? �,�,   rn����o? (   $ $ a _ { i j } $ $   ) ? �   �Z� �  ? �? ? ����.  
-  
- ? ? ? ��  ?  �? ��� ? ? �Z? ? ��? ? /�L�  �[� ? � ? 1�?   (   { { 0 } }   ) ,   ? ׬K�? �   2 5 5 �o? ? �? ? ��,�,   9m? ? J �? ? ? ��K�? �   (   { { 1 } }   ) z�� ? ? 2 5 4 �n��? ? ? ? ��  ? �? ? ? ? ? ? H���.  
- ? ? �I-�  ?  �? ��� ? /�L�  �Z? ? ��? ? ? ? 1�=�  ? ����? ? R G B   ����8�? ? ?a�]�? ? ? x���\t? ? �? ?  ���  ? �?   (   $ $ ( R ,   G ,   B ) $ $   ) ? ? ? ��L�? �]��o? ? �? ? ����.  
-  
- ? ? ?  �? ��� \t? ? y$f�? ��  ? H��? ? ?  �? ��� \t? ����~�  ? ?   ?  �? ��� \t? ? 0�9��o? ? ��}�? �,�  ? ׬��? ? ? ��  ? �? ? ? ? ? ? H���.  
- ? ? ?  �? ��� ? ? ? y$f�? ? ? ���? ���  ? 0�9�? ? ? ׬��? �   (   { { ? �3�(`? �����} }   ) ?  ���.  
-  
- ? ? ?  �? ��� ? ? ۊwŰ�\t? p�׬�? ? ? ? ? ���? ���  ? 0�9�? ? ? ׬��? �   (   { { ? |1Բۊ? }   ) ?  ���.  
-  
- ? ? �I-�  ?  �? ��� \t? ? ��  ?  �? ��� �o? ۊ��?   ? ?   ? ��  ?  �? ��� \t? ? �? ?  ���  ? 0�9�? ? �Z? ? E�G�? �   �I-�  ?  �? ��� \t? ? �? ?  ���  ? ? ? 0�9�  R ,   G ,   B ? ? ? � ? �/�? ? ? E�G�? ? (   { { ? /���} }   ) ? ���  �cK3�? ?  
-  
- ? ? ?  �? ��� ? ? ? 2���?  �޸(`? ? � �y?  �? �ɿ  ? ���? ���  ? 0�9�? ? ? ׬��? �   (   { { (`F��} }   ) ?  ���. ` ,  
-   o p t i o n s :   [ " 0 " ,   " 1 " ,   " $ $ a _ { i j } $ $ " ,   " $ $ ( R ,   G ,   B ) $ $ " ,   " ? 0�9�" ,   " ? |1Բۊ? ,   " ? �3�(`? �����" ,   " ? /���" ,   " (`F��" ]  
-   } ,  
-   {  
-   i d :   ' q 3 ' ,  
-   t i t l e :   ' 0 3 .   ? /���? e$Բ? �   ������? ? ,  
-   c o n t e n t :   ` ? ��0țZ? x ? ?   x ? ?   . . . ,   x ? �ɿ  ? � ? ? ��j"țZ� �  y ? ?   y ? ?   . . . ,   y ? � �(`?   pu��m�? ? f ( x ) = a x   ( a ? ? ? ��Բ) ? ? ? լh!  ? I�k��Z� �  a x ? ?   a x ? ?   . . . ,   a x ? � �? ? ? ? ? ?  
- ? ? ? |1�:   y ? ? a x ? ?   y ? ? a x ? ?   . . . ,   y ? ? a x ? ? ? ? ? /���? e$Բ:   L ( a )   =   (   $ $ ( y _ 1 - a x _ 1 ) ^ 2   +   \ \ c d o t s   +   ( y _ n - a x _ n ) ^ 2 $ $   )   /   n  
-  
- ? ? ? }1F�? e$Բ  y = f ( x ) ? /�L�  x ? ? �Z� �  a �Z�   ? ��r����L�  a ? ? ? �ľ�? ? �Z� �n��Y���? ? ? ? e$���Z? f ( x ) �Z�   ? ���? ? ? ? L ? ? ? �ľ�? ? �Z� �n��Y���� ��?   ? e$Բ  y = f ( x ) ? ? L ? ? (   { { ? �C�} }   ) ? �Ď�(`? ? �,�,   ? ����? ? rn����o? (   $ $ \ \ l i m _ { x   \ \ t o   a } f ( x ) = L $ $   ) (`? �Z� �  ? �? ? ����.  
-  
- ? ? ? }1F�? e$Բ  y = f ( x ) ? /�L�  x ? ? �Z� �  a ? /�L�  b �n��?   B�� ? ? ? ����  (   { { ? /���B�� ? ��I�} }   ) ? �   ? |1��(`? �Z�.  
-     ( f ( b ) - f ( a ) )   /   ( b - a )   =   ( f ( a + ? x ) - f ( a ) )   /   ? x  
-  
- ? ? ? }1F�? e$Բ  y = f ( x ) ? /�L�  x = a ? /�L�? ? ����G�(`��Բ  (   $ $ f ' ( a ) $ $   ) ? ? ? ? ( a ,   f ( a ) ) ? /�L�  (`j"Q�  y = f ( x ) ? ? ? �Q�? ? (   { { rn׬��rn? }   ) ? �   �Z�.  
-  
- ? ? ? /���? e$Բ? ? �Z���  ������? ��/�? ? pu��m�? ����  rn׬��rnլ?   ���ŗ�  (`���? ? ? /���? e$Բ? ? (   { { ������? ? }   ) ? ? ? �,�,   ? /���? e$Բ? ? �Z� �  �������Z�   ? �ĸ�o? ? ���  pu��m�? ����  (   { { ������  pu��m�? ? }   ) ?  �*�(`? ? �Ď�.  
-  
- ? ? ? /���? e$Բ? ? �Z� �  �Z/���? ���  ۊz$"�? ? ����,�  �sG�kқZ���  ۊ���? ��]��o? ?  �޸? �Ď����L�  ������? ��/�? ? ۊx$��? ? (   { { �[�×�? ���0�? }   ) ?  �*�(`? ? �Ď�.  
- ? ? (   { { ? ¿�\t? }   ) ? ? ? H��\t? ? ���? ? p�׬�? �2  ����G�(`��Բ? ? ? H��? ? ?a� (`����? ? ? /���? e$Բ? ? �Z� �  B�� ? ���  ? ��ĸ\t? p�׬�? ? ? ? ? H���. ` ,  
-   o p t i o n s :   [ " ? /���B�� ? ��I�" ,   " ������? ? ,   " �[�×�? ���0�? ,   " $ $ \ \ l i m _ { x   \ \ t o   a } f ( x ) = L $ $ " ,   " $ $ f ' ( a ) $ $ " ,   " ������  pu��m�? ? ,   " rn׬��rn? ,   " ? ¿�\t? ,   " $ $ ( y _ 1 - a x _ 1 ) ^ 2   +   \ \ c d o t s   +   ( y _ n - a x _ n ) ^ 2 $ $ " ,   " ? �C�" ]  
-   }  
-   ] ;  
-  
-   c o n s t   d e f a u l t R u b r i c s   =   {  
-   ' q 1 ' :   [  
-   {   m i n :   9 ,   m a x :   1 0 ,   g r a d e :   ' A ' ,   s c o r e :   1 0   } ,  
-   {   m i n :   7 ,   m a x :   8 ,   g r a d e :   ' B ' ,   s c o r e :   8   } ,  
-   {   m i n :   0 ,   m a x :   6 ,   g r a d e :   ' C ' ,   s c o r e :   6   }  
-   ] ,  
-   ' q 2 ' :   [  
-   {   m i n :   8 ,   m a x :   9 ,   g r a d e :   ' A ' ,   s c o r e :   1 0   } ,  
-   {   m i n :   5 ,   m a x :   7 ,   g r a d e :   ' B ' ,   s c o r e :   8   } ,  
-   {   m i n :   0 ,   m a x :   4 ,   g r a d e :   ' C ' ,   s c o r e :   6   }  
-   ] ,  
-   ' q 3 ' :   [  
-   {   m i n :   9 ,   m a x :   1 0 ,   g r a d e :   ' A ' ,   s c o r e :   1 0   } ,  
-   {   m i n :   7 ,   m a x :   8 ,   g r a d e :   ' B ' ,   s c o r e :   8   } ,  
-   {   m i n :   0 ,   m a x :   6 ,   g r a d e :   ' C ' ,   s c o r e :   6   }  
-   ]  
-   } ;  
-  
-   c o n s t   L a t e x T e x t   =   ( {   t e x t   } )   = >   {  
-   i f   ( ! t e x t )   r e t u r n   n u l l ;  
-   c o n s t   p a r t s   =   t e x t . s p l i t ( / ( \ $ \ $ . * ? \ $ \ $ ) / g ) ;  
-   r e t u r n   (  
-   < s p a n >  
-   { p a r t s . m a p ( ( p a r t ,   i n d e x )   = >   {  
-   i f   ( p a r t . s t a r t s W i t h ( ' $ $ ' )   & &   p a r t . e n d s W i t h ( ' $ $ ' ) )   {  
-   c o n s t   m a t h   =   p a r t . s l i c e ( 2 ,   - 2 ) ;  
-   t r y   {  
-   c o n s t   h t m l   =   k a t e x . r e n d e r T o S t r i n g ( m a t h ,   {   t h r o w O n E r r o r :   f a l s e   } ) ;  
-   r e t u r n   < s p a n   k e y = { i n d e x }   d a n g e r o u s l y S e t I n n e r H T M L = { {   _ _ h t m l :   h t m l   } }   / > ;  
-   }   c a t c h   ( e )   {  
-   r e t u r n   < s p a n   k e y = { i n d e x } > { p a r t } < / s p a n > ;  
-   }  
-   }  
-   r e t u r n   < s p a n   k e y = { i n d e x } > { p a r t } < / s p a n > ;  
-   } ) }  
-   < / s p a n >  
-   ) ;  
-   } ;  
-  
-   f u n c t i o n   A p p ( )   {  
-   c o n s t   [ v i e w ,   s e t V i e w ]   =   R e a c t . u s e S t a t e ( ' l o g i n ' ) ;    
-   c o n s t   [ c u r r e n t U s e r ,   s e t C u r r e n t U s e r ]   =   R e a c t . u s e S t a t e ( {   i d :   ' ' ,   n a m e :   ' '   } ) ;  
-   c o n s t   [ s t u d e n t s D a t a ,   s e t S t u d e n t s D a t a ]   =   R e a c t . u s e S t a t e ( [ ] ) ;  
-   c o n s t   [ q u e s t i o n s ,   s e t Q u e s t i o n s ]   =   R e a c t . u s e S t a t e ( d e f a u l t Q u e s t i o n s ) ;  
-   c o n s t   [ r u b r i c s ,   s e t R u b r i c s ]   =   R e a c t . u s e S t a t e ( d e f a u l t R u b r i c s ) ;  
-    
-   c o n s t   [ s e t t i n g s ,   s e t S e t t i n g s ]   =   R e a c t . u s e S t a t e ( {  
-   g a s U r l :   D E F A U L T _ G A S _ U R L ,  
-   p a s s w o r d :   ' a d m i n '  
-   } ) ;  
-   c o n s t   [ i s T e a c h e r ,   s e t I s T e a c h e r ]   =   R e a c t . u s e S t a t e ( f a l s e ) ;  
-   c o n s t   [ s h o w L o g i n M o d a l ,   s e t S h o w L o g i n M o d a l ]   =   R e a c t . u s e S t a t e ( f a l s e ) ;  
-   c o n s t   [ t e a c h e r P w d I n p u t ,   s e t T e a c h e r P w d I n p u t ]   =   R e a c t . u s e S t a t e ( ' ' ) ;  
-    
-     c o n s t   [ m o d a l ,   s e t M o d a l ]   =   R e a c t . u s e S t a t e ( {   s h o w :   f a l s e ,   m e s s a g e :   ' ' ,   o n C o n f i r m :   n u l l ,   i s A l e r t :   t r u e   } ) ;  
-     c o n s t   [ i s L o a d i n g D a t a ,   s e t I s L o a d i n g D a t a ]   =   R e a c t . u s e S t a t e ( f a l s e ) ;  
-     c o n s t   [ i s S y n c i n g C o n f i g ,   s e t I s S y n c i n g C o n f i g ]   =   R e a c t . u s e S t a t e ( t r u e ) ;  
-  
-     R e a c t . u s e E f f e c t ( ( )   = >   {  
-         c o n s t   v e r   =   l o c a l S t o r a g e . g e t I t e m ( ' a i M a t h _ v e r s i o n ' ) ;  
-         i f   ( v e r   ! = =   A P P _ V E R S I O N )   {  
-             l o c a l S t o r a g e . c l e a r ( ) ;  
-             l o c a l S t o r a g e . s e t I t e m ( ' a i M a t h _ v e r s i o n ' ,   A P P _ V E R S I O N ) ;  
-         }  
-          
-         / /   �o�Ą�  ? }1�1uJ?   ? ׬Q�  z�H�-�? z1��  ( ? }1=�? ��$�  ? � n�?  
-         c o n s t   s a v e d S t u d e n t s   =   l o c a l S t o r a g e . g e t I t e m ( ' a i M a t h _ s t u d e n t s ' ) ;  
-         i f   ( s a v e d S t u d e n t s )   s e t S t u d e n t s D a t a ( J S O N . p a r s e ( s a v e d S t u d e n t s ) ) ;  
-         c o n s t   s a v e d Q u e s t i o n s   =   l o c a l S t o r a g e . g e t I t e m ( ' a i M a t h _ q u e s t i o n s ' ) ;  
-         i f   ( s a v e d Q u e s t i o n s )   s e t Q u e s t i o n s ( J S O N . p a r s e ( s a v e d Q u e s t i o n s ) ) ;  
-         c o n s t   s a v e d R u b r i c s   =   l o c a l S t o r a g e . g e t I t e m ( ' a i M a t h _ r u b r i c s ' ) ;  
-         i f   ( s a v e d R u b r i c s )   s e t R u b r i c s ( J S O N . p a r s e ( s a v e d R u b r i c s ) ) ;  
-         c o n s t   s a v e d S e t t i n g s   =   l o c a l S t o r a g e . g e t I t e m ( ' a i M a t h _ s e t t i n g s ' ) ;  
-         l e t   c u r r e n t G a s U r l   =   D E F A U L T _ G A S _ U R L ;  
-         i f   ( s a v e d S e t t i n g s )   {  
-             c o n s t   p a r s e d S e t t i n g s   =   J S O N . p a r s e ( s a v e d S e t t i n g s ) ;  
-             s e t S e t t i n g s ( p a r s e d S e t t i n g s ) ;  
-             c u r r e n t G a s U r l   =   p a r s e d S e t t i n g s . g a s U r l ;  
-         }  
-          
-         / /   ? ��ô? /�L�  ���Ċ�  ? |1�  ? °�? ?         i f   ( c u r r e n t G a s U r l )   {  
-             f e t c h ( c u r r e n t G a s U r l   +   ' ? a c t i o n = g e t C o n f i g ' )  
-                 . t h e n ( r e s   = >   r e s . j s o n ( ) )  
-                 . t h e n ( j s o n   = >   {  
-                     i f   ( j s o n   & &   j s o n . s t a t u s   = = =   ' s u c c e s s '   & &   j s o n . d a t a . q u e s t i o n s   & &   j s o n . d a t a . q u e s t i o n s . l e n g t h   >   0 )   {  
-                         s e t Q u e s t i o n s ( j s o n . d a t a . q u e s t i o n s ) ;  
-                         s e t R u b r i c s ( j s o n . d a t a . r u b r i c s ) ;  
-                         l o c a l S t o r a g e . s e t I t e m ( ' a i M a t h _ q u e s t i o n s ' ,   J S O N . s t r i n g i f y ( j s o n . d a t a . q u e s t i o n s ) ) ;  
-                         l o c a l S t o r a g e . s e t I t e m ( ' a i M a t h _ r u b r i c s ' ,   J S O N . s t r i n g i f y ( j s o n . d a t a . r u b r i c s ) ) ;  
-                     }  
-                 } )  
-                 . c a t c h ( e   = >   c o n s o l e . e r r o r ( " C o n f i g   s y n c   e r r o r : " ,   e ) )  
-                 . f i n a l l y ( ( )   = >   s e t I s S y n c i n g C o n f i g ( f a l s e ) ) ;  
-         }   e l s e   {  
-             s e t I s S y n c i n g C o n f i g ( f a l s e ) ;  
-         }  
-     } ,   [ ] ) ;  
-    
-   / /   ? ��n�? ? ? ���  ? ? �cH?   ? ��ô? /�L�  ���Ċ�  ? ׬ �? ? z�H�-�? z1�� 
-   R e a c t . u s e E f f e c t ( ( )   = >   {  
-   i f   ( i s T e a c h e r   & &   v i e w   = = =   ' a d m i n '   & &   s e t t i n g s . g a s U r l )   {  
-   s e t I s L o a d i n g D a t a ( t r u e ) ;  
-   f e t c h ( s e t t i n g s . g a s U r l )  
-   . t h e n ( r e s   = >   r e s . j s o n ( ) )  
-   . t h e n ( j s o n   = >   {  
-   i f   ( j s o n . s t a t u s   = = =   ' s u c c e s s ' )   {  
-   s e t S t u d e n t s D a t a ( j s o n . d a t a ) ;  
-   l o c a l S t o r a g e . s e t I t e m ( ' a i M a t h _ s t u d e n t s ' ,   J S O N . s t r i n g i f y ( j s o n . d a t a ) ) ;  
-   }  
-   } )  
-   . c a t c h ( e   = >   c o n s o l e . e r r o r ( " D a t a   l o a d   e r r o r : " ,   e ) )  
-   . f i n a l l y ( ( )   = >   s e t I s L o a d i n g D a t a ( f a l s e ) ) ;  
-   }  
-   } ,   [ i s T e a c h e r ,   v i e w ,   s e t t i n g s . g a s U r l ] ) ;  
-  
-   c o n s t   h a n d l e T e a c h e r L o g i n   =   ( )   = >   {  
-   i f   ( t e a c h e r P w d I n p u t   = = =   s e t t i n g s . p a s s w o r d )   {  
-   s e t I s T e a c h e r ( t r u e ) ;  
-   s e t S h o w L o g i n M o d a l ( f a l s e ) ;  
-   s e t T e a c h e r P w d I n p u t ( ' ' ) ;  
-   s e t V i e w ( ' a d m i n ' ) ;  
-   }   e l s e   {  
-   s e t M o d a l ( {   s h o w :   t r u e ,   m e s s a g e :   ' n���? 0�J����Z�   ? ����? �?   ? ���? H���. ' ,   i s A l e r t :   t r u e   } ) ;  
-   }  
-   } ;  
-  
-   c o n s t   h a n d l e S t u d e n t S t a r t   =   ( e )   = >   {  
-   e . p r e v e n t D e f a u l t ( ) ;  
-   i f   ( ! c u r r e n t U s e r . i d   | |   ! c u r r e n t U s e r . n a m e )   {  
-   s e t M o d a l ( {   s h o w :   t r u e ,   m e s s a g e :   ' ? ²�(`? ?  ���? ? ��d$��  ? ��0�? ��? ����. ' ,   i s A l e r t :   t r u e   } ) ;  
-   r e t u r n ;  
-   }  
-   c o n s t   e x i s t i n g   =   s t u d e n t s D a t a . f i n d ( s   = >   s . i d   = = =   c u r r e n t U s e r . i d ) ;  
-   i f   ( e x i s t i n g )   {  
-   s e t M o d a l ( {   s h o w :   t r u e ,   m e s s a g e :   ' ?  �?   ? /�? \t? ? ��g�? ? ? ²�? ��r�? ? ' ,   i s A l e r t :   t r u e   } ) ;  
-   r e t u r n ;  
-   }  
-   s e t V i e w ( ' q u i z ' ) ;  
-   } ;  
-  
-   r e t u r n   (  
-   < d i v   c l a s s N a m e = " m a x - w - 3 x l   m x - a u t o   p - 4   m d : p - 6   m i n - h - s c r e e n   r e l a t i v e " >  
-    
-   { i s S y n c i n g C o n f i g   & &   (  
-         < d i v   c l a s s N a m e = " f i x e d   i n s e t - 0   b g - w h i t e   f l e x   f l e x - c o l   i t e m s - c e n t e r   j u s t i f y - c e n t e r   z - [ 2 0 0 ] " >  
-             < d i v   c l a s s N a m e = " w o r k s h e e t - b o x   p - 8   t e x t - c e n t e r   a n i m a t e - p u l s e " >  
-                 < h 2   c l a s s N a m e = " t e x t - 2 x l   f o n t - b l a c k   m b - 4 " > ���Ċ�  ? |1�? ? z�H�-�? {1��  �N���? H���. . . < / h 2 >  
-                 < p   c l a s s N a m e = " f o n t - b o l d   t e x t - g r a y - 6 0 0 " > �cH?   ? ��ô? �   ? °�? ? �N���? H���.   ? �Ȇ���? rnլ��? |1�? ����. < / p >  
-             < / d i v >  
-         < / d i v >  
-     ) }  
-  
-   { / *   (`�;�  ��d$��  ( a l e r t / c o n f i r m   ? � ��?   * / }  
-   { m o d a l . s h o w   & &   (  
-   < d i v   c l a s s N a m e = " f i x e d   i n s e t - 0   b g - b l a c k / 5 0   f l e x   i t e m s - c e n t e r   j u s t i f y - c e n t e r   z - [ 1 0 0 ]   p - 4 " >  
-   < d i v   c l a s s N a m e = " w o r k s h e e t - b o x   p - 6   w - f u l l   m a x - w - s m   t e x t - c e n t e r   b g - w h i t e " >  
-   < p   c l a s s N a m e = " f o n t - b o l d   t e x t - l g   m b - 6   w h i t e s p a c e - p r e - w r a p " > { m o d a l . m e s s a g e } < / p >  
-   < d i v   c l a s s N a m e = " f l e x   g a p - 2   j u s t i f y - c e n t e r " >  
-   { m o d a l . i s A l e r t   ?   (  
-   < b u t t o n   o n C l i c k = { ( )   = >   s e t M o d a l ( {   s h o w :   f a l s e ,   m e s s a g e :   ' '   } ) }   c l a s s N a m e = " b g - b l a c k   t e x t - w h i t e   p x - 6   p y - 2   f o n t - b o l d   s h a d o w - [ 2 p x _ 2 p x _ 0 _ 0 _ # 6 6 6 ] " > ? ��$�< / b u t t o n >  
-   )   :   (  
-   < >  
-   < b u t t o n   o n C l i c k = { ( )   = >   {    
-   i f   ( m o d a l . o n C o n f i r m )   m o d a l . o n C o n f i r m ( ) ;    
-   s e t M o d a l ( {   s h o w :   f a l s e ,   m e s s a g e :   ' ' ,   o n C o n f i r m :   n u l l   } ) ;    
-   } }   c l a s s N a m e = " b g - r e d - 5 0 0   t e x t - w h i t e   p x - 6   p y - 2   f o n t - b o l d   b o r d e r - 2   b o r d e r - b l a c k " > ? ? ������) < / b u t t o n >  
-   < b u t t o n   o n C l i c k = { ( )   = >   s e t M o d a l ( {   s h o w :   f a l s e ,   m e s s a g e :   ' ' ,   o n C o n f i r m :   n u l l   } ) }   c l a s s N a m e = " b g - w h i t e   b o r d e r - 2   b o r d e r - b l a c k   p x - 6   p y - 2   f o n t - b o l d " > �ue$��< / b u t t o n >  
-   < / >  
-   ) }  
-   < / d i v >  
-   < / d i v >  
-   < / d i v >  
-   ) }  
-  
-   { / *   �c/���  �o���? ? ��d$��  * / }  
-   { s h o w L o g i n M o d a l   & &   (  
-   < d i v   c l a s s N a m e = " f i x e d   i n s e t - 0   b g - b l a c k / 5 0   f l e x   i t e m s - c e n t e r   j u s t i f y - c e n t e r   z - [ 5 0 ]   p - 4 " >  
-   < d i v   c l a s s N a m e = " w o r k s h e e t - b o x   p - 6   w - f u l l   m a x - w - s m   b g - w h i t e " >  
-   < h 2   c l a s s N a m e = " t e x t - x l   f o n t - b l a c k   m b - 4 " > �c/���  ? � ����   ? ���< / h 2 >  
-   < i n p u t    
-   t y p e = " p a s s w o r d "    
-   p l a c e h o l d e r = " n���? 0�J���  ? ��0�"    
-   c l a s s N a m e = " w - f u l l   p - 3   b o r d e r - 2   b o r d e r - b l a c k   f o n t - b o l d   m b - 4   o u t l i n e - n o n e "  
-   v a l u e = { t e a c h e r P w d I n p u t }  
-   o n C h a n g e = { e   = >   s e t T e a c h e r P w d I n p u t ( e . t a r g e t . v a l u e ) }  
-   o n K e y D o w n = { e   = >   e . k e y   = = =   ' E n t e r '   & &   h a n d l e T e a c h e r L o g i n ( ) }  
-   / >  
-   < d i v   c l a s s N a m e = " f l e x   g a p - 2 " >  
-   < b u t t o n   o n C l i c k = { h a n d l e T e a c h e r L o g i n }   c l a s s N a m e = " f l e x - 1   b g - b l a c k   t e x t - w h i t e   p y - 3   f o n t - b o l d   b o r d e r - 2   b o r d e r - b l a c k " > ? ���< / b u t t o n >  
-   < b u t t o n   o n C l i c k = { ( )   = >   s e t S h o w L o g i n M o d a l ( f a l s e ) }   c l a s s N a m e = " f l e x - 1   b g - w h i t e   b o r d e r - 2   b o r d e r - b l a c k   p y - 3   f o n t - b o l d " > �ue$��< / b u t t o n >  
-   < / d i v >  
-   < / d i v >  
-   < / d i v >  
-   ) }  
-  
-   < h e a d e r   c l a s s N a m e = " f l e x   j u s t i f y - b e t w e e n   i t e m s - c e n t e r   m b - 6   p b - 4   b o r d e r - b - 4   b o r d e r - b l a c k " >  
-   < d i v >  
-   < h 1   c l a s s N a m e = " t e x t - x l   s m : t e x t - 2 x l   f o n t - b l a c k   t r a c k i n g - t i g h t e r " > ? x������ ? �Բ? ? ? ���? /�? < / h 1 >  
-   < p   c l a s s N a m e = " t e x t - x s   s m : t e x t - s m   f o n t - b o l d   t e x t - g r a y - 6 0 0   m t - 1 " > ? ²�(`? ?  ���? ? ? ����? ? ? ��0�? �m�? ? < / p >  
-   < / d i v >  
-   { v i e w   ! = =   ' a d m i n '   & &   (  
-   < b u t t o n   o n C l i c k = { ( )   = >   s e t S h o w L o g i n M o d a l ( t r u e ) }   c l a s s N a m e = " t e x t - x s   f o n t - b o l d   p x - 3   p y - 1   b o r d e r - 2   b o r d e r - b l a c k   h o v e r : b g - g r a y - 2 0 0 " > �c/���? ���< / b u t t o n >  
-   ) }  
-   { v i e w   = = =   ' a d m i n '   & &   (  
-   < b u t t o n   o n C l i c k = { ( )   = >   {   s e t I s T e a c h e r ( f a l s e ) ;   s e t V i e w ( ' l o g i n ' ) ;   } }   c l a s s N a m e = " t e x t - x s   f o n t - b o l d   p x - 3   p y - 1   b o r d e r - 2   b o r d e r - b l a c k   b g - b l a c k   t e x t - w h i t e " > �o���? ��P�< / b u t t o n >  
-   ) }  
-   < / h e a d e r >  
-  
-   { / *   ? ����? ? * / }  
-   { v i e w   = = =   ' l o g i n '   & &   (  
-   < d i v   c l a s s N a m e = " w o r k s h e e t - b o x   p - 6   s m : p - 8   m a x - w - m d   m x - a u t o   m t - 1 0 " >  
-   < f o r m   o n S u b m i t = { h a n d l e S t u d e n t S t a r t }   c l a s s N a m e = " s p a c e - y - 6 " >  
-   < d i v >  
-   < l a b e l   c l a s s N a m e = " b l o c k   f o n t - b l a c k   t e x t - l g   m b - 2 " > ? ²�  ( 4 ? .�%) < / l a b e l >  
-   < i n p u t   t y p e = " t e x t "   p a t t e r n = " [ 0 - 9 ] { 4 } "   p l a c e h o l d e r = " ? ?   3 5 0 1 "   c l a s s N a m e = " w - f u l l   p - 4   b o r d e r - 2   b o r d e r - b l a c k   f o n t - b o l d   t e x t - x l   o u t l i n e - n o n e "   v a l u e = { c u r r e n t U s e r . i d }   o n C h a n g e = { e   = >   s e t C u r r e n t U s e r ( { . . . c u r r e n t U s e r ,   i d :   e . t a r g e t . v a l u e } ) }   r e q u i r e d   / >  
-   < / d i v >  
-   < d i v >  
-   < l a b e l   c l a s s N a m e = " b l o c k   f o n t - b l a c k   t e x t - l g   m b - 2 " > ?  ���< / l a b e l >  
-   < i n p u t   t y p e = " t e x t "   p l a c e h o l d e r = " ?  ���  ? ��0�"   c l a s s N a m e = " w - f u l l   p - 4   b o r d e r - 2   b o r d e r - b l a c k   f o n t - b o l d   t e x t - x l   o u t l i n e - n o n e "   v a l u e = { c u r r e n t U s e r . n a m e }   o n C h a n g e = { e   = >   s e t C u r r e n t U s e r ( { . . . c u r r e n t U s e r ,   n a m e :   e . t a r g e t . v a l u e } ) }   r e q u i r e d   / >  
-   < / d i v >  
-   < b u t t o n   t y p e = " s u b m i t "   c l a s s N a m e = " w - f u l l   b g - b l a c k   t e x t - w h i t e   p y - 4   f o n t - b l a c k   t e x t - x l   b t n - r e t r o " > ? /�?   ? ��	�? ���< / b u t t o n >  
-   < / f o r m >  
-   < / d i v >  
-   ) }  
-  
-   { v i e w   = = =   ' q u i z '   & &   (  
-   < Q u i z V i e w    
-   c u r r e n t U s e r = { c u r r e n t U s e r }    
-   q u e s t i o n s = { q u e s t i o n s }    
-   r u b r i c s = { r u b r i c s }  
-   s t u d e n t s D a t a = { s t u d e n t s D a t a }  
-   s e t S t u d e n t s D a t a = { s e t S t u d e n t s D a t a }  
-   s e t t i n g s = { s e t t i n g s }  
-   s e t V i e w = { s e t V i e w }  
-   s e t M o d a l = { s e t M o d a l }  
-   / >  
-   ) }  
-  
-   { v i e w   = = =   ' r e s u l t '   & &   (  
-   < R e s u l t V i e w   c u r r e n t U s e r = { c u r r e n t U s e r }   s t u d e n t s D a t a = { s t u d e n t s D a t a }   o n B a c k = { ( )   = >   {   s e t V i e w ( ' l o g i n ' ) ;   s e t C u r r e n t U s e r ( { i d : ' ' ,   n a m e : ' ' } ) ;   } }   / >  
-   ) }  
-  
-   { v i e w   = = =   ' a d m i n '   & &   i s T e a c h e r   & &   (  
-   < A d m i n D a s h b o a r d    
-   q u e s t i o n s = { q u e s t i o n s }   s e t Q u e s t i o n s = { s e t Q u e s t i o n s }  
-   r u b r i c s = { r u b r i c s }   s e t R u b r i c s = { s e t R u b r i c s }  
-   s t u d e n t s D a t a = { s t u d e n t s D a t a }   s e t S t u d e n t s D a t a = { s e t S t u d e n t s D a t a }  
-   s e t t i n g s = { s e t t i n g s }   s e t S e t t i n g s = { s e t S e t t i n g s }  
-   s e t M o d a l = { s e t M o d a l }   i s L o a d i n g D a t a = { i s L o a d i n g D a t a }  
-   / >  
-   ) }  
-   < / d i v >  
-   ) ;  
-   }  
-  
-   f u n c t i o n   Q u i z V i e w ( {   c u r r e n t U s e r ,   q u e s t i o n s ,   r u b r i c s ,   s t u d e n t s D a t a ,   s e t S t u d e n t s D a t a ,   s e t t i n g s ,   s e t V i e w ,   s e t M o d a l   } )   {  
-   c o n s t   [ c u r r e n t P a g e ,   s e t C u r r e n t P a g e ]   =   R e a c t . u s e S t a t e ( 0 ) ;  
-   c o n s t   [ s t u d e n t A n s w e r s ,   s e t S t u d e n t A n s w e r s ]   =   R e a c t . u s e S t a t e ( { } ) ;    
-   c o n s t   [ a c t i v e B l a n k ,   s e t A c t i v e B l a n k ]   =   R e a c t . u s e S t a t e ( n u l l ) ;    
-  
-   R e a c t . u s e E f f e c t ( ( )   = >   {  
-   c o n s t   i n i t A n s w e r s   =   { } ;  
-   q u e s t i o n s . f o r E a c h ( q   = >   {  
-   c o n s t   b l a n k C o u n t   =   ( q . c o n t e n t . m a t c h ( / \ { \ { . * ? \ } \ } / g )   | |   [ ] ) . l e n g t h ;  
-   i n i t A n s w e r s [ q . i d ]   =   A r r a y ( b l a n k C o u n t ) . f i l l ( ' ' ) ;  
-   } ) ;  
-   s e t S t u d e n t A n s w e r s ( i n i t A n s w e r s ) ;  
-   } ,   [ q u e s t i o n s ] ) ;  
-  
-   c o n s t   c u r r e n t Q   =   q u e s t i o n s [ c u r r e n t P a g e ] ;  
-   i f   ( ! c u r r e n t Q )   r e t u r n   n u l l ;  
-  
-   c o n s t   h a n d l e W o r d S e l e c t   =   ( w o r d )   = >   {  
-   i f   ( ! a c t i v e B l a n k )   r e t u r n ;  
-   s e t S t u d e n t A n s w e r s ( p r e v   = >   {  
-   c o n s t   n e w A n s   =   {   . . . p r e v   } ;  
-   n e w A n s [ a c t i v e B l a n k . q I d ] [ a c t i v e B l a n k . i n d e x ]   =   w o r d ;  
-   r e t u r n   n e w A n s ;  
-   } ) ;  
-   s e t A c t i v e B l a n k ( n u l l ) ;  
-   } ;  
-  
-   c o n s t   h a n d l e S u b m i t   =   ( )   = >   {  
-   s e t M o d a l ( {  
-   s h o w :   t r u e ,  
-   i s A l e r t :   f a l s e ,  
-   m e s s a g e :   " ? ��Z�  ? ��g�? ����[�ȿ�? G�t�? \ n ? ��g�  ? ��ɿ? ? ? ��? ? ? ? ? ����? H���. " ,  
-   o n C o n f i r m :   ( )   = >   {  
-   l e t   t o t a l S c o r e   =   0 ;  
-   c o n s t   r e s u l t s   =   { } ;  
-   q u e s t i o n s . f o r E a c h ( q   = >   {  
-   c o n s t   c o r r e c t A n s w e r s   =   ( q . c o n t e n t . m a t c h ( / \ { \ { ( . * ? ) \ } \ } / g )   | |   [ ] ) . m a p ( s   = >   s . r e p l a c e ( / [ { } ] / g ,   ' ' ) . t r i m ( ) ) ;  
-   c o n s t   u s e r A n s w e r s   =   s t u d e n t A n s w e r s [ q . i d ]   | |   [ ] ;  
-   l e t   c o r r e c t C o u n t   =   0 ;  
-   c o r r e c t A n s w e r s . f o r E a c h ( ( a n s ,   i d x )   = >   {  
-   i f   ( u s e r A n s w e r s [ i d x ]   = = =   a n s )   c o r r e c t C o u n t + + ;  
-   } ) ;  
-   c o n s t   q R u b r i c s   =   r u b r i c s [ q . i d ]   | |   [ ] ;  
-   l e t   s c o r e I n f o   =   {   g r a d e :   ' F ' ,   s c o r e :   0   } ;  
-   f o r   ( l e t   r   o f   q R u b r i c s )   {  
-   i f   ( c o r r e c t C o u n t   > =   r . m i n   & &   c o r r e c t C o u n t   < =   r . m a x )   {  
-   s c o r e I n f o   =   {   g r a d e :   r . g r a d e ,   s c o r e :   r . s c o r e   } ;  
-   b r e a k ;  
-   }  
-   }  
-   r e s u l t s [ q . i d ]   =   {   c o r r e c t C o u n t ,   s c o r e I n f o   } ;  
-   t o t a l S c o r e   + =   s c o r e I n f o . s c o r e ;  
-   } ) ;  
-  
-   c o n s t   f i n a l D a t a   =   {  
-   i d :   c u r r e n t U s e r . i d ,  
-   n a m e :   c u r r e n t U s e r . n a m e ,  
-   r e s u l t s ,  
-   t o t a l S c o r e ,  
-   t i m e s t a m p :   n e w   D a t e ( ) . t o L o c a l e S t r i n g ( ) ,  
-   s c o r e s :   q u e s t i o n s . m a p ( q   = >   r e s u l t s [ q . i d ] . s c o r e I n f o . s c o r e )  
-   } ;  
-  
-   c o n s t   n e w D a t a   =   [ . . . s t u d e n t s D a t a ,   f i n a l D a t a ] ;  
-   s e t S t u d e n t s D a t a ( n e w D a t a ) ;  
-   l o c a l S t o r a g e . s e t I t e m ( ' a i M a t h _ s t u d e n t s ' ,   J S O N . s t r i n g i f y ( n e w D a t a ) ) ;  
-    
-   i f   ( s e t t i n g s . g a s U r l )   {  
-   t r y   {  
-   f e t c h ( s e t t i n g s . g a s U r l ,   {  
-   m e t h o d :   ' P O S T ' ,  
-   m o d e :   ' n o - c o r s ' ,  
-   h e a d e r s :   {   ' C o n t e n t - T y p e ' :   ' t e x t / p l a i n '   } ,  
-   b o d y :   J S O N . s t r i n g i f y ( {   a c t i o n :   " s u b m i t " ,   d a t a :   f i n a l D a t a   } )  
-   } ) ;  
-   }   c a t c h ( e )   {   c o n s o l e . e r r o r ( " S h e e t   E r r o r : " ,   e ) ;   }  
-   }  
-   s e t V i e w ( ' r e s u l t ' ) ;  
-   }  
-   } ) ;  
-   } ;  
-  
-   c o n s t   r e n d e r C o n t e n t W i t h B l a n k s   =   ( q )   = >   {  
-   c o n s t   p a r t s   =   q . c o n t e n t . s p l i t ( / ( \ { \ { . * ? \ } \ } ) / g ) ;  
-   l e t   b l a n k I d x   =   0 ;  
-   r e t u r n   p a r t s . m a p ( ( p a r t ,   i )   = >   {  
-   i f   ( p a r t . s t a r t s W i t h ( ' { { ' )   & &   p a r t . e n d s W i t h ( ' } } ' ) )   {  
-   c o n s t   c u r r e n t I d x   =   b l a n k I d x + + ;  
-   c o n s t   a n s   =   s t u d e n t A n s w e r s [ q . i d ]   & &   s t u d e n t A n s w e r s [ q . i d ] [ c u r r e n t I d x ] ;  
-   c o n s t   i s A c t i v e   =   a c t i v e B l a n k   & &   a c t i v e B l a n k . q I d   = = =   q . i d   & &   a c t i v e B l a n k . i n d e x   = = =   c u r r e n t I d x ;  
-   r e t u r n   (  
-   < s p a n   k e y = { i }   o n C l i c k = { ( )   = >   s e t A c t i v e B l a n k ( {   q I d :   q . i d ,   i n d e x :   c u r r e n t I d x   } ) }   c l a s s N a m e = { ` b l a n k - i n p u t   $ { i s A c t i v e   ?   ' b l a n k - a c t i v e '   :   ' ' } ` } >  
-   { a n s   ?   < L a t e x T e x t   t e x t = { a n s }   / >   :   < s p a n   c l a s s N a m e = " t e x t - g r a y - 3 0 0 " > ? ׬��< / s p a n > }  
-   < / s p a n >  
-   ) ;  
-   }  
-   r e t u r n   < L a t e x T e x t   k e y = { i }   t e x t = { p a r t }   / > ;  
-   } ) ;  
-   } ;  
-  
-   r e t u r n   (  
-   < d i v   c l a s s N a m e = " f l e x   f l e x - c o l   h - [ 8 0 v h ] " >  
-   < d i v   c l a s s N a m e = " f l e x   j u s t i f y - b e t w e e n   i t e m s - c e n t e r   m b - 4 " >  
-   < h 2   c l a s s N a m e = " t e x t - x l   f o n t - b l a c k " > { c u r r e n t Q . t i t l e } < / h 2 >  
-   < s p a n   c l a s s N a m e = " f o n t - b o l d   b o r d e r - 2   b o r d e r - b l a c k   p x - 3   p y - 1   b g - w h i t e " > { c u r r e n t P a g e   +   1 }   /   { q u e s t i o n s . l e n g t h } < / s p a n >  
-   < / d i v >  
-   < d i v   c l a s s N a m e = " w o r k s h e e t - b o x   p - 4   s m : p - 6   f l e x - 1   o v e r f l o w - y - a u t o   l e a d i n g - l o o s e   t e x t - b a s e   s m : t e x t - l g   w h i t e s p a c e - p r e - w r a p " >  
-   { r e n d e r C o n t e n t W i t h B l a n k s ( c u r r e n t Q ) }  
-   < / d i v >  
-  
-   { a c t i v e B l a n k   & &   a c t i v e B l a n k . q I d   = = =   c u r r e n t Q . i d   & &   (  
-   < d i v   c l a s s N a m e = " m t - 4   p - 4   w o r k s h e e t - b o x   b g - g r a y - 5 0   b o r d e r - t - 0 " >  
-   < p   c l a s s N a m e = " t e x t - s m   f o n t - b o l d   m b - 2 " > ? e$1�\t? ? ��n�? �m�? ? < / p >  
-   < d i v   c l a s s N a m e = " f l e x   f l e x - w r a p   g a p - 2 " >  
-   { c u r r e n t Q . o p t i o n s . m a p ( ( o p t ,   i d x )   = >   (  
-   < b u t t o n   k e y = { i d x }   o n C l i c k = { ( )   = >   h a n d l e W o r d S e l e c t ( o p t ) }   c l a s s N a m e = " b o r d e r - 2   b o r d e r - b l a c k   b g - w h i t e   p x - 3   p y - 2   f o n t - b o l d   h o v e r : b g - b l a c k   h o v e r : t e x t - w h i t e   t r a n s i t i o n - c o l o r s " >  
-   < L a t e x T e x t   t e x t = { o p t }   / >  
-   < / b u t t o n >  
-   ) ) }  
-   < / d i v >  
-   < / d i v >  
-   ) }  
-  
-   < d i v   c l a s s N a m e = " m t - 6   f l e x   j u s t i f y - b e t w e e n   g a p - 4 " >  
-   { c u r r e n t P a g e   >   0   ?   (  
-   < b u t t o n   o n C l i c k = { ( )   = >   { s e t C u r r e n t P a g e ( p   = >   p   -   1 ) ;   s e t A c t i v e B l a n k ( n u l l ) ; } }   c l a s s N a m e = " f l e x - 1   b g - w h i t e   b o r d e r - 2   b o r d e r - b l a c k   p y - 4   f o n t - b l a c k   b t n - r e t r o   t e x t - s m   s m : t e x t - b a s e " > ? �   ? ���  ? ����< / b u t t o n >  
-   )   :   < d i v   c l a s s N a m e = " f l e x - 1 " > < / d i v > }  
-   { c u r r e n t P a g e   <   q u e s t i o n s . l e n g t h   -   1   ?   (  
-   < b u t t o n   o n C l i c k = { ( )   = >   { s e t C u r r e n t P a g e ( p   = >   p   +   1 ) ;   s e t A c t i v e B l a n k ( n u l l ) ; } }   c l a s s N a m e = " f l e x - 1   b g - b l a c k   t e x t - w h i t e   b o r d e r - 2   b o r d e r - b l a c k   p y - 4   f o n t - b l a c k   b t n - r e t r o   t e x t - s m   s m : t e x t - b a s e " > ? |1��  ? ����  ? ? / b u t t o n >  
-   )   :   (  
-   < b u t t o n   o n C l i c k = { h a n d l e S u b m i t }   c l a s s N a m e = " f l e x - 1   b g - b l a c k   t e x t - w h i t e   b o r d e r - 2   b o r d e r - b l a c k   p y - 4   f o n t - b l a c k   b t n - r e t r o   t e x t - s m   s m : t e x t - b a s e " > ����L�  ? ��g�? ���< / b u t t o n >  
-   ) }  
-   < / d i v >  
-   < / d i v >  
-   ) ;  
-   }  
-  
-   f u n c t i o n   R e s u l t V i e w ( {   c u r r e n t U s e r ,   s t u d e n t s D a t a ,   o n B a c k   } )   {  
-   c o n s t   r e s u l t   =   s t u d e n t s D a t a . f i n d ( s   = >   s . i d   = = =   c u r r e n t U s e r . i d ) ;  
-   i f   ( ! r e s u l t )   r e t u r n   < d i v   c l a s s N a m e = " p - 4   f o n t - b o l d   t e x t - c e n t e r " > �[̬��\t? ������  ? ? ? ����? H���. < / d i v > ;  
-   r e t u r n   (  
-   < d i v   c l a s s N a m e = " w o r k s h e e t - b o x   p - 6   s m : p - 8   m a x - w - l g   m x - a u t o   t e x t - c e n t e r   m t - 1 0 " >  
-   < h 2   c l a s s N a m e = " t e x t - 2 x l   s m : t e x t - 3 x l   f o n t - b l a c k   m b - 2 " > { r e s u l t . n a m e }   ? �n�< / h 2 >  
-   < p   c l a s s N a m e = " t e x t - l g   f o n t - b o l d   m b - 8   p b - 4   b o r d e r - b - 2   b o r d e r - b l a c k " > �sy��:   < s p a n   c l a s s N a m e = " t e x t - 3 x l " > { r e s u l t . t o t a l S c o r e } < / s p a n > ? ? / p >  
-   < d i v   c l a s s N a m e = " s p a c e - y - 4   m b - 8   t e x t - l e f t " >  
-   { O b j e c t . e n t r i e s ( r e s u l t . r e s u l t s ) . m a p ( ( [ q I d ,   d a t a ] ,   i d x )   = >   (  
-   < d i v   k e y = { i d x }   c l a s s N a m e = " f l e x   f l e x - c o l   s m : f l e x - r o w   j u s t i f y - b e t w e e n   s m : i t e m s - c e n t e r   b o r d e r - 2   b o r d e r - b l a c k   p - 4   b g - g r a y - 5 0   g a p - 2 " >  
-   < s p a n   c l a s s N a m e = " f o n t - b o l d " > ? ����  { i d x   +   1 } < / s p a n >  
-   < d i v   c l a s s N a m e = " t e x t - r i g h t   s m : t e x t - l e f t " >  
-   < s p a n   c l a s s N a m e = " f o n t - b l a c k   t e x t - x l " > { d a t a . s c o r e I n f o . s c o r e } ? ? / s p a n >  
-   < s p a n   c l a s s N a m e = " t e x t - s m   f o n t - b o l d   t e x t - g r a y - 6 0 0   m l - 2 " > ( { d a t a . s c o r e I n f o . g r a d e } ? C��  /   { d a t a . c o r r e c t C o u n t } �Z? ? ����) < / s p a n >  
-   < / d i v >  
-   < / d i v >  
-   ) ) }  
-   < / d i v >  
-   < b u t t o n   o n C l i c k = { o n B a c k }   c l a s s N a m e = " w - f u l l   b g - b l a c k   t e x t - w h i t e   p y - 4   f o n t - b l a c k   t e x t - x l   b t n - r e t r o " > �����? ���  ? ����Z� rn? / b u t t o n >  
-   < / d i v >  
-   ) ;  
-   }  
-  
-   f u n c t i o n   A d m i n D a s h b o a r d ( {   q u e s t i o n s ,   s e t Q u e s t i o n s ,   r u b r i c s ,   s e t R u b r i c s ,   s t u d e n t s D a t a ,   s e t S t u d e n t s D a t a ,   s e t t i n g s ,   s e t S e t t i n g s ,   s e t M o d a l ,   i s L o a d i n g D a t a   } )   {  
-   c o n s t   [ t a b ,   s e t T a b ]   =   R e a c t . u s e S t a t e ( ' s t u d e n t s ' ) ;  
-  
-   c o n s t   h a n d l e S y n c C o n f i g   =   ( )   = >   {  
-         s e t M o d a l ( {  
-             s h o w :   t r u e ,  
-             i s A l e r t :   f a l s e ,  
-             m e s s a g e :   ' ? ��1�  ? �f�? ? ����F�(`? 7sd$�1u? ? |1�? ? �N�0�  �cH?   ? ��ô? ? ? ? 1�? ׬���[�ȿ�? G�t�? \ n ��d$z�  rn̬��( ? �n�) �Z�   ? ? ? |1�? ���  ? °�? ��׹? H���. ' ,  
-             o n C o n f i r m :   ( )   = >   {  
-                 i f   ( ! s e t t i n g s . g a s U r l )   {  
-                     s e t T i m e o u t ( ( )   = >   s e t M o d a l ( {   s h o w :   t r u e ,   m e s s a g e :   ' �cH?   ? ��ô  ? լ޸  U R L ? ? ? |1�? �?   ? �/�? �r�? ? ' ,   i s A l e r t :   t r u e   } ) ,   1 0 0 ) ;  
-                     r e t u r n ;  
-                 }  
-                  
-                 t r y   {  
-                     f e t c h ( s e t t i n g s . g a s U r l ,   {  
-                         m e t h o d :   ' P O S T ' ,  
-                         m o d e :   ' n o - c o r s ' ,  
-                         h e a d e r s :   {   ' C o n t e n t - T y p e ' :   ' t e x t / p l a i n '   } ,  
-                         b o d y :   J S O N . s t r i n g i f y ( {   a c t i o n :   ' s a v e C o n f i g ' ,   d a t a :   {   q u e s t i o n s ,   r u b r i c s   }   } )  
-                     } ) ;  
-                     s e t T i m e o u t ( ( )   = >   s e t M o d a l ( {   s h o w :   t r u e ,   m e s s a g e :   ' ? °�? ? ? ��̮? ? ? ���? I���? H���. \ n ? ? 2 ~ 3 �s? ? ? �cH?   ? ��ô? ? ۊ�z�? x$r�? ? ' ,   i s A l e r t :   t r u e   } ) ,   1 0 0 ) ;  
-                 }   c a t c h ( e )   {  
-                     s e t T i m e o u t ( ( )   = >   s e t M o d a l ( {   s h o w :   t r u e ,   m e s s a g e :   ' ? °�? ? ? ��̮  �N? ? {1�ʛZ�   ۊ��n�? I���? H���. ' ,   i s A l e r t :   t r u e   } ) ,   1 0 0 ) ;  
-                 }  
-             }  
-         } ) ;  
-     } ;  
-  
-   c o n s t   h a n d l e E x p o r t C S V   =   ( )   = >   {  
-   c o n s t   h e a d e r s   =   [ ' ? ²�' ,   ' ?  ���' ] ;  
-   q u e s t i o n s . f o r E a c h ( q   = >   h e a d e r s . p u s h ( q . t i t l e ) ) ;  
-   h e a d e r s . p u s h ( ' �sy��' ) ;  
-   l e t   c s v C o n t e n t   =   " d a t a : t e x t / c s v ; c h a r s e t = u t f - 8 , \ u F E F F " ;  
-   c s v C o n t e n t   + =   h e a d e r s . j o i n ( " , " )   +   " \ n " ;  
-   s t u d e n t s D a t a . f o r E a c h ( s t u d e n t   = >   {  
-   c o n s t   r o w   =   [ s t u d e n t . i d ,   s t u d e n t . n a m e ] ;  
-   q u e s t i o n s . f o r E a c h ( q   = >   {  
-   c o n s t   s c o r e   =   s t u d e n t . r e s u l t s [ q . i d ]   ?   s t u d e n t . r e s u l t s [ q . i d ] . s c o r e I n f o . s c o r e   :   0 ;  
-   r o w . p u s h ( s c o r e ) ;  
-   } ) ;  
-   r o w . p u s h ( s t u d e n t . t o t a l S c o r e ) ;  
-   c s v C o n t e n t   + =   r o w . j o i n ( " , " )   +   " \ n " ;  
-   } ) ;  
-   c o n s t   e n c o d e d U r i   =   e n c o d e U R I ( c s v C o n t e n t ) ;  
-   c o n s t   l i n k   =   d o c u m e n t . c r e a t e E l e m e n t ( " a " ) ;  
-   l i n k . s e t A t t r i b u t e ( " h r e f " ,   e n c o d e d U r i ) ;  
-   l i n k . s e t A t t r i b u t e ( " d o w n l o a d " ,   ` ? ���? /�? �[̬��_ $ { n e w   D a t e ( ) . t o L o c a l e D a t e S t r i n g ( ) } . c s v ` ) ;  
-   d o c u m e n t . b o d y . a p p e n d C h i l d ( l i n k ) ;  
-   l i n k . c l i c k ( ) ;  
-   d o c u m e n t . b o d y . r e m o v e C h i l d ( l i n k ) ;  
-   } ;  
-  
-   c o n s t   h a n d l e D e l e t e S t u d e n t   =   ( i d )   = >   {  
-   s e t M o d a l ( {  
-   s h o w :   t r u e ,  
-   i s A l e r t :   f a l s e ,  
-   m e s s a g e :   ` $ { i d }   ? �n�? ? rnլ	�? ? ? ��Z�  ? ? #�? ����[�ȿ�? G�t�? \ n ? ? #�  ? ? ? �n�? ? ? |1��  ? /�? \t? B�? ? ? ? I���? H���. ` ,  
-   o n C o n f i r m :   ( )   = >   {  
-   c o n s t   n e w D a t a   =   s t u d e n t s D a t a . f i l t e r ( s   = >   s . i d   ! = =   i d ) ;  
-   s e t S t u d e n t s D a t a ( n e w D a t a ) ;  
-   l o c a l S t o r a g e . s e t I t e m ( ' a i M a t h _ s t u d e n t s ' ,   J S O N . s t r i n g i f y ( n e w D a t a ) ) ;  
-   i f   ( s e t t i n g s . g a s U r l )   {  
-   t r y   {  
-   f e t c h ( s e t t i n g s . g a s U r l ,   {  
-   m e t h o d :   ' P O S T ' ,  
-   m o d e :   ' n o - c o r s ' ,  
-   h e a d e r s :   {   ' C o n t e n t - T y p e ' :   ' t e x t / p l a i n '   } ,  
-   b o d y :   J S O N . s t r i n g i f y ( {   a c t i o n :   " d e l e t e " ,   d a t a :   {   s t u d e n t I d :   i d   }   } )  
-   } ) ;  
-   }   c a t c h ( e )   { }  
-   }  
-   }  
-   } ) ;  
-   } ;  
-  
-   c o n s t   h a n d l e A d d Q u e s t i o n   =   ( )   = >   {  
-   c o n s t   n e w I d   =   ' q '   +   D a t e . n o w ( ) ;  
-   c o n s t   n e w Q   =   [ . . . q u e s t i o n s ,   {   i d :   n e w I d ,   t i t l e :   ' ? H��? ? ? ����' ,   c o n t e n t :   '   ? ���? ? ? ��0�? �m�? ?   { { ? ����} } ' ,   o p t i o n s :   [ ' ? ����' ]   } ] ;  
-   s e t Q u e s t i o n s ( n e w Q ) ;  
-   l o c a l S t o r a g e . s e t I t e m ( ' a i M a t h _ q u e s t i o n s ' ,   J S O N . s t r i n g i f y ( n e w Q ) ) ;  
-   c o n s t   n e w R   =   { . . . r u b r i c s ,   [ n e w I d ] :   [ {   m i n :   0 ,   m a x :   1 ,   g r a d e :   ' A ' ,   s c o r e :   1 0   } ] } ;  
-   s e t R u b r i c s ( n e w R ) ;  
-   l o c a l S t o r a g e . s e t I t e m ( ' a i M a t h _ r u b r i c s ' ,   J S O N . s t r i n g i f y ( n e w R ) ) ;  
-   } ;  
-  
-   c o n s t   h a n d l e D e l e t e Q u e s t i o n   =   ( q I d )   = >   {  
-   s e t M o d a l ( {  
-   s h o w :   t r u e ,  
-   i s A l e r t :   f a l s e ,  
-   m e s s a g e :   " ? ��Z�  ? ? ? ����? ? ? ? #�? ����[�ȿ�? G�t�? \ n ( ?a� ? ? 7sd$�1u? ĸ  ? c$a�  ? ? #�? x$r�? ? " ,  
-   o n C o n f i r m :   ( )   = >   {  
-   c o n s t   n e w Q   =   q u e s t i o n s . f i l t e r ( q   = >   q . i d   ! = =   q I d ) ;  
-   s e t Q u e s t i o n s ( n e w Q ) ;  
-   l o c a l S t o r a g e . s e t I t e m ( ' a i M a t h _ q u e s t i o n s ' ,   J S O N . s t r i n g i f y ( n e w Q ) ) ;  
-   c o n s t   n e w R   =   { . . . r u b r i c s } ;  
-   d e l e t e   n e w R [ q I d ] ;  
-   s e t R u b r i c s ( n e w R ) ;  
-   l o c a l S t o r a g e . s e t I t e m ( ' a i M a t h _ r u b r i c s ' ,   J S O N . s t r i n g i f y ( n e w R ) ) ;  
-   }  
-   } ) ;  
-   } ;  
-  
-   r e t u r n   (  
-   < d i v   c l a s s N a m e = " f l e x   f l e x - c o l   m d : f l e x - r o w   g a p - 6 " >  
-   < d i v   c l a s s N a m e = " w - f u l l   m d : w - 4 8   f l e x   f l e x - c o l   g a p - 2 " >  
-   < b u t t o n   o n C l i c k = { ( )   = >   s e t T a b ( ' s t u d e n t s ' ) }   c l a s s N a m e = { ` p - 3   f o n t - b o l d   b o r d e r - 2   b o r d e r - b l a c k   t e x t - l e f t   $ { t a b   = = =   ' s t u d e n t s '   ?   ' b g - b l a c k   t e x t - w h i t e '   :   ' b g - w h i t e ' } ` } > ? �n�  �[̬��  ? ��$�< / b u t t o n >  
-   < b u t t o n   o n C l i c k = { ( )   = >   s e t T a b ( ' q u e s t i o n s ' ) }   c l a s s N a m e = { ` p - 3   f o n t - b o l d   b o r d e r - 2   b o r d e r - b l a c k   t e x t - l e f t   $ { t a b   = = =   ' q u e s t i o n s '   ?   ' b g - b l a c k   t e x t - w h i t e '   :   ' b g - w h i t e ' } ` } > ����F�  ۊ? 7sd$�1u? ?a� 1u? / b u t t o n >  
-   < b u t t o n   o n C l i c k = { ( )   = >   s e t T a b ( ' s e t t i n g s ' ) }   c l a s s N a m e = { ` p - 3   f o n t - b o l d   b o r d e r - 2   b o r d e r - b l a c k   t e x t - l e f t   $ { t a b   = = =   ' s e t t i n g s '   ?   ' b g - b l a c k   t e x t - w h i t e '   :   ' b g - w h i t e ' } ` } > ? |1�  ۊ? ? լ޸< / b u t t o n >  
-   < / d i v >  
-   < d i v   c l a s s N a m e = " f l e x - 1   w o r k s h e e t - b o x   p - 4   s m : p - 6   o v e r f l o w - x - h i d d e n " >  
-    
-   { t a b   = = =   ' s t u d e n t s '   & &   (  
-   < d i v >  
-   < d i v   c l a s s N a m e = " f l e x   f l e x - c o l   s m : f l e x - r o w   j u s t i f y - b e t w e e n   s m : i t e m s - c e n t e r   g a p - 4   m b - 6   b o r d e r - b - 2   b o r d e r - b l a c k   p b - 4 " >  
-   < h 2   c l a s s N a m e = " t e x t - x l   f o n t - b l a c k " > ? �n�  �[̬��  ? ��$�  ( { s t u d e n t s D a t a . l e n g t h } ��? < / h 2 >  
-   < d i v   c l a s s N a m e = " f l e x   g a p - 2 " >  
-   { i s L o a d i n g D a t a   & &   < s p a n   c l a s s N a m e = " f o n t - b o l d   t e x t - b l u e - 6 0 0   b g - b l u e - 5 0   p x - 3   p y - 1   r o u n d e d " > ? ׬ �? ? �o��k�  �N? . . < / s p a n > }  
-   < b u t t o n   o n C l i c k = { h a n d l e E x p o r t C S V }   c l a s s N a m e = " b g - w h i t e   b o r d e r - 2   b o r d e r - b l a c k   p x - 4   p y - 2   f o n t - b o l d   b t n - r e t r o " > ? �?   ? |1���o��v�< / b u t t o n >  
-   < / d i v >  
-   < / d i v >  
-   < d i v   c l a s s N a m e = " o v e r f l o w - x - a u t o " >  
-   < t a b l e   c l a s s N a m e = " w - f u l l   b o r d e r - c o l l a p s e   b o r d e r - 2   b o r d e r - b l a c k   t e x t - s m   w h i t e s p a c e - n o w r a p " >  
-   < t h e a d   c l a s s N a m e = " b g - g r a y - 1 0 0 " >  
-   < t r >  
-   < t h   c l a s s N a m e = " b o r d e r - 2   b o r d e r - b l a c k   p - 2 " > ? ²�< / t h >  
-   < t h   c l a s s N a m e = " b o r d e r - 2   b o r d e r - b l a c k   p - 2 " > ?  ���< / t h >  
-   { q u e s t i o n s . m a p ( ( q ,   i )   = >   < t h   k e y = { i }   c l a s s N a m e = " b o r d e r - 2   b o r d e r - b l a c k   p - 2 " > ? ����  { i + 1 } < / t h > ) }  
-   < t h   c l a s s N a m e = " b o r d e r - 2   b o r d e r - b l a c k   p - 2   b g - g r a y - 2 0 0 " > �sy��< / t h >  
-   < t h   c l a s s N a m e = " b o r d e r - 2   b o r d e r - b l a c k   p - 2 " > ?a� 1u? / t h >  
-   < / t r >  
-   < / t h e a d >  
-   < t b o d y >  
-   { s t u d e n t s D a t a . m a p ( ( s ,   i d x )   = >   (  
-   < t r   k e y = { i d x }   c l a s s N a m e = " t e x t - c e n t e r   h o v e r : b g - g r a y - 5 0 " >  
-   < t d   c l a s s N a m e = " b o r d e r - 2   b o r d e r - b l a c k   p - 2   f o n t - b o l d " > { s . i d } < / t d >  
-   < t d   c l a s s N a m e = " b o r d e r - 2   b o r d e r - b l a c k   p - 2 " > { s . n a m e } < / t d >  
-   { q u e s t i o n s . m a p ( ( q ,   i )   = >   (  
-   < t d   k e y = { i }   c l a s s N a m e = " b o r d e r - 2   b o r d e r - b l a c k   p - 2 " >  
-   { s . r e s u l t s [ q . i d ]   ?   s . r e s u l t s [ q . i d ] . s c o r e I n f o . s c o r e   :   0 }  
-   < / t d >  
-   ) ) }  
-   < t d   c l a s s N a m e = " b o r d e r - 2   b o r d e r - b l a c k   p - 2   f o n t - b l a c k   b g - g r a y - 1 0 0 " > { s . t o t a l S c o r e } < / t d >  
-   < t d   c l a s s N a m e = " b o r d e r - 2   b o r d e r - b l a c k   p - 2 " >  
-   < b u t t o n   o n C l i c k = { ( )   = >   h a n d l e D e l e t e S t u d e n t ( s . i d ) }   c l a s s N a m e = " t e x t - x s   f o n t - b o l d   b g - w h i t e   b o r d e r   b o r d e r - b l a c k   p x - 2   p y - 1 " > rnլ	�  ? ? #�< / b u t t o n >  
-   < / t d >  
-   < / t r >  
-   ) ) }  
-   { s t u d e n t s D a t a . l e n g t h   = = =   0   & &   (  
-   < t r > < t d   c o l S p a n = { q u e s t i o n s . l e n g t h   +   4 }   c l a s s N a m e = " p - 8   t e x t - c e n t e r   t e x t - g r a y - 5 0 0   f o n t - b o l d   b o r d e r - 2   b o r d e r - b l a c k " > ? ��g�? ? ? ׬ �? ̬?   ? ����? H���. < / t d > < / t r >  
-   ) }  
-   < / t b o d y >  
-   < / t a b l e >  
-   < / d i v >  
-   < / d i v >  
-   ) }  
-  
-   { t a b   = = =   ' q u e s t i o n s '   & &   (  
-   < d i v >  
-   < d i v   c l a s s N a m e = " f l e x   f l e x - c o l   s m : f l e x - r o w   j u s t i f y - b e t w e e n   i t e m s - s t a r t   s m : i t e m s - c e n t e r   m b - 6   b o r d e r - b - 2   b o r d e r - b l a c k   p b - 4   g a p - 4 " >  
-         < d i v >  
-             < h 2   c l a s s N a m e = " t e x t - x l   f o n t - b l a c k " > ����F�  ۊ? 7sd$�1u? ?a� 1u? / h 2 >  
-             < p   c l a s s N a m e = " t e x t - x s   f o n t - b o l d   t e x t - g r a y - 6 0 0   m t - 1 " > ? ����? /�L�  ? ��? ? ? ���? �   ? ��1�  rn̬��? ? ? ����  ? � ? �׹? H���. < / p >  
-         < / d i v >  
-         < d i v   c l a s s N a m e = " f l e x   g a p - 2   w - f u l l   s m : w - a u t o " >  
-             < b u t t o n   o n C l i c k = { h a n d l e S y n c C o n f i g }   c l a s s N a m e = " f l e x - 1   s m : f l e x - n o n e   b g - b l u e - 6 0 0   t e x t - w h i t e   p x - 4   p y - 2   f o n t - b o l d   b t n - r e t r o " > ��d$z�  rn̬��( ? ��ô) ? ? ۊ���  ? � ? ? / b u t t o n >  
-             < b u t t o n   o n C l i c k = { h a n d l e A d d Q u e s t i o n }   c l a s s N a m e = " f l e x - 1   s m : f l e x - n o n e   b g - b l a c k   t e x t - w h i t e   p x - 4   p y - 2   f o n t - b o l d   b t n - r e t r o " > +   ? ����  pu��? < / b u t t o n >  
-         < / d i v >  
-   < / d i v >  
-   < d i v   c l a s s N a m e = " s p a c e - y - 8 " >  
-   { q u e s t i o n s . m a p ( ( q ,   q I n d e x )   = >   (  
-   < d i v   k e y = { q . i d }   c l a s s N a m e = " b o r d e r - 4   b o r d e r - b l a c k   p - 4   r e l a t i v e   b g - w h i t e " >  
-   < b u t t o n   o n C l i c k = { ( )   = >   h a n d l e D e l e t e Q u e s t i o n ( q . i d ) }   c l a s s N a m e = " a b s o l u t e   t o p - 2   s m : t o p - 4   r i g h t - 2   s m : r i g h t - 4   b g - w h i t e   b o r d e r - 2   b o r d e r - b l a c k   t e x t - b l a c k   p x - 2   p y - 1   s m : p x - 3   s m : p y - 1   f o n t - b o l d   t e x t - x s   s m : t e x t - s m   b t n - r e t r o " > ? ����  ? ? #�< / b u t t o n >  
-   < l a b e l   c l a s s N a m e = " b l o c k   f o n t - b l a c k   m b - 1   m t - 6   s m : m t - 0 " > ? ����  ? ��I0< / l a b e l >  
-   < i n p u t   t y p e = " t e x t "   v a l u e = { q . t i t l e }   o n C h a n g e = { ( e )   = >   {  
-   c o n s t   n e w Q   =   [ . . . q u e s t i o n s ] ;  
-   n e w Q [ q I n d e x ] . t i t l e   =   e . t a r g e t . v a l u e ;  
-   s e t Q u e s t i o n s ( n e w Q ) ;  
-   l o c a l S t o r a g e . s e t I t e m ( ' a i M a t h _ q u e s t i o n s ' ,   J S O N . s t r i n g i f y ( n e w Q ) ) ;  
-   } }   c l a s s N a m e = " w - f u l l   t e x t - b a s e   s m : t e x t - l g   f o n t - b o l d   p - 2   b o r d e r - 2   b o r d e r - b l a c k   o u t l i n e - n o n e   m b - 4 "   / >  
-    
-   < l a b e l   c l a s s N a m e = " b l o c k   f o n t - b l a c k   m b - 1 " > ����F�  ? ���  ( n�I�O�? �   { ' { { ? ����} } ' }   ? ��m�,   ? ���? �   $ $ ? ���$ $   ? ��m�) < / l a b e l >  
-   < t e x t a r e a   v a l u e = { q . c o n t e n t }   o n C h a n g e = { ( e )   = >   {  
-   c o n s t   n e w Q   =   [ . . . q u e s t i o n s ] ;  
-   n e w Q [ q I n d e x ] . c o n t e n t   =   e . t a r g e t . v a l u e ;  
-   s e t Q u e s t i o n s ( n e w Q ) ;  
-   l o c a l S t o r a g e . s e t I t e m ( ' a i M a t h _ q u e s t i o n s ' ,   J S O N . s t r i n g i f y ( n e w Q ) ) ;  
-   } }   c l a s s N a m e = " w - f u l l   h - 4 0   p - 2   b o r d e r - 2   b o r d e r - b l a c k   o u t l i n e - n o n e   m b - 4   t e x t - x s   s m : t e x t - s m   w h i t e s p a c e - p r e - w r a p   f o n t - m o n o "   / >  
-    
-   < l a b e l   c l a s s N a m e = " b l o c k   f o n t - b l a c k   m b - 1 " > �Zw�? ? ? B�����  ( ��{1O��o? �cIG�,   ? ���  �Z� ? ? < / l a b e l >  
-   < i n p u t   t y p e = " t e x t "   v a l u e = { q . o p t i o n s . j o i n ( ' ,   ' ) }   o n C h a n g e = { ( e )   = >   {  
-   c o n s t   n e w Q   =   [ . . . q u e s t i o n s ] ;  
-   n e w Q [ q I n d e x ] . o p t i o n s   =   e . t a r g e t . v a l u e . s p l i t ( ' , ' ) . m a p ( s   = >   s . t r i m ( ) ) ;  
-   s e t Q u e s t i o n s ( n e w Q ) ;  
-   l o c a l S t o r a g e . s e t I t e m ( ' a i M a t h _ q u e s t i o n s ' ,   J S O N . s t r i n g i f y ( n e w Q ) ) ;  
-   } }   c l a s s N a m e = " w - f u l l   p - 2   b o r d e r - 2   b o r d e r - b l a c k   o u t l i n e - n o n e   m b - 4   t e x t - x s   s m : t e x t - s m   f o n t - m o n o "   / >  
-    
-   < d i v   c l a s s N a m e = " f l e x   f l e x - c o l   s m : f l e x - r o w   s m : j u s t i f y - b e t w e e n   s m : i t e m s - c e n t e r   m b - 2   m t - 6   b o r d e r - t - 2   b o r d e r - b l a c k   p t - 4   g a p - 2 " >  
-   < h 3   c l a s s N a m e = " f o n t - b l a c k   b g - g r a y - 2 0 0   p x - 2   i n l i n e - b l o c k " > 7sd$�1u? ( �����  rn׬? ) < / h 3 >  
-   < b u t t o n   o n C l i c k = { ( )   = >   {  
-   c o n s t   n e w R   =   { . . . r u b r i c s } ;  
-   i f   ( ! n e w R [ q . i d ] )   n e w R [ q . i d ]   =   [ ] ;  
-   n e w R [ q . i d ] . p u s h ( {   m i n :   0 ,   m a x :   0 ,   g r a d e :   ' C ' ,   s c o r e :   0   } ) ;  
-   s e t R u b r i c s ( n e w R ) ;  
-   l o c a l S t o r a g e . s e t I t e m ( ' a i M a t h _ r u b r i c s ' ,   J S O N . s t r i n g i f y ( n e w R ) ) ;  
-   } }   c l a s s N a m e = " b g - w h i t e   b o r d e r - 2   b o r d e r - b l a c k   p x - 3   p y - 1   f o n t - b o l d   t e x t - s m   b t n - r e t r o   s e l f - s t a r t   s m : s e l f - a u t o " > +   rn׬?   pu��? < / b u t t o n >  
-   < / d i v >  
-   < d i v   c l a s s N a m e = " o v e r f l o w - x - a u t o " >  
-   < t a b l e   c l a s s N a m e = " w - f u l l   b o r d e r - c o l l a p s e   b o r d e r - 2   b o r d e r - b l a c k   t e x t - x s   s m : t e x t - s m   w h i t e s p a c e - n o w r a p " >  
-   < t h e a d   c l a s s N a m e = " b g - g r a y - 1 0 0 " >  
-   < t r >  
-   < t h   c l a s s N a m e = " b o r d e r - 2   b o r d e r - b l a c k   p - 1   s m : p - 2 " > ������( �Z? < / t h >  
-   < t h   c l a s s N a m e = " b o r d e r - 2   b o r d e r - b l a c k   p - 1   s m : p - 2 " > ����? ( �Z? < / t h >  
-   < t h   c l a s s N a m e = " b o r d e r - 2   b o r d e r - b l a c k   p - 1   s m : p - 2 " > ? C��< / t h >  
-   < t h   c l a s s N a m e = " b o r d e r - 2   b o r d e r - b l a c k   p - 1   s m : p - 2 " > z�� ? ? ? /�Բ< / t h >  
-   < t h   c l a s s N a m e = " b o r d e r - 2   b o r d e r - b l a c k   p - 1   s m : p - 2 " > ?a� 1u? / t h >  
-   < / t r >  
-   < / t h e a d >  
-   < t b o d y >  
-   { ( r u b r i c s [ q . i d ]   | |   [ ] ) . m a p ( ( r ,   r I n d e x )   = >   (  
-   < t r   k e y = { r I n d e x }   c l a s s N a m e = " t e x t - c e n t e r " >  
-   < t d   c l a s s N a m e = " b o r d e r - 2   b o r d e r - b l a c k   p - 1 " >  
-   < i n p u t   t y p e = " n u m b e r "   v a l u e = { r . m i n }   o n C h a n g e = { ( e )   = >   {  
-   c o n s t   n e w R   =   { . . . r u b r i c s } ;  
-   n e w R [ q . i d ] [ r I n d e x ] . m i n   =   N u m b e r ( e . t a r g e t . v a l u e ) ;  
-   s e t R u b r i c s ( n e w R ) ;  
-   l o c a l S t o r a g e . s e t I t e m ( ' a i M a t h _ r u b r i c s ' ,   J S O N . s t r i n g i f y ( n e w R ) ) ;  
-   } }   c l a s s N a m e = " w - 1 2   s m : w - 1 6   t e x t - c e n t e r   o u t l i n e - n o n e   b g - t r a n s p a r e n t "   / >  
-   < / t d >  
-   < t d   c l a s s N a m e = " b o r d e r - 2   b o r d e r - b l a c k   p - 1 " >  
-   < i n p u t   t y p e = " n u m b e r "   v a l u e = { r . m a x }   o n C h a n g e = { ( e )   = >   {  
-   c o n s t   n e w R   =   { . . . r u b r i c s } ;  
-   n e w R [ q . i d ] [ r I n d e x ] . m a x   =   N u m b e r ( e . t a r g e t . v a l u e ) ;  
-   s e t R u b r i c s ( n e w R ) ;  
-   l o c a l S t o r a g e . s e t I t e m ( ' a i M a t h _ r u b r i c s ' ,   J S O N . s t r i n g i f y ( n e w R ) ) ;  
-   } }   c l a s s N a m e = " w - 1 2   s m : w - 1 6   t e x t - c e n t e r   o u t l i n e - n o n e   b g - t r a n s p a r e n t "   / >  
-   < / t d >  
-   < t d   c l a s s N a m e = " b o r d e r - 2   b o r d e r - b l a c k   p - 1 " >  
-   < i n p u t   t y p e = " t e x t "   v a l u e = { r . g r a d e }   o n C h a n g e = { ( e )   = >   {  
-   c o n s t   n e w R   =   { . . . r u b r i c s } ;  
-   n e w R [ q . i d ] [ r I n d e x ] . g r a d e   =   e . t a r g e t . v a l u e ;  
-   s e t R u b r i c s ( n e w R ) ;  
-   l o c a l S t o r a g e . s e t I t e m ( ' a i M a t h _ r u b r i c s ' ,   J S O N . s t r i n g i f y ( n e w R ) ) ;  
-   } }   c l a s s N a m e = " w - 1 2   s m : w - 1 6   t e x t - c e n t e r   o u t l i n e - n o n e   b g - t r a n s p a r e n t   f o n t - b o l d "   / >  
-   < / t d >  
-   < t d   c l a s s N a m e = " b o r d e r - 2   b o r d e r - b l a c k   p - 1 " >  
-   < i n p u t   t y p e = " n u m b e r "   v a l u e = { r . s c o r e }   o n C h a n g e = { ( e )   = >   {  
-   c o n s t   n e w R   =   { . . . r u b r i c s } ;  
-   n e w R [ q . i d ] [ r I n d e x ] . s c o r e   =   N u m b e r ( e . t a r g e t . v a l u e ) ;  
-   s e t R u b r i c s ( n e w R ) ;  
-   l o c a l S t o r a g e . s e t I t e m ( ' a i M a t h _ r u b r i c s ' ,   J S O N . s t r i n g i f y ( n e w R ) ) ;  
-   } }   c l a s s N a m e = " w - 1 2   s m : w - 1 6   t e x t - c e n t e r   o u t l i n e - n o n e   b g - t r a n s p a r e n t   f o n t - b o l d "   / >  
-   < / t d >  
-   < t d   c l a s s N a m e = " b o r d e r - 2   b o r d e r - b l a c k   p - 1 " >  
-   < b u t t o n   o n C l i c k = { ( )   = >   {  
-   c o n s t   n e w R   =   { . . . r u b r i c s } ;  
-   n e w R [ q . i d ] . s p l i c e ( r I n d e x ,   1 ) ;  
-   s e t R u b r i c s ( n e w R ) ;  
-   l o c a l S t o r a g e . s e t I t e m ( ' a i M a t h _ r u b r i c s ' ,   J S O N . s t r i n g i f y ( n e w R ) ) ;  
-   } }   c l a s s N a m e = " t e x t - x s   f o n t - b o l d   p x - 2   p y - 1   b g - g r a y - 2 0 0   b o r d e r   b o r d e r - b l a c k " > ? ? #�< / b u t t o n >  
-   < / t d >  
-   < / t r >  
-   ) ) }  
-   < / t b o d y >  
-   < / t a b l e >  
-   < / d i v >  
-   < / d i v >  
-   ) ) }  
-   < / d i v >  
-   < / d i v >  
-   ) }  
-  
-   { t a b   = = =   ' s e t t i n g s '   & &   (  
-   < d i v >  
-   < h 2   c l a s s N a m e = " t e x t - x l   f o n t - b l a c k   m b - 6   b o r d e r - b - 2   b o r d e r - b l a c k   p b - 2 " > ? |1�  ۊ? ? լ޸< / h 2 >  
-   < d i v   c l a s s N a m e = " m b - 6   p - 4   b o r d e r - 4   b o r d e r - b l a c k   b g - w h i t e " >  
-   < h 3   c l a s s N a m e = " f o n t - b l a c k   m b - 2 " > �c/���  n���? 0�J���  ? |1�< / h 3 >  
-   < i n p u t   t y p e = " t e x t "   v a l u e = { s e t t i n g s . p a s s w o r d }   o n C h a n g e = { ( e )   = >   s e t S e t t i n g s ( { . . . s e t t i n g s ,   p a s s w o r d :   e . t a r g e t . v a l u e } ) }   c l a s s N a m e = " w - f u l l   p - 2   b o r d e r - 2   b o r d e r - b l a c k   o u t l i n e - n o n e   f o n t - b o l d "   / >  
-   < p   c l a s s N a m e = " t e x t - x s   f o n t - b o l d   t e x t - g r a y - 5 0 0   m t - 1 " > �o���? ? ? ? ? J��? ? ? ����\t? ? ��0�? �m�? ? < / p >  
-   < / d i v >  
-   < d i v   c l a s s N a m e = " m b - 6   p - 4   b o r d e r - 4   b o r d e r - b l a c k   b g - w h i t e " >  
-   < h 3   c l a s s N a m e = " f o n t - b l a c k   m b - 2 " > �cH?   ? ��ô  ? լ޸  U R L   ( ? ��n�) < / h 3 >  
-   < i n p u t   t y p e = " t e x t "   v a l u e = { s e t t i n g s . g a s U r l }   o n C h a n g e = { ( e )   = >   s e t S e t t i n g s ( { . . . s e t t i n g s ,   g a s U r l :   e . t a r g e t . v a l u e } ) }   c l a s s N a m e = " w - f u l l   p - 2   b o r d e r - 2   b o r d e r - b l a c k   o u t l i n e - n o n e   t e x t - x s   s m : t e x t - s m   f o n t - m o n o   t e x t - g r a y - 6 0 0 "   p l a c e h o l d e r = " h t t p s : / / s c r i p t . g o o g l e . c o m / . . . "   / >  
-   < p   c l a s s N a m e = " t e x t - x s   f o n t - b o l d   t e x t - g r a y - 5 0 0   m t - 1 " > ? �Ĭ�? ? �cH?   ? F���  ? }1��1u��ô  ? ? ? ? U R L ? ? ? ��0�? �m�? ? < / p >  
-   < / d i v >  
-   < b u t t o n   o n C l i c k = { ( )   = >   {  
-   l o c a l S t o r a g e . s e t I t e m ( ' a i M a t h _ s e t t i n g s ' ,   J S O N . s t r i n g i f y ( s e t t i n g s ) ) ;  
-   s e t M o d a l ( {   s h o w :   t r u e ,   m e s s a g e :   ' ? |1�? ? ? � ? ���? I���? H���. ' ,   i s A l e r t :   t r u e   } ) ;  
-   } }   c l a s s N a m e = " w - f u l l   b g - b l a c k   t e x t - w h i t e   p y - 3   f o n t - b l a c k   t e x t - l g   b t n - r e t r o " > B�� �[�×�? ? ? � ? ? / b u t t o n >  
-   < / d i v >  
-   ) }  
-   < / d i v >  
-   < / d i v >  
-   ) ;  
-   }  
-  
-   c o n s t   r o o t   =   R e a c t D O M . c r e a t e R o o t ( d o c u m e n t . g e t E l e m e n t B y I d ( ' r o o t ' ) ) ;  
-   r o o t . r e n d e r ( < A p p   / > ) ;  
-   < / s c r i p t >  
- < / b o d y >  
- < / h t m l >  
- 
+                        </div>
+ <div className="overflow-x-auto">
+ <table className="w-full border-collapse border-2 border-black text-xs sm:text-sm whitespace-nowrap">
+ <thead className="bg-gray-100">
+ <tr>
+ <th className="border-2 border-black p-1 sm:p-2">理쒖냼(媛?</th>
+ <th className="border-2 border-black p-1 sm:p-2">理쒕?(媛?</th>
+ <th className="border-2 border-black p-1 sm:p-2">?깃툒</th>
+ <th className="border-2 border-black p-1 sm:p-2">遺???먯닔</th>
+ <th className="border-2 border-black p-1 sm:p-2">愿由?/th>
+ </tr>
+ </thead>
+ <tbody>
+ {(rubrics[q.id] || []).map((r, rIndex) => (
+ <tr key={rIndex} className="text-center">
+ <td className="border-2 border-black p-1">
+ <input type="number" value={r.min} onChange={(e) => {
+ const newR = {...rubrics};
+ newR[q.id][rIndex].min = Number(e.target.value);
+ setRubrics(newR);
+ localStorage.setItem('aiMath_rubrics', JSON.stringify(newR));
+ }} className="w-12 sm:w-16 text-center outline-none bg-transparent" />
+ </td>
+ <td className="border-2 border-black p-1">
+ <input type="number" value={r.max} onChange={(e) => {
+ const newR = {...rubrics};
+ newR[q.id][rIndex].max = Number(e.target.value);
+ setRubrics(newR);
+ localStorage.setItem('aiMath_rubrics', JSON.stringify(newR));
+ }} className="w-12 sm:w-16 text-center outline-none bg-transparent" />
+ </td>
+ <td className="border-2 border-black p-1">
+ <input type="text" value={r.grade} onChange={(e) => {
+ const newR = {...rubrics};
+ newR[q.id][rIndex].grade = e.target.value;
+ setRubrics(newR);
+ localStorage.setItem('aiMath_rubrics', JSON.stringify(newR));
+ }} className="w-12 sm:w-16 text-center outline-none bg-transparent font-bold" />
+ </td>
+ <td className="border-2 border-black p-1">
+ <input type="number" value={r.score} onChange={(e) => {
+ const newR = {...rubrics};
+ newR[q.id][rIndex].score = Number(e.target.value);
+ setRubrics(newR);
+ localStorage.setItem('aiMath_rubrics', JSON.stringify(newR));
+ }} className="w-12 sm:w-16 text-center outline-none bg-transparent font-bold" />
+ </td>
+ <td className="border-2 border-black p-1">
+ <button onClick={() => {
+ const newR = {...rubrics};
+ newR[q.id].splice(rIndex, 1);
+ setRubrics(newR);
+ localStorage.setItem('aiMath_rubrics', JSON.stringify(newR));
+ }} className="text-xs font-bold px-2 py-1 bg-gray-200 border border-black">??젣</button>
+ </td>
+ </tr>
+ ))}
+ </tbody>
+ </table>
+ </div>
+ </div>
+ ))}
+ </div>
+ </div>
+ )}
+
+ {tab === 'settings' && (
+ <div>
+ <h2 className="text-xl font-black mb-6 border-b-2 border-black pb-2">?ㅼ젙 諛??곕룞</h2>
+ <div className="mb-6 p-4 border-4 border-black bg-white">
+ <h3 className="font-black mb-2">援먯궗 鍮꾨?踰덊샇 ?ㅼ젙</h3>
+ <input type="text" value={settings.password} onChange={(e) => setSettings({...settings, password: e.target.value})} className="w-full p-2 border-2 border-black outline-none font-bold" />
+ <p className="text-xs font-bold text-gray-500 mt-1">濡쒓렇?????ъ슜???뷀샇瑜??낅젰?섏꽭??</p>
+ </div>
+ <div className="mb-6 p-4 border-4 border-black bg-white">
+ <h3 className="font-black mb-2">援ш? ?쒗듃 ?곕룞 URL (?좏깮)</h3>
+ <input type="text" value={settings.gasUrl} onChange={(e) => setSettings({...settings, gasUrl: e.target.value})} className="w-full p-2 border-2 border-black outline-none text-xs sm:text-sm font-mono text-gray-600" placeholder="https://script.google.com/..." />
+ <p className="text-xs font-bold text-gray-500 mt-1">?쒓났??援ш? ?깆뒪 ?ㅽ겕由쏀듃 ????URL???낅젰?섏꽭??</p>
+ </div>
+ <button onClick={() => {
+ localStorage.setItem('aiMath_settings', JSON.stringify(settings));
+ setModal({ show: true, message: '?ㅼ젙????λ릺?덉뒿?덈떎.', isAlert: true });
+ }} className="w-full bg-black text-white py-3 font-black text-lg btn-retro">蹂寃쎌궗?????/button>
+ </div>
+ )}
+ </div>
+ </div>
+ );
+ }
+
+ const root = ReactDOM.createRoot(document.getElementById('root'));
+ root.render(<App />);
+ </script>
+</body>
+</html>
