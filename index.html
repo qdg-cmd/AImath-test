@@ -1,898 +1,377 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="ko">
 <head>
- <meta charset="UTF-8">
- <meta name="viewport" content="width=device-width, initial-scale=1.0">
- <title>?멸났吏?μ닔???섑뻾?됯? ?쒖뒪??/title>
- <script src="https://cdn.tailwindcss.com"></script>
- <script src="https://unpkg.com/react@18/umd/react.development.js" crossorigin></script>
- <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js" crossorigin></script>
- <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
- <!-- KaTeX for Math Rendering -->
- <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.css">
- <script src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.js"></script>
- <style>
- body { font-family: 'KoPub Batang', 'Malgun Gothic', serif; background-color: #f5f5f5; color: #111; }
- .worksheet-box { background-color: #fff; border: 3px solid #000; box-shadow: 6px 6px 0px 0px #000; }
- .btn-retro { border: 2px solid #000; box-shadow: 3px 3px 0px 0px #000; transition: all 0.1s; }
- .btn-retro:active { transform: translate(3px, 3px); box-shadow: 0px 0px 0px 0px #000; }
- .blank-input { border-bottom: 2px solid #000; display: inline-block; min-width: 60px; text-align: center; font-weight: bold; padding: 0 5px; cursor: pointer; min-height: 24px; }
- .blank-active { background-color: #e5e5e5; border-bottom: 3px solid #000; }
- </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>AI 활용 수학 평가</title>
+  
+  <script src="https://unpkg.com/react@17/umd/react.production.min.js"></script>
+  <script src="https://unpkg.com/react-dom@17/umd/react-dom.production.min.js"></script>
+  <script src="https://unpkg.com/babel-standalone@6/babel.min.js"></script>
+  <script src="https://cdn.tailwindcss.com"></script>
+  
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+
+  <style>
+    body { font-family: 'Pretendard', sans-serif; background-color: #f3f4f6; }
+    .blank-input {
+      display: inline-block; min-width: 60px; min-height: 30px;
+      border-bottom: 2px solid #000; margin: 0 4px; padding: 0 8px;
+      text-align: center; cursor: pointer; transition: all 0.2s;
+    }
+    .blank-active {
+      background-color: #e5e7eb; border-bottom: 3px solid #3b82f6; box-shadow: 0 4px 6px -1px rgba(59, 130, 246, 0.5);
+    }
+    .latex-container { display: inline-block; vertical-align: middle; }
+    /* 인쇄용 스타일 수정: column 제거하고 Grid 사용 */
+    @media print {
+      body { background-color: #fff; margin: 0; padding: 0; }
+      .no-print { display: none !important; }
+      .print-area { display: block !important; width: 100%; }
+      .worksheet-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        grid-gap: 20px;
+        width: 100%;
+        page-break-inside: avoid;
+      }
+      .question-box { page-break-inside: avoid; margin-bottom: 20px; }
+      #pdf-content { padding: 0 !important; width: 210mm; min-height: 297mm; margin: 0 auto; }
+    }
+    @page { margin: 10mm; size: A4; }
+  </style>
 </head>
 <body>
- <div id="root"></div>
- <script type="text/babel">
- const APP_VERSION = 'v11';
- const DEFAULT_GAS_URL = "https://script.google.com/macros/s/AKfycbzo3r9NJ-G3azQlUUmJMNhIqJiKkG-5857m9bbp6GfOspDqwiPLd9GffJTpY7lR1jhP0w/exec";
- 
- const defaultQuestions = [
- {
- id: 'q1',
- title: '01. ?띿뒪???먮즺???쒗쁽 諛?泥섎━',
- content: `??愿李곗씠??痢≪젙 ?깆쓣 ?듯빐 ?산쾶 ?섎뒗 媛怨듬릺吏 ?딆? ?뺣낫瑜?( {{鍮꾩젙??} )?쇨퀬 ?쒕떎.
-??( {{?뺥삎}} ) ?먮즺???쇱젙???뺤떇??媛뽰텣 ?먮즺?닿퀬, ( {{鍮꾩젙??} ) ?먮즺???쇱젙???뺤떇??媛뽰텛吏 ?딆? ?먮즺?대떎.
+  <div id="root"></div>
 
-???띿뒪???먮즺??吏묓빀?대굹 ( {{踰≫꽣}} )濡??섑??????덈떎.
-??n媛쒖쓽 ??x?? x?? ..., x?숈쓣 愿꾪샇 ?띿뿉 ?쒖꽌?濡??섏뿴?섏뿬 ?섑???
-  X = (x?? x?? ..., x??
-  ??踰≫꽣???섍퀬, x?? x?? ..., x?숈쓣 踰≫꽣 X??( {{?깅텇}} )?대씪怨??쒕떎.
-
-??鍮꾩젙???띿뒪???먮즺?먯꽌 ?⑥뼱??( {{鍮덈룄??} )瑜?援ы븯硫?洹??먮즺?먯꽌 二쇱젣?대? 李얠쓣 ???덈떎.
-
-???⑥뼱 鍮덈룄?섎? ?댁슜?섏뿬 TF쨌IDF瑜?援ы븯硫??띿뒪???먮즺???좎슜???뺣낫瑜??뚯븘?????덈떎.
-??TF쨌IDF媛 ?묒쑝硫?以묒슂?꾧? ( {{???}} ) ?⑥뼱?닿퀬, TF쨌IDF媛 ?щ㈃ 以묒슂?꾧? ( {{?믪?}} ) ?⑥뼱?대떎.
-
-???먮즺??遺꾩꽍 寃곌낵瑜??쎄쾶 ?댄빐?????덈룄濡??쒓컖?곸쑝濡??쒗쁽?섏뿬 ?④낵?곸쑝濡??꾨떖?섎뒗 怨쇱젙??( {{?쒓컖??} )?쇨퀬 ?쒕떎.
-???쒓컖??諛⑸쾿 ?좏삎?먮뒗 ?쒓컙 ?쒓컖?? 遺꾪룷 ?쒓컖?? 愿怨??쒓컖?? 鍮꾧탳 ?쒓컖?? 怨듦컙 ?쒓컖?? 援ъ“ ?쒓컖?붽? ?덈떎.
-
-???띿뒪???먮즺???⑥뼱 鍮덈룄?섎? ?댁슜?섏뿬 ?? 留됰?洹몃옒?? ?먭렇?섑봽, ( {{?⑥뼱 援щ쫫}} ) ?깆쑝濡??쒓컖?뷀븷 ???덈떎.`,
- options: ["鍮덈룄??, "?쒓컖??, "?먮즺", "???", "?믪?", "?깅텇", "?뺥삎", "鍮꾩젙??, "踰≫꽣", "?⑥뼱 援щ쫫"]
- },
- {
- id: 'q2',
- title: '02. ?대?吏 ?먮즺???쒗쁽 諛?泥섎━',
- content: `?????먮뒗 臾몄옄瑜?吏곸궗媛곹삎 紐⑥뼇?쇰줈 諛곗뿴?섏뿬 愿꾪샇濡?臾띠? 寃껋쓣 ( {{?됰젹}} )?대씪怨??쒕떎.
-???됰젹 A????i?됯낵 ??j?댁씠 留뚮굹???꾩튂???덈뒗 ?깅텇???됰젹 A??(i, j) ?깅텇?대씪 ?섍퀬, 湲고샇濡?( $$a_{ij}$$ )? 媛숈씠 ?섑??몃떎.
-
-???묐갚 ?대?吏??媛??쎌??먯꽌 寃??됱? ( {{0}} ), ?곗깋? 255濡??섑??닿퀬, 洹??ъ씠???뚯깋? ( {{1}} )遺??254源뚯????섎줈 ?섑??????덈떎.
-??而щ윭 ?대?吏?먯꽌 媛??쎌????됱긽 ?뺣낫??RGB 梨꾨꼸??愿묒썝???멸린瑜??섑??대뒗 ?섎? ( $$(R, G, B)$$ )???쒖꽌?띿쑝濡??섑??몃떎.
-
-???대?吏瑜??⑹꽦?섏뿬 ?덈줈???대?吏瑜?留뚮뱾 ?? ?대?吏瑜??됰젹濡??쒗쁽?섍퀬 ?곗궛???섏뿬 ?섑??????덈떎.
-???대?吏???⑹꽦???댁슜?섎뒗 ?됰젹???곗궛? ( {{?㏃뀍怨?類꾩뀍}} )?대떎.
-
-???대?吏??諛앷린瑜?議곗젅?????댁슜?섎뒗 ?됰젹???곗궛? ( {{?ㅼ닔諛?} )?대떎.
-
-??而щ윭 ?대?吏瑜??묐갚 ?대?吏濡?諛붽? ?? ?묐갚 ?대?吏瑜??섑??대뒗 ?됰젹??媛??깅텇? 而щ윭 ?대?吏瑜??섑??대뒗 ???됰젹 R, G, B????묓븯???깅텇??( {{?됯퇏}} )?쇰줈 援ы븳??
-
-???대?吏???됲뻾?대룞怨??移?씠?숈뿉 ?댁슜?섎뒗 ?됰젹???곗궛? ( {{怨깆뀍}} )?대떎.`,
- options: ["0", "1", "$$a_{ij}$$", "$$(R, G, B)$$", "?됰젹", "?ㅼ닔諛?, "?㏃뀍怨?類꾩뀍", "?됯퇏", "怨깆뀍"]
- },
- {
- id: 'q3',
- title: '03. ?먯떎?⑥닔? 理쒖쟻??,
- content: `?낅젰媛?x?? x?? ..., x?숈뿉 ???痢≪젙媛믪씠 y?? y?? ..., y?숈씠怨? 異붿꽭??f(x)=ax (a???곸닔)???곕Ⅸ ?덉륫媛믪씠 ax?? ax?? ..., ax?숈씠??????
-???ㅼ감: y??ax?? y??ax?? ..., y??ax?????먯떎?⑥닔: L(a) = ( $$(y_1-ax_1)^2 + \\cdots + (y_n-ax_n)^2$$ ) / n
-
-???ㅽ빆?⑥닔 y=f(x)?먯꽌 x??媛믪씠 a媛 ?꾨땲硫댁꽌 a???쒖뾾??媛源뚯썙吏????⑥닽媛?f(x)媛 ?쇱젙????L???쒖뾾??媛源뚯썙吏硫? ?⑥닔 y=f(x)??L??( {{?섎졃}} )?쒕떎怨??섍퀬, ?닿쾬??湲고샇濡?( $$\\lim_{x \\to a}f(x)=L$$ )怨?媛숈씠 ?섑??몃떎.
-
-???ㅽ빆?⑥닔 y=f(x)?먯꽌 x??媛믪씠 a?먯꽌 b源뚯? 蹂???뚯쓽 ( {{?됯퇏蹂?붿쑉}} )? ?ㅼ쓬怨?媛숇떎.
-  (f(b)-f(a)) / (b-a) = (f(a+?x)-f(a)) / ?x
-
-???ㅽ빆?⑥닔 y=f(x)?먯꽌 x=a?먯꽌??誘몃텇怨꾩닔 ( $$f'(a)$$ )????(a, f(a))?먯꽌 怨≪꽑 y=f(x)???묒꽑??( {{湲곗슱湲?} )? 媛숇떎.
-
-???먯떎?⑥닔??媛믪쓣 理쒖냼?뷀븯??異붿꽭?좎쓽 湲곗슱湲곕? 李얜뒗 怨쇱젙???먯떎?⑥닔??( {{理쒖쟻??} )???섍퀬, ?먯떎?⑥닔??媛믪씠 理쒖냼媛 ?섎룄濡??섎뒗 異붿꽭?좎쓣 ( {{理쒖쟻 異붿꽭??} )?대씪怨??쒕떎.
-
-???먯떎?⑥닔??媛믪씠 媛먯냼?섎뒗 諛⑺뼢??李얘퀬 珥덇퉫媛믪쓣 諛섎났?곸쑝濡??대룞?쒗궎硫댁꽌 理쒖쟻?뷀븯??諛⑸쾿??( {{寃쎌궗?섍컯踰?} )?대씪怨??쒕떎.
-??( {{?숈뒿瑜?} )???ш린瑜??곸젅??議곗젅?섎㈃ 誘몃텇怨꾩닔???ш린??愿怨꾩뾾???먯떎?⑥닔??媛믪씠 蹂?섎뒗 ?뺣룄瑜?議곗젅?????덈떎.`,
- options: ["?됯퇏蹂?붿쑉", "理쒖쟻??, "寃쎌궗?섍컯踰?, "$$\\lim_{x \\to a}f(x)=L$$", "$$f'(a)$$", "理쒖쟻 異붿꽭??, "湲곗슱湲?, "?숈뒿瑜?, "$$(y_1-ax_1)^2 + \\cdots + (y_n-ax_n)^2$$", "?섎졃"]
- }
- ];
-
- const defaultRubrics = {
- 'q1': [
- { min: 9, max: 10, grade: 'A', score: 10 },
- { min: 7, max: 8, grade: 'B', score: 8 },
- { min: 0, max: 6, grade: 'C', score: 6 }
- ],
- 'q2': [
- { min: 8, max: 9, grade: 'A', score: 10 },
- { min: 5, max: 7, grade: 'B', score: 8 },
- { min: 0, max: 4, grade: 'C', score: 6 }
- ],
- 'q3': [
- { min: 9, max: 10, grade: 'A', score: 10 },
- { min: 7, max: 8, grade: 'B', score: 8 },
- { min: 0, max: 6, grade: 'C', score: 6 }
- ]
- };
-
- const LatexText = ({ text }) => {
- if (!text) return null;
- const parts = text.split(/(\$\$.*?\$\$)/g);
- return (
- <span>
- {parts.map((part, index) => {
- if (part.startsWith('$$') && part.endsWith('$$')) {
- const math = part.slice(2, -2);
- try {
- const html = katex.renderToString(math, { throwOnError: false });
- return <span key={index} dangerouslySetInnerHTML={{ __html: html }} />;
- } catch (e) {
- return <span key={index}>{part}</span>;
- }
- }
- return <span key={index}>{part}</span>;
- })}
- </span>
- );
- };
-
- function App() {
- const [view, setView] = React.useState('login'); 
- const [currentUser, setCurrentUser] = React.useState({ id: '', name: '' });
- const [studentsData, setStudentsData] = React.useState([]);
- const [questions, setQuestions] = React.useState(defaultQuestions);
- const [rubrics, setRubrics] = React.useState(defaultRubrics);
- 
- const [settings, setSettings] = React.useState({
- gasUrl: DEFAULT_GAS_URL,
- password: 'admin'
- });
- const [isTeacher, setIsTeacher] = React.useState(false);
- const [showLoginModal, setShowLoginModal] = React.useState(false);
- const [teacherPwdInput, setTeacherPwdInput] = React.useState('');
- 
-  const [modal, setModal] = React.useState({ show: false, message: '', onConfirm: null, isAlert: true });
-  const [isLoadingData, setIsLoadingData] = React.useState(false);
-  const [isSyncingConfig, setIsSyncingConfig] = React.useState(true);
-
-  React.useEffect(() => {
-    const ver = localStorage.getItem('aiMath_version');
-    if (ver !== APP_VERSION) {
-      localStorage.clear();
-      localStorage.setItem('aiMath_version', APP_VERSION);
-    }
-    
-    // 濡쒖뺄 ?ㅽ넗由ъ? ?곗꽑 遺덈윭?ㅺ린 (?ㅽ봽?쇱씤 ?鍮?
-    const savedStudents = localStorage.getItem('aiMath_students');
-    if (savedStudents) setStudentsData(JSON.parse(savedStudents));
-    const savedQuestions = localStorage.getItem('aiMath_questions');
-    if (savedQuestions) setQuestions(JSON.parse(savedQuestions));
-    const savedRubrics = localStorage.getItem('aiMath_rubrics');
-    if (savedRubrics) setRubrics(JSON.parse(savedRubrics));
-    const savedSettings = localStorage.getItem('aiMath_settings');
-    let currentGasUrl = DEFAULT_GAS_URL;
-    if (savedSettings) {
-      const parsedSettings = JSON.parse(savedSettings);
-      setSettings(parsedSettings);
-      currentGasUrl = parsedSettings.gasUrl;
-    }
-    
-    // ?쒗듃?먯꽌 理쒖떊 ?ㅼ젙 ?숆린??    if (currentGasUrl) {
-      fetch(currentGasUrl + '?action=getConfig')
-        .then(res => res.json())
-        .then(json => {
-          if (json && json.status === 'success' && json.data.questions && json.data.questions.length > 0) {
-            setQuestions(json.data.questions);
-            setRubrics(json.data.rubrics);
-            localStorage.setItem('aiMath_questions', JSON.stringify(json.data.questions));
-            localStorage.setItem('aiMath_rubrics', JSON.stringify(json.data.rubrics));
-          }
-        })
-        .catch(e => console.error("Config sync error:", e))
-        .finally(() => setIsSyncingConfig(false));
-    } else {
-      setIsSyncingConfig(false);
-    }
-  }, []);
- 
- // ?좎깮???묒냽 ??援ш? ?쒗듃?먯꽌 理쒖떊 ?곗씠??遺덈윭?ㅺ린
- React.useEffect(() => {
- if (isTeacher && view === 'admin' && settings.gasUrl) {
- setIsLoadingData(true);
- fetch(settings.gasUrl)
- .then(res => res.json())
- .then(json => {
- if (json.status === 'success') {
- setStudentsData(json.data);
- localStorage.setItem('aiMath_students', JSON.stringify(json.data));
- }
- })
- .catch(e => console.error("Data load error:", e))
- .finally(() => setIsLoadingData(false));
- }
- }, [isTeacher, view, settings.gasUrl]);
-
- const handleTeacherLogin = () => {
- if (teacherPwdInput === settings.password) {
- setIsTeacher(true);
- setShowLoginModal(false);
- setTeacherPwdInput('');
- setView('admin');
- } else {
- setModal({ show: true, message: '鍮꾨?踰덊샇媛 ?쇱튂?섏? ?딆뒿?덈떎.', isAlert: true });
- }
- };
-
- const handleStudentStart = (e) => {
- e.preventDefault();
- if (!currentUser.id || !currentUser.name) {
- setModal({ show: true, message: '?숇쾲怨??대쫫??紐⑤몢 ?낅젰?댁＜?몄슂.', isAlert: true });
- return;
- }
- const existing = studentsData.find(s => s.id === currentUser.id);
- if (existing) {
- setModal({ show: true, message: '?대? ?됯?瑜??쒖텧???숇쾲?낅땲??', isAlert: true });
- return;
- }
- setView('quiz');
- };
-
- return (
- <div className="max-w-3xl mx-auto p-4 md:p-6 min-h-screen relative">
- 
- {isSyncingConfig && (
-    <div className="fixed inset-0 bg-white flex flex-col items-center justify-center z-[200]">
-      <div className="worksheet-box p-8 text-center animate-pulse">
-        <h2 className="text-2xl font-black mb-4">理쒖떊 ?ㅼ젙??遺덈윭?ㅻ뒗 以묒엯?덈떎...</h2>
-        <p className="font-bold text-gray-600">援ш? ?쒗듃? ?숆린??以묒엯?덈떎. ?좎떆留?湲곕떎?ㅼ＜?몄슂.</p>
-      </div>
-    </div>
-  )}
-
- {/* 怨듯넻 紐⑤떖 (alert/confirm ?泥? */}
- {modal.show && (
- <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[100] p-4">
- <div className="worksheet-box p-6 w-full max-w-sm text-center bg-white">
- <p className="font-bold text-lg mb-6 whitespace-pre-wrap">{modal.message}</p>
- <div className="flex gap-2 justify-center">
- {modal.isAlert ? (
- <button onClick={() => setModal({ show: false, message: '' })} className="bg-black text-white px-6 py-2 font-bold shadow-[2px_2px_0_0_#666]">?뺤씤</button>
- ) : (
- <>
- <button onClick={() => { 
- if (modal.onConfirm) modal.onConfirm(); 
- setModal({ show: false, message: '', onConfirm: null }); 
- }} className="bg-red-500 text-white px-6 py-2 font-bold border-2 border-black">??吏꾪뻾)</button>
- <button onClick={() => setModal({ show: false, message: '', onConfirm: null })} className="bg-white border-2 border-black px-6 py-2 font-bold">痍⑥냼</button>
- </>
- )}
- </div>
- </div>
- </div>
- )}
-
- {/* 援먯궗 濡쒓렇??紐⑤떖 */}
- {showLoginModal && (
- <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[50] p-4">
- <div className="worksheet-box p-6 w-full max-w-sm bg-white">
- <h2 className="text-xl font-black mb-4">援먯궗 ?섏씠吏 ?묒냽</h2>
- <input 
- type="password" 
- placeholder="鍮꾨?踰덊샇 ?낅젰" 
- className="w-full p-3 border-2 border-black font-bold mb-4 outline-none"
- value={teacherPwdInput}
- onChange={e => setTeacherPwdInput(e.target.value)}
- onKeyDown={e => e.key === 'Enter' && handleTeacherLogin()}
- />
- <div className="flex gap-2">
- <button onClick={handleTeacherLogin} className="flex-1 bg-black text-white py-3 font-bold border-2 border-black">?묒냽</button>
- <button onClick={() => setShowLoginModal(false)} className="flex-1 bg-white border-2 border-black py-3 font-bold">痍⑥냼</button>
- </div>
- </div>
- </div>
- )}
-
- <header className="flex justify-between items-center mb-6 pb-4 border-b-4 border-black">
- <div>
- <h1 className="text-xl sm:text-2xl font-black tracking-tighter">?멸났吏?μ닔???섑뻾?됯?</h1>
- <p className="text-xs sm:text-sm font-bold text-gray-600 mt-1">?숇쾲怨??대쫫???뺥솗???낅젰?섏꽭??</p>
- </div>
- {view !== 'admin' && (
- <button onClick={() => setShowLoginModal(true)} className="text-xs font-bold px-3 py-1 border-2 border-black hover:bg-gray-200">援먯궗?묒냽</button>
- )}
- {view === 'admin' && (
- <button onClick={() => { setIsTeacher(false); setView('login'); }} className="text-xs font-bold px-3 py-1 border-2 border-black bg-black text-white">濡쒓렇?꾩썐</button>
- )}
- </header>
-
- {/* ?쇱슦??*/}
- {view === 'login' && (
- <div className="worksheet-box p-6 sm:p-8 max-w-md mx-auto mt-10">
- <form onSubmit={handleStudentStart} className="space-y-6">
- <div>
- <label className="block font-black text-lg mb-2">?숇쾲 (4?먮━)</label>
- <input type="text" pattern="[0-9]{4}" placeholder="?? 3501" className="w-full p-4 border-2 border-black font-bold text-xl outline-none" value={currentUser.id} onChange={e => setCurrentUser({...currentUser, id: e.target.value})} required />
- </div>
- <div>
- <label className="block font-black text-lg mb-2">?대쫫</label>
- <input type="text" placeholder="?대쫫 ?낅젰" className="w-full p-4 border-2 border-black font-bold text-xl outline-none" value={currentUser.name} onChange={e => setCurrentUser({...currentUser, name: e.target.value})} required />
- </div>
- <button type="submit" className="w-full bg-black text-white py-4 font-black text-xl btn-retro">?됯? ?쒖옉?섍린</button>
- </form>
- </div>
- )}
-
- {view === 'quiz' && (
- <QuizView 
- currentUser={currentUser} 
- questions={questions} 
- rubrics={rubrics}
- studentsData={studentsData}
- setStudentsData={setStudentsData}
- settings={settings}
- setView={setView}
- setModal={setModal}
- />
- )}
-
- {view === 'result' && (
- <ResultView currentUser={currentUser} studentsData={studentsData} onBack={() => { setView('login'); setCurrentUser({id:'', name:''}); }} />
- )}
-
- {view === 'admin' && isTeacher && (
- <AdminDashboard 
- questions={questions} setQuestions={setQuestions}
- rubrics={rubrics} setRubrics={setRubrics}
- studentsData={studentsData} setStudentsData={setStudentsData}
- settings={settings} setSettings={setSettings}
- setModal={setModal} isLoadingData={isLoadingData}
- />
- )}
- </div>
- );
- }
-
- function QuizView({ currentUser, questions, rubrics, studentsData, setStudentsData, settings, setView, setModal }) {
- const [currentPage, setCurrentPage] = React.useState(0);
- const [studentAnswers, setStudentAnswers] = React.useState({}); 
- const [activeBlank, setActiveBlank] = React.useState(null); 
-
- React.useEffect(() => {
- const initAnswers = {};
- questions.forEach(q => {
- const blankCount = (q.content.match(/\{\{.*?\}\}/g) || []).length;
- initAnswers[q.id] = Array(blankCount).fill('');
- });
- setStudentAnswers(initAnswers);
- }, [questions]);
-
- const currentQ = questions[currentPage];
- if (!currentQ) return null;
-
- const handleWordSelect = (word) => {
- if (!activeBlank) return;
- setStudentAnswers(prev => {
- const newAns = { ...prev };
- newAns[activeBlank.qId][activeBlank.index] = word;
- return newAns;
- });
- setActiveBlank(null);
- };
-
- const handleSubmit = () => {
- setModal({
- show: true,
- isAlert: false,
- message: "?뺣쭚 ?쒖텧?섏떆寃좎뒿?덇퉴?\n?쒖텧 ?꾩뿉???섏젙?????놁뒿?덈떎.",
- onConfirm: () => {
- let totalScore = 0;
- const results = {};
- questions.forEach(q => {
-            const userAnswers = studentAnswers[q.id] || [];
-            const correctAnswers = q.type === 'essay' ? [] : ((q.content || '').match(/\{\{(.*?)\}\}/g) || []).map(s => s.replace(/[{}]/g, '').trim());
-            const qRubrics = rubrics[q.id] || [];
-            
-            let scoreInfo = { grade: 'F', score: 0 };
-            let correctCount = 0;
-            
-            if (q.type === 'essay') {
-              const text = (userAnswers[0] || '').trim();
-              let matchedR = null;
-              // sort rubrics by score descending so higher score matches first
-              const sortedRubrics = [...qRubrics].sort((a,b) => b.score - a.score);
-              for (let r of sortedRubrics) {
-                if (r.type === 'keyword') {
-                  const keywords = (r.keywords || '').split(',').map(k => k.trim()).filter(k => k);
-                  let allMatch = true;
-                  for (let k of keywords) {
-                    if (text.indexOf(k) === -1) { allMatch = false; break; }
-                  }
-                  if (allMatch && keywords.length > 0) {
-                     matchedR = r;
-                     break;
-                  }
-                }
-              }
-              if (matchedR) scoreInfo = { grade: matchedR.grade, score: matchedR.score };
-            } else if (q.type === 'value') {
-              const mode = q.gradingMode || 'count';
-              if (mode === 'count') {
-                correctAnswers.forEach((ans, idx) => {
-                  if ((userAnswers[idx] || '').trim() === ans) correctCount++;
-                });
-                for (let r of qRubrics) {
-                  if (r.type === 'count' && correctCount >= r.min && correctCount <= r.max) {
-                    scoreInfo = { grade: r.grade, score: r.score };
-                    break;
-                  }
-                }
-              } else if (mode === 'individual') {
-                let totalScore = 0;
-                let grades = [];
-                for (let r of qRubrics) {
-                  if (r.type === 'individual') {
-                    const uAns = (userAnswers[r.blankIndex] || '').trim();
-                    if (uAns === r.matchValue.toString().trim()) {
-                      totalScore += r.score;
-                      if(r.grade) grades.push(r.grade);
-                      correctCount++;
-                    }
-                  }
-                }
-                scoreInfo = { grade: grades.join('/') || '완료', score: totalScore };
-              } else if (mode === 'combination') {
-                let maxScoreR = null;
-                for (let r of qRubrics) {
-                  if (r.type === 'combination') {
-                    const indices = (r.indices || '').split(',').map(n => parseInt(n.trim(), 10)).filter(n => !isNaN(n));
-                    let allCorrect = true;
-                    for (let idx of indices) {
-                      const uAns = (userAnswers[idx] || '').trim();
-                      const cAns = correctAnswers[idx];
-                      if (uAns !== cAns) { allCorrect = false; break; }
-                    }
-                    if (allCorrect && indices.length > 0) {
-                      if (!maxScoreR || r.score > maxScoreR.score) maxScoreR = r;
-                    }
-                  }
-                }
-                if (maxScoreR) scoreInfo = { grade: maxScoreR.grade, score: maxScoreR.score };
-              }
-            } else {
-              correctAnswers.forEach((ans, idx) => {
-                if (userAnswers[idx] === ans) correctCount++;
-              });
-              for (let r of qRubrics) {
-                if (r.type === 'count' || !r.type) {
-                  if (correctCount >= r.min && correctCount <= r.max) {
-                    scoreInfo = { grade: r.grade, score: r.score };
-                    break;
-                  }
-                }
+  <script type="text/babel">
+    const LatexText = ({ text }) => {
+      if (!text) return null;
+      const parts = text.split(/(\$\$.*?\$\$)/g);
+      return (
+        <React.Fragment>
+          {parts.map((part, index) => {
+            if (part.startsWith('$$') && part.endsWith('$$')) {
+              const math = part.slice(2, -2);
+              try {
+                const html = katex.renderToString(math, { throwOnError: false });
+                return <span key={index} dangerouslySetInnerHTML={{ __html: html }} />;
+              } catch (e) {
+                return <span key={index}>{part}</span>;
               }
             }
-            
-            results[q.id] = { correctCount, scoreInfo, type: q.type, userAnswers, correctAnswers };port" content="width=device-width, initial-scale=1.0">
- <title>?멸났吏?μ닔???섑뻾?됯? ?쒖뒪??/title>
- <script src="https://cdn.tailwindcss.com"></script>
- <script src="https://unpkg.com/react@18/umd/react.development.js" crossorigin></script>
- <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js" crossorigin></script>
- <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
- <!-- KaTeX for Math Rendering -->
- <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.css">
- <script src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.js"></script>
- <style>
- body { font-family: 'KoPub Batang', 'Malgun Gothic', serif; background-color: #f5f5f5; color: #111; }
- .worksheet-box { background-color: #fff; border: 3px solid #000; box-shadow: 6px 6px 0px 0px #000; }
- .btn-retro { border: 2px solid #000; box-shadow: 3px 3px 0px 0px #000; transition: all 0.1s; }
- .btn-retro:active { transform: translate(3px, 3px); box-shadow: 0px 0px 0px 0px #000; }
- .blank-input { border-bottom: 2px solid #000; display: inline-block; min-width: 60px; text-align: center; font-weight: bold; padding: 0 5px; cursor: pointer; min-height: 24px; }
- .blank-active { background-color: #e5e5e5; border-bottom: 3px solid #000; }
- </style>
-</head>
-<body>
- <div id="root"></div>
- <script type="text/babel">
- const APP_VERSION = 'v11';
- const DEFAULT_GAS_URL = "https://script.google.com/macros/s/AKfycbzo3r9NJ-G3azQlUUmJMNhIqJiKkG-5857m9bbp6GfOspDqwiPLd9GffJTpY7lR1jhP0w/exec";
- 
- const defaultQuestions = [
- {
- id: 'q1',
- title: '01. ?띿뒪???먮즺???쒗쁽 諛?泥섎━',
- content: `??愿李곗씠??痢≪젙 ?깆쓣 ?듯빐 ?산쾶 ?섎뒗 媛怨듬릺吏 ?딆? ?뺣낫瑜?( {{鍮꾩젙??} )?쇨퀬 ?쒕떎.
-??( {{?뺥삎}} ) ?먮즺???쇱젙???뺤떇??媛뽰텣 ?먮즺?닿퀬, ( {{鍮꾩젙??} ) ?먮즺???쇱젙???뺤떇??媛뽰텛吏 ?딆? ?먮즺?대떎.
+            return <span key={index}>{part}</span>;
+          })}
+        </React.Fragment>
+      );
+    };
 
-???띿뒪???먮즺??吏묓빀?대굹 ( {{踰≫꽣}} )濡??섑??????덈떎.
-??n媛쒖쓽 ??x?? x?? ..., x?숈쓣 愿꾪샇 ?띿뿉 ?쒖꽌?濡??섏뿴?섏뿬 ?섑???
-  X = (x?? x?? ..., x??
-  ??踰≫꽣???섍퀬, x?? x?? ..., x?숈쓣 踰≫꽣 X??( {{?깅텇}} )?대씪怨??쒕떎.
+    const DEFAULT_GAS_URL = "https://script.google.com/macros/s/AKfycbzo3r9NJ-G3azQlUUmJMNhIqJiKkG-5857m9bbp6GfOspDqwiPLd9GffJTpY7lR1jhP0w/exec";
 
-??鍮꾩젙???띿뒪???먮즺?먯꽌 ?⑥뼱??( {{鍮덈룄??} )瑜?援ы븯硫?洹??먮즺?먯꽌 二쇱젣?대? 李얠쓣 ???덈떎.
+    const App = () => {
+      const [view, setView] = React.useState('login');
+      const [currentUser, setCurrentUser] = React.useState({ id: '', name: '' });
+      const [studentsBySession, setStudentsBySession] = React.useState({ "1차": [] });
+      const [isTeacher, setIsTeacher] = React.useState(false);
+      const [isLoadingData, setIsLoadingData] = React.useState(false);
+      const [isSyncingConfig, setIsSyncingConfig] = React.useState(true);
+      
+      const defaultQuestions = [
+        { id: 'q1', type: 'count', title: '01. 텍스트 자료의 정제 및 표현', content: '관찰이나 측정 등을 통해 수집된 자료 중 텍스트 자료에서 단어의 {{빈도수}}를 구하고, 이를 {{시각화}}하여 자료의 특징을 파악할 수 있다.', options: ['빈도수', '시각화', '오차', '수치화'] }
+      ];
+      const defaultRubrics = {
+        'q1': [
+          { min: 2, max: 2, grade: 'A', score: 10 },
+          { min: 1, max: 1, grade: 'B', score: 7 },
+          { min: 0, max: 0, grade: 'C', score: 4 }
+        ]
+      };
 
-???⑥뼱 鍮덈룄?섎? ?댁슜?섏뿬 TF쨌IDF瑜?援ы븯硫??띿뒪???먮즺???좎슜???뺣낫瑜??뚯븘?????덈떎.
-??TF쨌IDF媛 ?묒쑝硫?以묒슂?꾧? ( {{???}} ) ?⑥뼱?닿퀬, TF쨌IDF媛 ?щ㈃ 以묒슂?꾧? ( {{?믪?}} ) ?⑥뼱?대떎.
+      const [configBySession, setConfigBySession] = React.useState({
+        "1차": { questions: defaultQuestions, rubrics: defaultRubrics }
+      });
+      const [settings, setSettings] = React.useState({
+        title: '인공지능 수학 수행평가',
+        gasUrl: DEFAULT_GAS_URL,
+        password: 'admin',
+        sessions: ["1차"]
+      });
+      const [activeSession, setActiveSession] = React.useState("1차");
+      const [modalState, setModalState] = React.useState({ show: false, type: 'alert', title: '', message: '', inputPlaceholder: '', onConfirm: null, onCancel: null, defaultValue: '' });
+      const [modalInput, setModalInput] = React.useState('');
 
-???먮즺??遺꾩꽍 寃곌낵瑜??쎄쾶 ?댄빐?????덈룄濡??쒓컖?곸쑝濡??쒗쁽?섏뿬 ?④낵?곸쑝濡??꾨떖?섎뒗 怨쇱젙??( {{?쒓컖??} )?쇨퀬 ?쒕떎.
-???쒓컖??諛⑸쾿 ?좏삎?먮뒗 ?쒓컙 ?쒓컖?? 遺꾪룷 ?쒓컖?? 愿怨??쒓컖?? 鍮꾧탳 ?쒓컖?? 怨듦컙 ?쒓컖?? 援ъ“ ?쒓컖?붽? ?덈떎.
+      const showModal = (type, title, message, inputPlaceholder = '', defaultValue = '') => {
+        return new Promise((resolve) => {
+          setModalInput(defaultValue);
+          setModalState({
+            show: true,
+            type, title, message, inputPlaceholder, defaultValue,
+            onConfirm: (val) => { setModalState(prev => ({...prev, show: false})); resolve(type === 'input' ? val : true); },
+            onCancel: () => { setModalState(prev => ({...prev, show: false})); resolve(type === 'input' ? null : false); }
+          });
+        });
+      };
 
-???띿뒪???먮즺???⑥뼱 鍮덈룄?섎? ?댁슜?섏뿬 ?? 留됰?洹몃옒?? ?먭렇?섑봽, ( {{?⑥뼱 援щ쫫}} ) ?깆쑝濡??쒓컖?뷀븷 ???덈떎.`,
- options: ["鍮덈룄??, "?쒓컖??, "?먮즺", "???", "?믪?", "?깅텇", "?뺥삎", "鍮꾩젙??, "踰≫꽣", "?⑥뼱 援щ쫫"]
- },
- {
- id: 'q2',
- title: '02. ?대?吏 ?먮즺???쒗쁽 諛?泥섎━',
- content: `?????먮뒗 臾몄옄瑜?吏곸궗媛곹삎 紐⑥뼇?쇰줈 諛곗뿴?섏뿬 愿꾪샇濡?臾띠? 寃껋쓣 ( {{?됰젹}} )?대씪怨??쒕떎.
-???됰젹 A????i?됯낵 ??j?댁씠 留뚮굹???꾩튂???덈뒗 ?깅텇???됰젹 A??(i, j) ?깅텇?대씪 ?섍퀬, 湲고샇濡?( $$a_{ij}$$ )? 媛숈씠 ?섑??몃떎.
-
-???묐갚 ?대?吏??媛??쎌??먯꽌 寃??됱? ( {{0}} ), ?곗깋? 255濡??섑??닿퀬, 洹??ъ씠???뚯깋? ( {{1}} )遺??254源뚯????섎줈 ?섑??????덈떎.
-??而щ윭 ?대?吏?먯꽌 媛??쎌????됱긽 ?뺣낫??RGB 梨꾨꼸??愿묒썝???멸린瑜??섑??대뒗 ?섎? ( $$(R, G, B)$$ )???쒖꽌?띿쑝濡??섑??몃떎.
-
-???대?吏瑜??⑹꽦?섏뿬 ?덈줈???대?吏瑜?留뚮뱾 ?? ?대?吏瑜??됰젹濡??쒗쁽?섍퀬 ?곗궛???섏뿬 ?섑??????덈떎.
-???대?吏???⑹꽦???댁슜?섎뒗 ?됰젹???곗궛? ( {{?㏃뀍怨?類꾩뀍}} )?대떎.
-
-???대?吏??諛앷린瑜?議곗젅?????댁슜?섎뒗 ?됰젹???곗궛? ( {{?ㅼ닔諛?} )?대떎.
-
-??而щ윭 ?대?吏瑜??묐갚 ?대?吏濡?諛붽? ?? ?묐갚 ?대?吏瑜??섑??대뒗 ?됰젹??媛??깅텇? 而щ윭 ?대?吏瑜??섑??대뒗 ???됰젹 R, G, B????묓븯???깅텇??( {{?됯퇏}} )?쇰줈 援ы븳??
-
-???대?吏???됲뻾?대룞怨??移?씠?숈뿉 ?댁슜?섎뒗 ?됰젹???곗궛? ( {{怨깆뀍}} )?대떎.`,
- options: ["0", "1", "$$a_{ij}$$", "$$(R, G, B)$$", "?됰젹", "?ㅼ닔諛?, "?㏃뀍怨?類꾩뀍", "?됯퇏", "怨깆뀍"]
- },
- {
- id: 'q3',
- title: '03. ?먯떎?⑥닔? 理쒖쟻??,
- content: `?낅젰媛?x?? x?? ..., x?숈뿉 ???痢≪젙媛믪씠 y?? y?? ..., y?숈씠怨? 異붿꽭??f(x)=ax (a???곸닔)???곕Ⅸ ?덉륫媛믪씠 ax?? ax?? ..., ax?숈씠??????
-???ㅼ감: y??ax?? y??ax?? ..., y??ax?????먯떎?⑥닔: L(a) = ( $$(y_1-ax_1)^2 + \\cdots + (y_n-ax_n)^2$$ ) / n
-
-???ㅽ빆?⑥닔 y=f(x)?먯꽌 x??媛믪씠 a媛 ?꾨땲硫댁꽌 a???쒖뾾??媛源뚯썙吏????⑥닽媛?f(x)媛 ?쇱젙????L???쒖뾾??媛源뚯썙吏硫? ?⑥닔 y=f(x)??L??( {{?섎졃}} )?쒕떎怨??섍퀬, ?닿쾬??湲고샇濡?( $$\\lim_{x \\to a}f(x)=L$$ )怨?媛숈씠 ?섑??몃떎.
-
-???ㅽ빆?⑥닔 y=f(x)?먯꽌 x??媛믪씠 a?먯꽌 b源뚯? 蹂???뚯쓽 ( {{?됯퇏蹂?붿쑉}} )? ?ㅼ쓬怨?媛숇떎.
-  (f(b)-f(a)) / (b-a) = (f(a+?x)-f(a)) / ?x
-
-???ㅽ빆?⑥닔 y=f(x)?먯꽌 x=a?먯꽌??誘몃텇怨꾩닔 ( $$f'(a)$$ )????(a, f(a))?먯꽌 怨≪꽑 y=f(x)???묒꽑??( {{湲곗슱湲?} )? 媛숇떎.
-
-???먯떎?⑥닔??媛믪쓣 理쒖냼?뷀븯??異붿꽭?좎쓽 湲곗슱湲곕? 李얜뒗 怨쇱젙???먯떎?⑥닔??( {{理쒖쟻??} )???섍퀬, ?먯떎?⑥닔??媛믪씠 理쒖냼媛 ?섎룄濡??섎뒗 異붿꽭?좎쓣 ( {{理쒖쟻 異붿꽭??} )?대씪怨??쒕떎.
-
-???먯떎?⑥닔??媛믪씠 媛먯냼?섎뒗 諛⑺뼢??李얘퀬 珥덇퉫媛믪쓣 諛섎났?곸쑝濡??대룞?쒗궎硫댁꽌 理쒖쟻?뷀븯??諛⑸쾿??( {{寃쎌궗?섍컯踰?} )?대씪怨??쒕떎.
-??( {{?숈뒿瑜?} )???ш린瑜??곸젅??議곗젅?섎㈃ 誘몃텇怨꾩닔???ш린??愿怨꾩뾾???먯떎?⑥닔??媛믪씠 蹂?섎뒗 ?뺣룄瑜?議곗젅?????덈떎.`,
- options: ["?됯퇏蹂?붿쑉", "理쒖쟻??, "寃쎌궗?섍컯踰?, "$$\\lim_{x \\to a}f(x)=L$$", "$$f'(a)$$", "理쒖쟻 異붿꽭??, "湲곗슱湲?, "?숈뒿瑜?, "$$(y_1-ax_1)^2 + \\cdots + (y_n-ax_n)^2$$", "?섎졃"]
- }
- ];
-
- const defaultRubrics = {
- 'q1': [
- { min: 9, max: 10, grade: 'A', score: 10 },
- { min: 7, max: 8, grade: 'B', score: 8 },
- { min: 0, max: 6, grade: 'C', score: 6 }
- ],
- 'q2': [
- { min: 8, max: 9, grade: 'A', score: 10 },
- { min: 5, max: 7, grade: 'B', score: 8 },
- { min: 0, max: 4, grade: 'C', score: 6 }
- ],
- 'q3': [
- { min: 9, max: 10, grade: 'A', score: 10 },
- { min: 7, max: 8, grade: 'B', score: 8 },
- { min: 0, max: 6, grade: 'C', score: 6 }
- ]
- };
-
- const LatexText = ({ text }) => {
- if (!text) return null;
- const parts = text.split(/(\$\$.*?\$\$)/g);
- return (
- <span>
- {parts.map((part, index) => {
- if (part.startsWith('$$') && part.endsWith('$$')) {
- const math = part.slice(2, -2);
- try {
- const html = katex.renderToString(math, { throwOnError: false });
- return <span key={index} dangerouslySetInnerHTML={{ __html: html }} />;
- } catch (e) {
- return <span key={index}>{part}</span>;
- }
- }
- return <span key={index}>{part}</span>;
- })}
- </span>
- );
- };
-
- function App() {
- const [view, setView] = React.useState('login'); 
- const [currentUser, setCurrentUser] = React.useState({ id: '', name: '' });
- const [studentsData, setStudentsData] = React.useState([]);
- const [questions, setQuestions] = React.useState(defaultQuestions);
- const [rubrics, setRubrics] = React.useState(defaultRubrics);
- 
- const [settings, setSettings] = React.useState({
- gasUrl: DEFAULT_GAS_URL,
- password: 'admin'
- });
- const [isTeacher, setIsTeacher] = React.useState(false);
- const [showLoginModal, setShowLoginModal] = React.useState(false);
- const [teacherPwdInput, setTeacherPwdInput] = React.useState('');
- 
-  const [modal, setModal] = React.useState({ show: false, message: '', onConfirm: null, isAlert: true });
-  const [isLoadingData, setIsLoadingData] = React.useState(false);
-  const [isSyncingConfig, setIsSyncingConfig] = React.useState(true);
-
-  React.useEffect(() => {
-    const ver = localStorage.getItem('aiMath_version');
-    if (ver !== APP_VERSION) {
-      localStorage.clear();
-      localStorage.setItem('aiMath_version', APP_VERSION);
-    }
-    
-    // 濡쒖뺄 ?ㅽ넗由ъ? ?곗꽑 遺덈윭?ㅺ린 (?ㅽ봽?쇱씤 ?鍮?
-    const savedStudents = localStorage.getItem('aiMath_students');
-    if (savedStudents) setStudentsData(JSON.parse(savedStudents));
-    const savedQuestions = localStorage.getItem('aiMath_questions');
-    if (savedQuestions) setQuestions(JSON.parse(savedQuestions));
-    const savedRubrics = localStorage.getItem('aiMath_rubrics');
-    if (savedRubrics) setRubrics(JSON.parse(savedRubrics));
-    const savedSettings = localStorage.getItem('aiMath_settings');
-    let currentGasUrl = DEFAULT_GAS_URL;
-    if (savedSettings) {
-      const parsedSettings = JSON.parse(savedSettings);
-      setSettings(parsedSettings);
-      currentGasUrl = parsedSettings.gasUrl;
-    }
-    
-    // ?쒗듃?먯꽌 理쒖떊 ?ㅼ젙 ?숆린??    if (currentGasUrl) {
-      fetch(currentGasUrl + '?action=getConfig')
-        .then(res => res.json())
-        .then(json => {
-          if (json && json.status === 'success' && json.data.questions && json.data.questions.length > 0) {
-            setQuestions(json.data.questions);
-            setRubrics(json.data.rubrics);
-            localStorage.setItem('aiMath_questions', JSON.stringify(json.data.questions));
-            localStorage.setItem('aiMath_rubrics', JSON.stringify(json.data.rubrics));
+      React.useEffect(() => {
+        let savedConfigBySession = { "1차": { questions: defaultQuestions, rubrics: defaultRubrics } };
+        let savedStudentsBySession = { "1차": [] };
+        
+        // 마이그레이션 로직
+        const oldQuestions = localStorage.getItem('aiMath_questions');
+        const oldRubrics = localStorage.getItem('aiMath_rubrics');
+        if (oldQuestions) {
+          try {
+            const pq = JSON.parse(oldQuestions);
+            const pr = JSON.parse(oldRubrics || "{}");
+            if (Array.isArray(pq)) {
+              pq.forEach(q => { if(!q.type) q.type = 'count'; });
+              savedConfigBySession["1차"] = { questions: pq, rubrics: pr };
+            }
+          } catch(e) {}
+        }
+        
+        const oldConfig = localStorage.getItem('aiMath_configBySession');
+        if (oldConfig) savedConfigBySession = JSON.parse(oldConfig);
+        
+        const savedStudents = localStorage.getItem('aiMath_students');
+        if (savedStudents) {
+          try {
+            const ps = JSON.parse(savedStudents);
+            if (Array.isArray(ps)) {
+              savedStudentsBySession["1차"] = ps;
+            } else {
+              savedStudentsBySession = ps;
+            }
+          } catch(e) {}
+        }
+        
+        const oldSettings = localStorage.getItem('aiMath_settings');
+        let currentSettings = { ...settings };
+        if (oldSettings) {
+          const parsed = JSON.parse(oldSettings);
+          currentSettings = { ...currentSettings, ...parsed };
+          if (DEFAULT_GAS_URL) {
+            currentSettings.gasUrl = DEFAULT_GAS_URL;
           }
-        })
-        .catch(e => console.error("Config sync error:", e))
-        .finally(() => setIsSyncingConfig(false));
-    } else {
-      setIsSyncingConfig(false);
-    }
-  }, []);
- 
- // ?좎깮???묒냽 ??援ш? ?쒗듃?먯꽌 理쒖떊 ?곗씠??遺덈윭?ㅺ린
- React.useEffect(() => {
- if (isTeacher && view === 'admin' && settings.gasUrl) {
- setIsLoadingData(true);
- fetch(settings.gasUrl)
- .then(res => res.json())
- .then(json => {
- if (json.status === 'success') {
- setStudentsData(json.data);
- localStorage.setItem('aiMath_students', JSON.stringify(json.data));
- }
- })
- .catch(e => console.error("Data load error:", e))
- .finally(() => setIsLoadingData(false));
- }
- }, [isTeacher, view, settings.gasUrl]);
+        }
+        if (!currentSettings.sessions || currentSettings.sessions.length === 0) currentSettings.sessions = ["1차"];
+        
+        setSettings(currentSettings);
+        setConfigBySession(savedConfigBySession);
+        setStudentsBySession(savedStudentsBySession);
+        setActiveSession(currentSettings.sessions[0]);
+        
+        if (currentSettings.gasUrl) {
+          fetch(currentSettings.gasUrl + '?action=getConfig')
+            .then(res => res.json())
+            .then(json => {
+              if (json && json.status === 'success' && json.data) {
+                const fetchedSessions = json.data.sessions || ["1차"];
+                const fetchedConfig = json.data.configBySession || { "1차": { questions: defaultQuestions, rubrics: defaultRubrics } };
+                setSettings(s => ({...s, sessions: fetchedSessions, password: json.data.password || s.password, title: json.data.title || s.title}));
+                setConfigBySession(fetchedConfig);
+                setActiveSession(fetchedSessions[0]);
+                localStorage.setItem('aiMath_settings', JSON.stringify({...currentSettings, sessions: fetchedSessions, password: json.data.password || currentSettings.password, title: json.data.title || currentSettings.title}));
+                localStorage.setItem('aiMath_configBySession', JSON.stringify(fetchedConfig));
+              }
+            })
+            .catch(e => console.error(e))
+            .finally(() => setIsSyncingConfig(false));
+        } else {
+          setIsSyncingConfig(false);
+        }
+      }, []);
 
- const handleTeacherLogin = () => {
- if (teacherPwdInput === settings.password) {
- setIsTeacher(true);
- setShowLoginModal(false);
- setTeacherPwdInput('');
- setView('admin');
- } else {
- setModal({ show: true, message: '鍮꾨?踰덊샇媛 ?쇱튂?섏? ?딆뒿?덈떎.', isAlert: true });
- }
- };
+      React.useEffect(() => {
+        if (isTeacher && view === 'admin' && settings.gasUrl) {
+          setIsLoadingData(true);
+          let fetchUrl = settings.gasUrl.trim();
+          if (!fetchUrl.startsWith('http')) fetchUrl = 'https://' + fetchUrl;
+          fetch(fetchUrl)
+            .then(res => res.json())
+            .then(json => {
+              if (json.status === 'success') {
+                let result = json.data;
+                if (Array.isArray(result)) {
+                  result = { "1차": result };
+                }
+                setStudentsBySession(result);
+                localStorage.setItem('aiMath_students', JSON.stringify(result));
+              }
+            })
+            .catch(e => console.error(e))
+            .finally(() => setIsLoadingData(false));
+        }
+      }, [isTeacher, view, settings.gasUrl]);
 
- const handleStudentStart = (e) => {
- e.preventDefault();
- if (!currentUser.id || !currentUser.name) {
- setModal({ show: true, message: '?숇쾲怨??대쫫??紐⑤몢 ?낅젰?댁＜?몄슂.', isAlert: true });
- return;
- }
- const existing = studentsData.find(s => s.id === currentUser.id);
- if (existing) {
- setModal({ show: true, message: '?대? ?됯?瑜??쒖텧???숇쾲?낅땲??', isAlert: true });
- return;
- }
- setView('quiz');
- };
+      React.useEffect(() => {
+        document.title = settings.title;
+      }, [settings.title]);
 
- return (
- <div className="max-w-3xl mx-auto p-4 md:p-6 min-h-screen relative">
- 
- {isSyncingConfig && (
-    <div className="fixed inset-0 bg-white flex flex-col items-center justify-center z-[200]">
-      <div className="worksheet-box p-8 text-center animate-pulse">
-        <h2 className="text-2xl font-black mb-4">理쒖떊 ?ㅼ젙??遺덈윭?ㅻ뒗 以묒엯?덈떎...</h2>
-        <p className="font-bold text-gray-600">援ш? ?쒗듃? ?숆린??以묒엯?덈떎. ?좎떆留?湲곕떎?ㅼ＜?몄슂.</p>
-      </div>
-    </div>
-  )}
+      const handleSyncConfig = () => {
+        if (!settings.gasUrl) {
+          showModal('alert', '오류', '구글 앱스 스크립트 웹 앱 URL을 먼저 저장해주세요.');
+          return;
+        }
+        const configData = {
+          title: settings.title,
+          password: settings.password,
+          sessions: settings.sessions,
+          configBySession: configBySession
+        };
+        let fetchUrl = settings.gasUrl.trim();
+        if (!fetchUrl.startsWith('http')) fetchUrl = 'https://' + fetchUrl;
+        fetch(fetchUrl, {
+          method: 'POST',
+          mode: 'no-cors',
+          headers: { 'Content-Type': 'text/plain' },
+          body: JSON.stringify({ action: "saveConfig", data: configData })
+        }).then(() => {
+          showModal('alert', '성공', '구글 시트에 모든 설정과 문항/루브릭 배포가 완료되었습니다.');
+        }).catch(err => {
+          showModal('alert', '오류', '저장 중 오류가 발생했습니다.');
+        });
+      };
 
- {/* 怨듯넻 紐⑤떖 (alert/confirm ?泥? */}
- {modal.show && (
- <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[100] p-4">
- <div className="worksheet-box p-6 w-full max-w-sm text-center bg-white">
- <p className="font-bold text-lg mb-6 whitespace-pre-wrap">{modal.message}</p>
- <div className="flex gap-2 justify-center">
- {modal.isAlert ? (
- <button onClick={() => setModal({ show: false, message: '' })} className="bg-black text-white px-6 py-2 font-bold shadow-[2px_2px_0_0_#666]">?뺤씤</button>
- ) : (
- <>
- <button onClick={() => { 
- if (modal.onConfirm) modal.onConfirm(); 
- setModal({ show: false, message: '', onConfirm: null }); 
- }} className="bg-red-500 text-white px-6 py-2 font-bold border-2 border-black">??吏꾪뻾)</button>
- <button onClick={() => setModal({ show: false, message: '', onConfirm: null })} className="bg-white border-2 border-black px-6 py-2 font-bold">痍⑥냼</button>
- </>
- )}
- </div>
- </div>
- </div>
- )}
+      if (isSyncingConfig) {
+        return (
+          <div className="min-h-screen flex items-center justify-center bg-gray-100">
+            <div className="text-2xl font-bold p-8 bg-white rounded-xl shadow-lg border-2 border-black">
+              구글 시트에서 설정을 불러오는 중입니다...
+            </div>
+          </div>
+        );
+      }
 
- {/* 援먯궗 濡쒓렇??紐⑤떖 */}
- {showLoginModal && (
- <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[50] p-4">
- <div className="worksheet-box p-6 w-full max-w-sm bg-white">
- <h2 className="text-xl font-black mb-4">援먯궗 ?섏씠吏 ?묒냽</h2>
- <input 
- type="password" 
- placeholder="鍮꾨?踰덊샇 ?낅젰" 
- className="w-full p-3 border-2 border-black font-bold mb-4 outline-none"
- value={teacherPwdInput}
- onChange={e => setTeacherPwdInput(e.target.value)}
- onKeyDown={e => e.key === 'Enter' && handleTeacherLogin()}
- />
- <div className="flex gap-2">
- <button onClick={handleTeacherLogin} className="flex-1 bg-black text-white py-3 font-bold border-2 border-black">?묒냽</button>
- <button onClick={() => setShowLoginModal(false)} className="flex-1 bg-white border-2 border-black py-3 font-bold">痍⑥냼</button>
- </div>
- </div>
- </div>
- )}
+      return (
+        <React.Fragment>
+          {view === 'login' && <LoginView setActiveSession={setActiveSession} activeSession={activeSession} settings={settings} setView={setView} setCurrentUser={setCurrentUser} setIsTeacher={setIsTeacher} showModal={showModal} />}
+          {view === 'quiz' && <QuizView activeSession={activeSession} settings={settings} configBySession={configBySession} currentUser={currentUser} setView={setView} setStudentsBySession={setStudentsBySession} showModal={showModal} />}
+          {view === 'result' && <ResultView activeSession={activeSession} currentUser={currentUser} studentsBySession={studentsBySession} setView={setView} />}
+          {view === 'admin' && (
+            <AdminDashboard 
+              activeSession={activeSession} setActiveSession={setActiveSession}
+              settings={settings} setSettings={setSettings}
+              configBySession={configBySession} setConfigBySession={setConfigBySession}
+              studentsBySession={studentsBySession} setStudentsBySession={setStudentsBySession}
+              setView={setView} setIsTeacher={setIsTeacher}
+              handleSyncConfig={handleSyncConfig} isLoadingData={isLoadingData}
+              showModal={showModal}
+            />
+          )}
 
- <header className="flex justify-between items-center mb-6 pb-4 border-b-4 border-black">
- <div>
- <h1 className="text-xl sm:text-2xl font-black tracking-tighter">?멸났吏?μ닔???섑뻾?됯?</h1>
- <p className="text-xs sm:text-sm font-bold text-gray-600 mt-1">?숇쾲怨??대쫫???뺥솗???낅젰?섏꽭??</p>
- </div>
- {view !== 'admin' && (
- <button onClick={() => setShowLoginModal(true)} className="text-xs font-bold px-3 py-1 border-2 border-black hover:bg-gray-200">援먯궗?묒냽</button>
- )}
- {view === 'admin' && (
- <button onClick={() => { setIsTeacher(false); setView('login'); }} className="text-xs font-bold px-3 py-1 border-2 border-black bg-black text-white">濡쒓렇?꾩썐</button>
- )}
- </header>
+          {modalState.show && (
+            <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+              <div className="bg-white p-6 rounded-xl border-4 border-black w-full max-w-sm shadow-[8px_8px_0_0_rgba(0,0,0,1)]">
+                <h3 className="font-black text-2xl mb-4 bg-yellow-300 inline-block px-3 py-1 shadow-[2px_2px_0_0_rgba(0,0,0,1)] -rotate-1">{modalState.title}</h3>
+                <p className="mb-6 font-bold text-lg leading-snug">{modalState.message}</p>
+                {modalState.type === 'input' && (
+                  <input 
+                    type="text" value={modalInput} onChange={e => setModalInput(e.target.value)}
+                    placeholder={modalState.inputPlaceholder}
+                    className="w-full p-3 border-4 border-black mb-6 font-bold outline-none focus:bg-blue-50"
+                  />
+                )}
+                <div className="flex gap-3">
+                  {modalState.type !== 'alert' && (
+                    <button onClick={modalState.onCancel} className="flex-1 p-3 border-4 border-black font-black bg-white hover:bg-gray-100 shadow-[4px_4px_0_0_rgba(0,0,0,1)] hover:translate-y-1 hover:shadow-none transition-all">취소</button>
+                  )}
+                  <button onClick={() => modalState.onConfirm(modalInput)} className="flex-1 p-3 border-4 border-black bg-blue-500 text-white font-black hover:bg-blue-600 shadow-[4px_4px_0_0_rgba(0,0,0,1)] hover:translate-y-1 hover:shadow-none transition-all">확인</button>
+                </div>
+              </div>
+            </div>
+          )}
+        </React.Fragment>
+      );
+    };
 
- {/* ?쇱슦??*/}
- {view === 'login' && (
- <div className="worksheet-box p-6 sm:p-8 max-w-md mx-auto mt-10">
- <form onSubmit={handleStudentStart} className="space-y-6">
- <div>
- <label className="block font-black text-lg mb-2">?숇쾲 (4?먮━)</label>
- <input type="text" pattern="[0-9]{4}" placeholder="?? 3501" className="w-full p-4 border-2 border-black font-bold text-xl outline-none" value={currentUser.id} onChange={e => setCurrentUser({...currentUser, id: e.target.value})} required />
- </div>
- <div>
- <label className="block font-black text-lg mb-2">?대쫫</label>
- <input type="text" placeholder="?대쫫 ?낅젰" className="w-full p-4 border-2 border-black font-bold text-xl outline-none" value={currentUser.name} onChange={e => setCurrentUser({...currentUser, name: e.target.value})} required />
- </div>
- <button type="submit" className="w-full bg-black text-white py-4 font-black text-xl btn-retro">?됯? ?쒖옉?섍린</button>
- </form>
- </div>
- )}
+    const LoginView = ({ setActiveSession, activeSession, settings, setView, setCurrentUser, setIsTeacher, showModal }) => {
+      const [id, setId] = React.useState('');
+      const [name, setName] = React.useState('');
+      const handleLogin = (e) => {
+        e.preventDefault();
+        if (id && name) {
+          setCurrentUser({ id, name });
+          setView('quiz');
+        }
+      };
+      const handleTeacherLogin = () => {
+        showModal('input', '교사 접속', '교사 비밀번호를 입력하세요:').then(pwd => {
+          if (pwd === settings.password) {
+            setIsTeacher(true);
+            setView('admin');
+          } else if (pwd !== null) {
+            showModal('alert', '오류', '비밀번호가 일치하지 않습니다.');
+          }
+        });
+      };
+      
+      return (
+        <div className="min-h-screen flex items-center justify-center px-4 relative">
+          <button onClick={handleTeacherLogin} className="absolute top-4 right-4 bg-gray-800 text-white px-4 py-2 rounded font-bold shadow hover:bg-gray-700">교사 접속</button>
+          <form onSubmit={handleLogin} className="bg-white p-8 rounded-2xl shadow-xl w-full max-w-md border-4 border-black mt-12">
+            <h1 className="text-3xl font-black mb-8 text-center bg-yellow-300 inline-block px-4 py-2 rotate-[-2deg] shadow-[4px_4px_0_0_rgba(0,0,0,1)]">{settings.title}</h1>
+            
+            <div className="mb-4">
+              <label className="block font-bold mb-2">평가 회차</label>
+              <select value={activeSession} onChange={e => setActiveSession(e.target.value)} className="w-full p-4 border-2 border-black font-bold text-xl outline-none focus:bg-blue-50">
+                {settings.sessions.map(s => <option key={s} value={s}>{s}</option>)}
+              </select>
+            </div>
 
- {view === 'quiz' && (
- <QuizView 
- currentUser={currentUser} 
- questions={questions} 
- rubrics={rubrics}
- studentsData={studentsData}
- setStudentsData={setStudentsData}
- settings={settings}
- setView={setView}
- setModal={setModal}
- />
- )}
+            <input type="text" placeholder="학번 (예: 10101)" value={id} onChange={e => setId(e.target.value)} className="w-full mb-4 p-4 border-2 border-black font-bold text-xl outline-none focus:bg-blue-50" required />
+            <input type="text" placeholder="이름 (예: 홍길동)" value={name} onChange={e => setName(e.target.value)} className="w-full mb-8 p-4 border-2 border-black font-bold text-xl outline-none focus:bg-blue-50" required />
+            
+            <button type="submit" className="w-full bg-blue-500 text-white font-black text-2xl py-4 border-4 border-black shadow-[4px_4px_0_0_rgba(0,0,0,1)] hover:translate-y-1 hover:shadow-none transition-all">시작하기</button>
+          </form>
+        </div>
+      );
+    };
 
- {view === 'result' && (
- <ResultView currentUser={currentUser} studentsData={studentsData} onBack={() => { setView('login'); setCurrentUser({id:'', name:''}); }} />
- )}
+    const QuizView = ({ activeSession, settings, configBySession, currentUser, setView, setStudentsBySession, showModal }) => {
+      const questions = (configBySession[activeSession] && configBySession[activeSession].questions) || [];
+      const rubrics = (configBySession[activeSession] && configBySession[activeSession].rubrics) || {};
+      const [currentQIndex, setCurrentQIndex] = React.useState(0);
+      const [studentAnswers, setStudentAnswers] = React.useState({});
+      // Add individual grading UI states
+      const [activeBlank, setActiveBlank] = React.useState(null);
+      const handleNumberClick = (num) => {
+        if (!activeBlank) return;
+        setStudentAnswers(prev => {
+          const newAns = { ...prev };
+          if (!newAns[activeBlank.qId]) newAns[activeBlank.qId] = [];
+          
+          let currentVal = newAns[activeBlank.qId][activeBlank.index] || '';
+          if (currentVal === '?') currentVal = '';
+          
+          newAns[activeBlank.qId][activeBlank.index] = currentVal + num;
+          return newAns;
+        });
+      };
+      const handleClearBlank = () => {
+        if (!activeBlank) return;
+        setStudentAnswers(prev => {
+          const newAns = { ...prev };
+          if (!newAns[activeBlank.qId]) newAns[activeBlank.qId] = [];
+          newAns[activeBlank.qId][activeBlank.index] = '';
+          return newAns;
+        });
+      };
 
- {view === 'admin' && isTeacher && (
- <AdminDashboard 
- questions={questions} setQuestions={setQuestions}
- rubrics={rubrics} setRubrics={setRubrics}
- studentsData={studentsData} setStudentsData={setStudentsData}
- settings={settings} setSettings={setSettings}
- setModal={setModal} isLoadingData={isLoadingData}
- />
- )}
- </div>
- );
- }
+      const [activeBlank, setActiveBlank] = React.useState(null);
+      const [isSubmitting, setIsSubmitting] = React.useState(false);
 
- function QuizView({ currentUser, questions, rubrics, studentsData, setStudentsData, settings, setView, setModal }) {
- const [currentPage, setCurrentPage] = React.useState(0);
- const [studentAnswers, setStudentAnswers] = React.useState({}); 
- const [activeBlank, setActiveBlank] = React.useState(null); 
+      const currentQ = questions[currentQIndex];
 
- React.useEffect(() => {
- const initAnswers = {};
- questions.forEach(q => {
- const blankCount = (q.content.match(/\{\{.*?\}\}/g) || []).length;
- initAnswers[q.id] = Array(blankCount).fill('');
- });
- setStudentAnswers(initAnswers);
- }, [questions]);
+      if (!currentQ) return <div className="p-8 font-bold">문항이 없습니다.</div>;
 
- const currentQ = questions[currentPage];
- if (!currentQ) return null;
-
- const handleWordSelect = (word) => {
- if (!activeBlank) return;
- setStudentAnswers(prev => {
- const newAns = { ...prev };
- newAns[activeBlank.qId][activeBlank.index] = word;
- return newAns;
- });
- setActiveBlank(null);
- };
-
- const handleSubmit = () => {
- setModal({
- show: true,
- isAlert: false,
- message: "?뺣쭚 ?쒖텧?섏떆寃좎뒿?덇퉴?\n?쒖텧 ?꾩뿉???섏젙?????놁뒿?덈떎.",
- onConfirm: () => {
- let totalScore = 0;
- const results = {};
- questions.forEach(q => {
- const correctAnswers = (q.content.match(/\{\{(.*?)\}\}/g) || []).map(s => s.replace(/[{}]/g, '').trim());
- const userAnswers = studentAnswers[q.id] || [];
- let correctCount = 0;
- correctAnswers.forEach((ans, idx) => {
- if (userAnswers[idx] === ans) correctCount++;
- });
- const qRubrics = rubrics[q.id] || [];
- let scoreInfo = { grade: 'F', score: 0 };
- for (let r of qRubrics) {
- if (correctCount >= r.min && correctCount <= r.max) {
- scoreInfo = { grade: r.grade, score: r.score };
- break;
- }
- }
- results[q.id] = { correctCount, scoreInfo };
- totalScore += scoreInfo.score;
- });
-
- const finalData = {
- id: currentUser.id,
- name: currentUser.name,
- results,
- totalScore,
- timestamp: new Date().toLocaleString(),
- scores: questions.map(q => results[q.id].scoreInfo.score)
- };
-
- const newData = [...studentsData, finalData];
- setStudentsData(newData);
- localStorage.setItem('aiMath_students', JSON.stringify(newData));
- 
- if (settings.gasUrl) {
- try {
- fetch(settings.gasUrl, {
- method: 'POST',
- mode: 'no-cors',
- headers: { 'Content-Type': 'text/plain' },
- body: JSON.stringify({ action: "submit", data: finalData })
- });
- } catch(e) { console.error("Sheet Error:", e); }
- }
- setView('result');
- }
- });
- };
-
- const renderContentWithBlanks = (q) => {
+      const renderContentWithBlanks = (q) => {
         if (q.type === 'essay') {
           return (
             <React.Fragment>
-              <div className="mb-4 whitespace-pre-wrap">{q.content}</div>
+              <div className="mb-4 whitespace-pre-wrap font-bold text-lg">{q.content}</div>
               <textarea 
                 value={(studentAnswers[q.id] && studentAnswers[q.id][0]) || ''}
                 onChange={(e) => {
@@ -929,7 +408,7 @@
                       return newAns;
                     });
                   }}
-                  className="border-b-2 border-black bg-transparent w-24 text-center font-bold outline-none focus:bg-blue-50"
+                  className="border-b-4 border-black bg-transparent w-24 text-center font-bold outline-none focus:bg-blue-50 px-2"
                   placeholder="입력"
                 />
               );
@@ -950,237 +429,386 @@
         });
       };
 
- return (
- <div className="flex flex-col h-[80vh]">
- <div className="flex justify-between items-center mb-4">
- <h2 className="text-xl font-black">{currentQ.title}</h2>
- <span className="font-bold border-2 border-black px-3 py-1 bg-white">{currentPage + 1} / {questions.length}</span>
- </div>
- <div className="worksheet-box p-4 sm:p-6 flex-1 overflow-y-auto leading-loose text-base sm:text-lg whitespace-pre-wrap">
- {renderContentWithBlanks(currentQ)}
- </div>
+      const handleSubmit = () => {
+        showModal('confirm', '제출 확인', '정말 제출하시겠습니까?').then(confirmed => {
+          if (!confirmed) return;
+          setIsSubmitting(true);
+          let totalScore = 0;
+          const results = {};
 
- {activeBlank && activeBlank.qId === currentQ.id && (
- <div className="mt-4 p-4 worksheet-box bg-gray-50 border-t-0">
- <p className="text-sm font-bold mb-2">?⑥뼱瑜??좏깮?섏꽭??</p>
- <div className="flex flex-wrap gap-2">
- {currentQ.options.map((opt, idx) => (
- <button key={idx} onClick={() => handleWordSelect(opt)} className="border-2 border-black bg-white px-3 py-2 font-bold hover:bg-black hover:text-white transition-colors">
- <LatexText text={opt} />
- </button>
- ))}
- </div>
- </div>
- )}
-
- <div className="mt-6 flex justify-between gap-4">
- {currentPage > 0 ? (
- <button onClick={() => {setCurrentPage(p => p - 1); setActiveBlank(null);}} className="flex-1 bg-white border-2 border-black py-4 font-black btn-retro text-sm sm:text-base">? ?댁쟾 ?곸뿭</button>
- ) : <div className="flex-1"></div>}
- {currentPage < questions.length - 1 ? (
- <button onClick={() => {setCurrentPage(p => p + 1); setActiveBlank(null);}} className="flex-1 bg-black text-white border-2 border-black py-4 font-black btn-retro text-sm sm:text-base">?ㅼ쓬 ?곸뿭 ??/button>
- ) : (
- <button onClick={handleSubmit} className="flex-1 bg-black text-white border-2 border-black py-4 font-black btn-retro text-sm sm:text-base">理쒖쥌 ?쒖텧?섍린</button>
- )}
- </div>
- </div>
- );
- }
-
- function ResultView({ currentUser, studentsData, onBack }) {
- const result = studentsData.find(s => s.id === currentUser.id);
- if (!result) return <div className="p-4 font-bold text-center">寃곌낵瑜?李얠쓣 ???놁뒿?덈떎.</div>;
- return (
- <div className="worksheet-box p-6 sm:p-8 max-w-lg mx-auto text-center mt-10">
- <h2 className="text-2xl sm:text-3xl font-black mb-2">{result.name} ?숈깮</h2>
- <p className="text-lg font-bold mb-8 pb-4 border-b-2 border-black">珥앹젏: <span className="text-3xl">{result.totalScore}</span>??/p>
- <div className="space-y-4 mb-8 text-left">
- {Object.entries(result.results).map(([qId, data], idx) => (
- <div key={idx} className="flex flex-col sm:flex-row justify-between sm:items-center border-2 border-black p-4 bg-gray-50 gap-2">
- <span className="font-bold">?곸뿭 {idx + 1}</span>
- <div className="text-right sm:text-left">
- <span className="font-black text-xl">{data.scoreInfo.score}??/span>
- <span className="text-sm font-bold text-gray-600 ml-2">({data.scoreInfo.grade}?깃툒 / {data.correctCount}媛??뺣떟)</span>
- </div>
- </div>
- ))}
- </div>
- <button onClick={onBack} className="w-full bg-black text-white py-4 font-black text-xl btn-retro">泥섏쓬?쇰줈 ?뚯븘媛湲?/button>
- </div>
- );
- }
-
- function AdminDashboard({ questions, setQuestions, rubrics, setRubrics, studentsData, setStudentsData, settings, setSettings, setModal, isLoadingData }) {
- const [tab, setTab] = React.useState('students');
-
- const handleSyncConfig = () => {
-    setModal({
-      show: true,
-      isAlert: false,
-      message: '?꾩옱 ?묒꽦??臾명빆怨?猷⑤툕由??ㅼ젙??以묒븰 援ш? ?쒗듃????뼱?곗떆寃좎뒿?덇퉴?\n紐⑤뱺 湲곌린(?숈깮)媛 ???ㅼ젙?쇰줈 ?숆린?붾맗?덈떎.',
-      onConfirm: () => {
-        if (!settings.gasUrl) {
-          setTimeout(() => setModal({ show: true, message: '援ш? ?쒗듃 ?곕룞 URL???ㅼ젙?섏? ?딆븯?듬땲??', isAlert: true }), 100);
-          return;
-        }
-        
-        try {
-          fetch(settings.gasUrl, {
-            method: 'POST',
-            mode: 'no-cors',
-            headers: { 'Content-Type': 'text/plain' },
-            body: JSON.stringify({ action: 'saveConfig', data: { questions, rubrics } })
+          questions.forEach(q => {
+                const userAnswers = studentAnswers[q.id] || [];
+                const correctAnswers = q.type === 'essay' ? [] : ((q.content || '').match(/\{\{(.*?)\}\}/g) || []).map(s => s.replace(/[{}]/g, '').trim());
+                const qRubrics = rubrics[q.id] || [];
+                
+                let scoreInfo = { grade: 'F', score: 0 };
+                let correctCount = 0;
+                
+                if (q.type === 'essay') {
+                  const text = (userAnswers[0] || '').trim();
+                  let matchedR = null;
+                  const sortedRubrics = [...qRubrics].sort((a,b) => b.score - a.score);
+                  for (let r of sortedRubrics) {
+                    if (r.type === 'keyword') {
+                      const keywords = (r.keywords || '').split(',').map(k => k.trim()).filter(k => k);
+                      let allMatch = true;
+                      for (let k of keywords) {
+                        if (text.indexOf(k) === -1) { allMatch = false; break; }
+                      }
+                      if (allMatch && keywords.length > 0) {
+                         matchedR = r;
+                         break;
+                      }
+                    }
+                  }
+                  if (matchedR) scoreInfo = { grade: matchedR.grade, score: matchedR.score };
+                } else if (q.type === 'value') {
+                  const mode = q.gradingMode || 'count';
+                  if (mode === 'count') {
+                    correctAnswers.forEach((ans, idx) => {
+                      if ((userAnswers[idx] || '').trim() === ans) correctCount++;
+                    });
+                    for (let r of qRubrics) {
+                      if (r.type === 'count' && correctCount >= r.min && correctCount <= r.max) {
+                        scoreInfo = { grade: r.grade, score: r.score };
+                        break;
+                      }
+                    }
+                  } else if (mode === 'individual') {
+                    let totalScoreIndividual = 0;
+                    let grades = [];
+                    for (let r of qRubrics) {
+                      if (r.type === 'individual') {
+                        const uAns = (userAnswers[r.blankIndex] || '').trim();
+                        if (uAns === r.matchValue.toString().trim()) {
+                          totalScoreIndividual += r.score;
+                          if(r.grade) grades.push(r.grade);
+                          correctCount++;
+                        }
+                      }
+                    }
+                    scoreInfo = { grade: grades.join('/') || '완료', score: totalScoreIndividual };
+                  } else if (mode === 'combination') {
+                    let maxScoreR = null;
+                    for (let r of qRubrics) {
+                      if (r.type === 'combination') {
+                        const indices = (r.indices || '').split(',').map(n => parseInt(n.trim(), 10)).filter(n => !isNaN(n));
+                        let allCorrect = true;
+                        for (let idx of indices) {
+                          const uAns = (userAnswers[idx] || '').trim();
+                          const cAns = correctAnswers[idx];
+                          if (uAns !== cAns) { allCorrect = false; break; }
+                        }
+                        if (allCorrect && indices.length > 0) {
+                          if (!maxScoreR || r.score > maxScoreR.score) maxScoreR = r;
+                        }
+                      }
+                    }
+                    if (maxScoreR) scoreInfo = { grade: maxScoreR.grade, score: maxScoreR.score };
+                  }
+                } else {
+                  correctAnswers.forEach((ans, idx) => {
+                    if (userAnswers[idx] === ans) correctCount++;
+                  });
+                  for (let r of qRubrics) {
+                    if (r.type === 'count' || !r.type) {
+                      if (correctCount >= r.min && correctCount <= r.max) {
+                        scoreInfo = { grade: r.grade, score: r.score };
+                        break;
+                      }
+                    }
+                  }
+                }
+                
+                results[q.id] = { correctCount, scoreInfo, type: q.type, userAnswers, correctAnswers };
+            totalScore += scoreInfo.score;
           });
-          setTimeout(() => setModal({ show: true, message: '?숆린???붿껌???꾩넚?덉뒿?덈떎.\n??2~3珥???援ш? ?쒗듃??諛섏쁺?⑸땲??', isAlert: true }), 100);
-        } catch(e) {
-          setTimeout(() => setModal({ show: true, message: '?숆린???붿껌 以??ㅻ쪟媛 諛쒖깮?덉뒿?덈떎.', isAlert: true }), 100);
+
+          const finalData = {
+            id: currentUser.id,
+            name: currentUser.name,
+            results,
+            totalScore,
+            timestamp: new Date().toLocaleString(),
+            scores: questions.map(q => results[q.id].scoreInfo.score)
+          };
+
+          if (settings.gasUrl) {
+            let fetchUrl = settings.gasUrl.trim();
+            if (!fetchUrl.startsWith('http')) fetchUrl = 'https://' + fetchUrl;
+            fetch(fetchUrl, {
+              method: 'POST',
+              mode: 'no-cors',
+              headers: { 'Content-Type': 'text/plain' },
+              body: JSON.stringify({ action: "submit", data: { session: activeSession, ...finalData } })
+            }).then(() => {
+              setStudentsBySession(prev => {
+                const next = {...prev};
+                if(!next[activeSession]) next[activeSession] = [];
+                next[activeSession].push(finalData);
+                return next;
+              });
+              setIsSubmitting(false);
+              showModal('alert', '제출 완료', '제출이 완료되었습니다!').then(() => setView('result'));
+            }).catch(e => {
+              console.error(e);
+              setIsSubmitting(false);
+              showModal('alert', '제출 실패', '제출 중 오류가 발생했습니다. 네트워크 연결이나 앱스 스크립트 주소를 확인해주세요.');
+            });
+          } else {
+            setStudentsBySession(prev => {
+              const next = {...prev};
+              if(!next[activeSession]) next[activeSession] = [];
+              next[activeSession].push(finalData);
+              localStorage.setItem('aiMath_students', JSON.stringify(next));
+              return next;
+            });
+            setIsSubmitting(false);
+            setView('result');
+          }
+        });
+      };
+
+      return (
+        <div className="min-h-screen bg-gray-100 p-4 flex flex-col items-center">
+          <div className="w-full max-w-4xl bg-white rounded-xl border-4 border-black flex flex-col h-[85vh] shadow-[8px_8px_0_0_rgba(0,0,0,1)]">
+            <div className="p-4 sm:p-6 flex-shrink-0 flex justify-between items-center border-b-4 border-black bg-blue-50 rounded-t-lg">
+              <span className="bg-black text-white px-4 py-1 rounded-full font-bold text-sm sm:text-base shadow-[2px_2px_0_0_rgba(0,0,0,0.5)]">{activeSession} - {currentQIndex + 1}/{questions.length}</span>
+              <span className="font-black text-gray-700 bg-white px-3 py-1 border-2 border-black rounded-lg text-sm sm:text-base">[{currentUser.id}] {currentUser.name}</span>
+            </div>
+            
+            <div className="p-4 sm:p-6 flex-shrink-0">
+              <h2 className="text-xl sm:text-2xl font-black break-keep">{currentQ.title}</h2>
+            </div>
+
+            <div className="flex-1 overflow-y-auto px-4 sm:px-6 pb-6 text-lg sm:text-xl md:text-2xl leading-loose font-medium whitespace-pre-wrap break-keep">
+              {renderContentWithBlanks(currentQ)}
+            </div>
+            
+            {activeBlank && activeBlank.qId === currentQ.id && currentQ.type !== 'value' && (
+              <div className="flex-shrink-0 bg-yellow-300 p-4 border-t-4 border-black shadow-[0_-4px_0_0_rgba(0,0,0,0.1)]">
+                <p className="font-black mb-3">알맞은 단어를 선택하세요:</p>
+                <div className="flex flex-wrap gap-3">
+                  {(currentQ.options || []).map((opt, i) => (
+                    <button key={i} onClick={() => handleSelectWord(opt)} className="bg-white px-4 py-2 border-2 border-black font-black rounded hover:bg-black hover:text-white transition-all shadow-[2px_2px_0_0_rgba(0,0,0,1)] hover:shadow-none hover:translate-y-0.5 hover:translate-x-0.5">
+                      <LatexText text={opt} />
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            <div className="flex-shrink-0 flex justify-between p-4 sm:p-6 border-t-4 border-black bg-gray-50 rounded-b-lg">
+              <button onClick={() => { setCurrentQIndex(Math.max(0, currentQIndex - 1)); setActiveBlank(null); }} disabled={currentQIndex === 0} className="px-6 py-3 font-black border-2 border-black rounded-lg bg-white shadow-[4px_4px_0_0_rgba(0,0,0,1)] disabled:opacity-30 disabled:shadow-none transition-all">이전 영역</button>
+              {currentQIndex === questions.length - 1 ? (
+                <button onClick={handleSubmit} disabled={isSubmitting} className="bg-blue-500 text-white px-8 py-3 font-black text-xl border-2 border-black rounded-lg shadow-[4px_4px_0_0_rgba(0,0,0,1)] hover:translate-y-1 hover:shadow-none transition-all">{isSubmitting ? '제출중...' : '최종 제출하기'}</button>
+              ) : (
+                <button onClick={() => { setCurrentQIndex(currentQIndex + 1); setActiveBlank(null); }} className="bg-black text-white px-8 py-3 font-black rounded-lg shadow-[4px_4px_0_0_rgba(0,0,0,0.5)] hover:translate-y-1 hover:shadow-none transition-all">다음 영역</button>
+              )}
+            </div>
+          </div>
+        </div>
+      );
+    };
+
+    const ResultView = ({ activeSession, currentUser, studentsBySession, setView }) => {
+      const myData = (studentsBySession[activeSession] || []).slice().reverse().find(s => s.id === currentUser.id && s.name === currentUser.name);
+      if (!myData) return <div className="p-8">결과를 찾을 수 없습니다.</div>;
+      
+      return (
+        <div className="min-h-screen flex items-center justify-center bg-gray-100 p-4">
+          <div className="bg-white p-8 rounded-2xl shadow-xl border-4 border-black text-center w-full max-w-md">
+            <h1 className="text-3xl font-black mb-2">평가 완료</h1>
+            <p className="text-gray-500 font-bold mb-8">{activeSession} - {currentUser.name} 학생</p>
+            <div className="bg-yellow-300 rounded-xl p-6 border-2 border-black shadow-[4px_4px_0_0_rgba(0,0,0,1)] mb-8">
+              <p className="text-xl font-bold mb-2">총점</p>
+              <p className="text-6xl font-black">{myData.totalScore}점</p>
+            </div>
+            <div className="space-y-4 mb-8">
+              {Object.entries(myData.results).map(([qId, res], i) => (
+                <div key={qId} className="flex justify-between items-center border-b-2 border-dashed pb-2">
+                  <span className="font-bold">문항 {i+1}</span>
+                  <span className="font-bold px-3 py-1 bg-gray-200 rounded">{res.scoreInfo.grade}등급 ({res.scoreInfo.score}점)</span>
+                </div>
+              ))}
+            </div>
+            <button onClick={() => setView('login')} className="w-full bg-black text-white font-bold py-3 rounded-lg border-2 border-black">처음으로 돌아가기</button>
+          </div>
+        </div>
+      );
+    };
+
+    const AdminDashboard = ({ activeSession, setActiveSession, settings, setSettings, configBySession, setConfigBySession, studentsBySession, setStudentsBySession, setView, setIsTeacher, handleSyncConfig, isLoadingData, showModal }) => {
+      const [tab, setTab] = React.useState('settings');
+      const questions = (configBySession[activeSession] && configBySession[activeSession].questions) || [];
+      const rubrics = (configBySession[activeSession] && configBySession[activeSession].rubrics) || {};
+      const students = studentsBySession[activeSession] || [];
+
+      const handleDeleteStudent = (studentId, e) => {
+        e.stopPropagation();
+        showModal('confirm', '학생 기록 삭제', '정말 이 학생의 제출 기록을 삭제하시겠습니까?').then(confirmed => {
+          if (confirmed) {
+            if (settings.gasUrl) {
+              let fetchUrl = settings.gasUrl.trim();
+              if (!fetchUrl.startsWith('http')) fetchUrl = 'https://' + fetchUrl;
+              fetch(fetchUrl, {
+                method: 'POST',
+                mode: 'no-cors',
+                headers: { 'Content-Type': 'text/plain' },
+                body: JSON.stringify({ action: "delete", data: { session: activeSession, studentId: studentId } })
+              }).then(() => {
+                setStudentsBySession(prev => {
+                  const next = {...prev};
+                  if (next[activeSession]) {
+                    next[activeSession] = next[activeSession].filter(s => s.id !== studentId);
+                  }
+                  return next;
+                });
+                showModal('alert', '삭제 완료', '기록이 삭제되었습니다.');
+              }).catch(e => {
+                console.error(e);
+                showModal('alert', '삭제 실패', '네트워크 연결이나 웹 앱 주소를 확인해주세요.');
+              });
+            } else {
+              setStudentsBySession(prev => {
+                const next = {...prev};
+                if (next[activeSession]) {
+                  next[activeSession] = next[activeSession].filter(s => s.id !== studentId);
+                  localStorage.setItem('aiMath_students', JSON.stringify(next));
+                }
+                return next;
+              });
+              showModal('alert', '삭제 완료', '기록이 삭제되었습니다.');
+            }
+          }
+        });
+      };
+
+      const handleAddSession = () => {
+         showModal('input', '회차 추가', '새로운 평가 회차 이름을 입력하세요 (예: 3차)', '회차 이름').then(name => {
+           if (name && !settings.sessions.includes(name)) {
+             setSettings(s => ({...s, sessions: [...s.sessions, name]}));
+             setConfigBySession(prev => ({...prev, [name]: {questions: [], rubrics: {}}}));
+             setActiveSession(name);
+           }
+         });
+      };
+      const handleDelSession = () => {
+         if (settings.sessions.length <= 1) {
+           showModal('alert', '삭제 불가', '최소 1개의 회차는 있어야 합니다.');
+           return;
+         }
+         showModal('confirm', '회차 삭제', `'${activeSession}' 회차를 삭제하시겠습니까? (학생 데이터는 구글 시트에 남아있습니다)`).then(confirmed => {
+           if (confirmed) {
+             setSettings(s => {
+               const newS = s.sessions.filter(x => x !== activeSession);
+               setActiveSession(newS[0]);
+               return {...s, sessions: newS};
+             });
+           }
+         });
+      };
+
+      const handleAddQuestion = (type) => {
+        const newId = 'q' + Date.now();
+        const newQ = { id: newId, type: type, title: '새로운 영역', content: '내용을 입력하세요. 정답: {{빈칸}}', options: type === 'count' ? ['빈칸'] : [] };
+        const newConfig = { ...configBySession };
+        if(!newConfig[activeSession]) newConfig[activeSession] = {questions:[], rubrics:{}};
+        newConfig[activeSession].questions.push(newQ);
+        
+        if (type === 'count') {
+          newConfig[activeSession].rubrics[newId] = [{ min: 0, max: 1, grade: 'A', score: 10 }];
+        } else {
+          newConfig[activeSession].rubrics[newId] = [
+            { matchValue: '15', grade: 'A', score: 10 },
+            { matchValue: '기타', grade: 'C', score: 0 }
+          ];
         }
-      }
-    });
-  };
+        setConfigBySession(newConfig);
+      };
 
- const handleExportCSV = () => {
- const headers = ['?숇쾲', '?대쫫'];
- questions.forEach(q => headers.push(q.title));
- headers.push('珥앹젏');
- let csvContent = "data:text/csv;charset=utf-8,\uFEFF";
- csvContent += headers.join(",") + "\n";
- studentsData.forEach(student => {
- const row = [student.id, student.name];
- questions.forEach(q => {
- const score = student.results[q.id] ? student.results[q.id].scoreInfo.score : 0;
- row.push(score);
- });
- row.push(student.totalScore);
- csvContent += row.join(",") + "\n";
- });
- const encodedUri = encodeURI(csvContent);
- const link = document.createElement("a");
- link.setAttribute("href", encodedUri);
- link.setAttribute("download", `?섑뻾?됯?寃곌낵_${new Date().toLocaleDateString()}.csv`);
- document.body.appendChild(link);
- link.click();
- document.body.removeChild(link);
- };
+      const handleDeleteQuestion = (id) => {
+        const newConfig = { ...configBySession };
+        newConfig[activeSession].questions = newConfig[activeSession].questions.filter(q => q.id !== id);
+        delete newConfig[activeSession].rubrics[id];
+        setConfigBySession(newConfig);
+      };
 
- const handleDeleteStudent = (id) => {
- setModal({
- show: true,
- isAlert: false,
- message: `${id} ?숈깮??湲곕줉???뺣쭚 ??젣?섏떆寃좎뒿?덇퉴?\n??젣 ???숈깮???ㅼ떆 ?됯?瑜?蹂????덉뒿?덈떎.`,
- onConfirm: () => {
- const newData = studentsData.filter(s => s.id !== id);
- setStudentsData(newData);
- localStorage.setItem('aiMath_students', JSON.stringify(newData));
- if (settings.gasUrl) {
- try {
- fetch(settings.gasUrl, {
- method: 'POST',
- mode: 'no-cors',
- headers: { 'Content-Type': 'text/plain' },
- body: JSON.stringify({ action: "delete", data: { studentId: id } })
- });
- } catch(e) {}
- }
- }
- });
- };
+      return (
+        <div className="min-h-screen bg-gray-100 no-print">
+          <nav className="bg-black text-white p-4 flex justify-between items-center">
+            <div className="flex items-center gap-4">
+              <h1 className="font-bold text-xl">관리자 대시보드</h1>
+              <select value={activeSession} onChange={e => setActiveSession(e.target.value)} className="text-black font-bold px-2 py-1 outline-none">
+                {settings.sessions.map(s => <option key={s} value={s}>{s} 관리</option>)}
+              </select>
+            </div>
+            <div>
+              <button onClick={handleSyncConfig} className="bg-blue-500 hover:bg-blue-400 text-white font-bold px-4 py-2 rounded mr-4">구글 시트에 배포 저장</button>
+              <button onClick={() => { setIsTeacher(false); setView('login'); }} className="bg-red-500 text-white font-bold px-4 py-2 rounded">로그아웃</button>
+            </div>
+          </nav>
+          
+          <div className="flex">
+            <aside className="w-48 bg-white min-h-screen border-r-2 border-black font-bold">
+              <button onClick={()=>setTab('settings')} className={`w-full text-left p-4 ${tab==='settings'?'bg-blue-100':''}`}>설정 / 연동</button>
+              <button onClick={()=>setTab('questions')} className={`w-full text-left p-4 ${tab==='questions'?'bg-blue-100':''}`}>문항 및 루브릭 ({activeSession})</button>
+              <button onClick={()=>setTab('students')} className={`w-full text-left p-4 ${tab==='students'?'bg-blue-100':''}`}>학생 결과 ({activeSession})</button>
+            </aside>
+            <main className="flex-1 p-8">
+              
+              {tab === 'settings' && (
+                <div className="bg-white p-8 rounded-xl shadow border-2 border-black max-w-2xl">
+                  <h2 className="text-2xl font-bold mb-6">설정 및 연동 관리</h2>
+                  <div className="mb-6">
+                    <label className="block font-bold mb-2">페이지 제목 (초기값: 인공지능 수학 수행평가)</label>
+                    <input type="text" value={settings.title} onChange={e => setSettings({...settings, title: e.target.value})} className="w-full p-2 border-2 border-black outline-none font-bold" />
+                  </div>
+                  <div className="mb-6 border-b-2 pb-6">
+                    <label className="block font-bold mb-2">평가 회차 목록 관리</label>
+                    <div className="flex gap-2 flex-wrap mb-2">
+                      {settings.sessions.map(s => <span key={s} className="bg-gray-200 px-3 py-1 rounded font-bold">{s}</span>)}
+                    </div>
+                    <button onClick={handleAddSession} className="bg-blue-500 text-white px-4 py-2 rounded font-bold mr-2">+ 새 회차 추가</button>
+                    <button onClick={handleDelSession} className="bg-red-500 text-white px-4 py-2 rounded font-bold">현재 회차 삭제</button>
+                  </div>
+                  <div className="mb-6">
+                    <label className="block font-bold mb-2">교사 비밀번호 (시트 동기화됨)</label>
+                    <input type="text" value={settings.password} onChange={e => setSettings({...settings, password: e.target.value})} className="w-full p-2 border-2 border-black outline-none" />
+                  </div>
+                  <div className="mb-6">
+                    <label className="block font-bold mb-2 text-blue-600">Google Apps Script URL (기기에만 저장됨)</label>
+                    <input type="text" value={settings.gasUrl} onChange={e => setSettings({...settings, gasUrl: e.target.value})} className="w-full p-2 border-2 border-blue-600 outline-none" placeholder="https://script.google.com/macros/s/.../exec" />
+                    <p className="text-sm mt-2 text-gray-500">* 해가 바뀌면 이 주소만 새로운 구글 시트 주소로 교체하세요.</p>
+                  </div>
+                </div>
+              )}
 
- const handleAddQuestion = () => {
- const newId = 'q' + Date.now();
- const newQ = [...questions, { id: newId, title: '?덈줈???곸뿭', content: ' ?댁슜???낅젰?섏꽭?? {{?뺣떟}}', options: ['?뺣떟'] }];
- setQuestions(newQ);
- localStorage.setItem('aiMath_questions', JSON.stringify(newQ));
- const newR = {...rubrics, [newId]: [{ min: 0, max: 1, grade: 'A', score: 10 }]};
- setRubrics(newR);
- localStorage.setItem('aiMath_rubrics', JSON.stringify(newR));
- };
-
- const handleDeleteQuestion = (qId) => {
- setModal({
- show: true,
- isAlert: false,
- message: "?뺣쭚 ???곸뿭????젣?섏떆寃좎뒿?덇퉴?\n(愿??猷⑤툕由?룄 ?④퍡 ??젣?⑸땲??",
- onConfirm: () => {
- const newQ = questions.filter(q => q.id !== qId);
- setQuestions(newQ);
- localStorage.setItem('aiMath_questions', JSON.stringify(newQ));
- const newR = {...rubrics};
- delete newR[qId];
- setRubrics(newR);
- localStorage.setItem('aiMath_rubrics', JSON.stringify(newR));
- }
- });
- };
-
- return (
- <div className="flex flex-col md:flex-row gap-6">
- <div className="w-full md:w-48 flex flex-col gap-2">
- <button onClick={() => setTab('students')} className={`p-3 font-bold border-2 border-black text-left ${tab === 'students' ? 'bg-black text-white' : 'bg-white'}`}>?숈깮 寃곌낵 ?뺤씤</button>
- <button onClick={() => setTab('questions')} className={`p-3 font-bold border-2 border-black text-left ${tab === 'questions' ? 'bg-black text-white' : 'bg-white'}`}>臾명빆 諛?猷⑤툕由?愿由?/button>
- <button onClick={() => setTab('settings')} className={`p-3 font-bold border-2 border-black text-left ${tab === 'settings' ? 'bg-black text-white' : 'bg-white'}`}>?ㅼ젙 諛??곕룞</button>
- </div>
- <div className="flex-1 worksheet-box p-4 sm:p-6 overflow-x-hidden">
- 
- {tab === 'students' && (
- <div>
- <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-4 mb-6 border-b-2 border-black pb-4">
- <h2 className="text-xl font-black">?숈깮 寃곌낵 ?뺤씤 ({studentsData.length}紐?</h2>
- <div className="flex gap-2">
- {isLoadingData && <span className="font-bold text-blue-600 bg-blue-50 px-3 py-1 rounded">?곗씠??濡쒕뵫 以?..</span>}
- <button onClick={handleExportCSV} className="bg-white border-2 border-black px-4 py-2 font-bold btn-retro">?묒? ?ㅼ슫濡쒕뱶</button>
- </div>
- </div>
- <div className="overflow-x-auto">
- <table className="w-full border-collapse border-2 border-black text-sm whitespace-nowrap">
- <thead className="bg-gray-100">
- <tr>
- <th className="border-2 border-black p-2">?숇쾲</th>
- <th className="border-2 border-black p-2">?대쫫</th>
- {questions.map((q, i) => <th key={i} className="border-2 border-black p-2">?곸뿭 {i+1}</th>)}
- <th className="border-2 border-black p-2 bg-gray-200">珥앹젏</th>
- <th className="border-2 border-black p-2">愿由?/th>
- </tr>
- </thead>
- <tbody>
- {studentsData.map((s, idx) => (
- <tr key={idx} className="text-center hover:bg-gray-50">
- <td className="border-2 border-black p-2 font-bold">{s.id}</td>
- <td className="border-2 border-black p-2">{s.name}</td>
- {questions.map((q, i) => (
- <td key={i} className="border-2 border-black p-2">
- {s.results[q.id] ? s.results[q.id].scoreInfo.score : 0}
- </td>
- ))}
- <td className="border-2 border-black p-2 font-black bg-gray-100">{s.totalScore}</td>
- <td className="border-2 border-black p-2">
- <button onClick={() => handleDeleteStudent(s.id)} className="text-xs font-bold bg-white border border-black px-2 py-1">湲곕줉 ??젣</button>
- </td>
- </tr>
- ))}
- {studentsData.length === 0 && (
- <tr><td colSpan={questions.length + 4} className="p-8 text-center text-gray-500 font-bold border-2 border-black">?쒖텧???곗씠?곌? ?놁뒿?덈떎.</td></tr>
- )}
- </tbody>
- </table>
- </div>
- </div>
- )}
-
- {tab === 'questions' && (
- <div>
- <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 border-b-2 border-black pb-4 gap-4">
-    <div>
-      <h2 className="text-xl font-black">臾명빆 諛?猷⑤툕由?愿由?/h2>
-      <p className="text-xs font-bold text-gray-600 mt-1">?닿납?먯꽌 ?섏젙???댁슜? ?꾩옱 湲곌린???꾩떆 ??λ맗?덈떎.</p>
-    </div>
-    <div className="flex gap-2 w-full sm:w-auto">
-      <button onClick={handleSyncConfig} className="flex-1 sm:flex-none bg-blue-600 text-white px-4 py-2 font-bold btn-retro">紐⑤뱺 湲곌린(?쒗듃)??諛고룷 ???/button>
-      <button onClick={handleAddQuestion} className="flex-1 sm:flex-none bg-black text-white px-4 py-2 font-bold btn-retro">+ ?곸뿭 異붽?</button>
-    </div>
- </div>
- <div className="space-y-8">
- {q.type === 'count' && (
+              {tab === 'questions' && (
+                <div>
+                  <div className="flex gap-4 mb-6">
+                    <button onClick={() => handleAddQuestion('count')} className="bg-blue-500 text-white font-bold py-2 px-4 rounded shadow-md border-2 border-black">+ 선택형(개수 채점) 추가</button>
+                    <button onClick={() => handleAddQuestion('value')} className="bg-green-500 text-white font-bold py-2 px-4 rounded shadow-md border-2 border-black">+ 직접입력형(값 채점) 추가</button>
+                  </div>
+                  {questions.map((q, qIndex) => (
+                    <div key={q.id} className="bg-white p-6 rounded-xl shadow border-2 border-black mb-8 relative">
+                      <span className="absolute -top-4 -left-4 bg-yellow-300 border-2 border-black font-black w-8 h-8 flex items-center justify-center rounded-full rotate-[-10deg]">{qIndex+1}</span>
+                      <span className="absolute top-2 right-2 bg-gray-200 text-xs px-2 py-1 rounded font-bold border border-gray-400">{q.type === 'value' ? '직접입력형' : '단어선택형'}</span>
+                      <div className="flex justify-between items-start mb-4 mt-2">
+                        <input type="text" value={q.title} onChange={e => {
+                          const newConfig = {...configBySession};
+                          newConfig[activeSession].questions[qIndex].title = e.target.value;
+                          setConfigBySession(newConfig);
+                        }} className="text-xl font-bold border-b-2 border-gray-300 w-3/4 outline-none" placeholder="제목/평가요소 입력" />
+                        <button onClick={() => handleDeleteQuestion(q.id)} className="text-red-500 font-bold underline">삭제</button>
+                      </div>
+                      <textarea value={q.content} onChange={e => {
+                        const newConfig = {...configBySession};
+                        newConfig[activeSession].questions[qIndex].content = e.target.value;
+                        setConfigBySession(newConfig);
+                      }} className="w-full p-2 border-2 border-black mb-2 h-24 outline-none" placeholder="내용을 입력하세요. 빈칸은 {{단어}} 형태로 만드세요." />
+                      
+                      {q.type === 'count' && (
                           <div className="mb-4">
                             <label className="font-bold text-sm text-gray-600 block mb-1">보기 (쉼표로 구분)</label>
                             <input type="text" value={(q.options || []).join(', ')} onChange={e => {
@@ -1218,10 +846,11 @@
                                     newConfig[activeSession].rubrics[q.id][rIndex].score = Number(e.target.value);
                                     setConfigBySession(newConfig);
                                   }} className="w-16 p-1 border border-black" placeholder="점수" />
-                                  <button onClick={() => handleAddQuestion('count')} className="bg-blue-500 text-white font-bold py-2 px-4 rounded shadow-md border-2 border-black">+ 선택형(개수 채점) 추가</button>
-                    <button onClick={() => handleAddQuestion('value')} className="bg-green-500 text-white font-bold py-2 px-4 rounded shadow-md border-2 border-black">+ 직접입력형(값 채점) 추가</button>
-                    <button onClick={() => handleAddQuestion('essay')} className="bg-yellow-500 text-white font-bold py-2 px-4 rounded shadow-md border-2 border-black">+ 서술형(키워드 채점) 추가</button>
-                    
+                                  <button onClick={() => {
+                                    const newConfig = {...configBySession};
+                                    newConfig[activeSession].rubrics[q.id].splice(rIndex, 1);
+                                    setConfigBySession(newConfig);
+                                  }} className="text-red-500 font-bold ml-2">X</button>
                                 </div>
                               ))}
                               <button onClick={() => {
@@ -1229,7 +858,7 @@
                                 if(!newConfig[activeSession].rubrics[q.id]) newConfig[activeSession].rubrics[q.id] = [];
                                 newConfig[activeSession].rubrics[q.id].push({ type: 'count', min: 0, max: 0, grade: 'C', score: 0 });
                                 setConfigBySession(newConfig);
-                              }} className="bg-gray-200 px-2 py-1 border border-gray-400 text-sm font-bold mt-2">+ 개수 채점 추가</button>
+                              }} className="bg-gray-200 px-2 py-1 border border-gray-400 text-sm font-bold mt-2">+ 기준 추가</button>
                             </React.Fragment>
                           )}
                           
@@ -1415,97 +1044,140 @@
                             </React.Fragment>
                           )}
                         </div>
- <div className="overflow-x-auto">
- <table className="w-full border-collapse border-2 border-black text-xs sm:text-sm whitespace-nowrap">
- <thead className="bg-gray-100">
- <tr>
- <th className="border-2 border-black p-1 sm:p-2">理쒖냼(媛?</th>
- <th className="border-2 border-black p-1 sm:p-2">理쒕?(媛?</th>
- <th className="border-2 border-black p-1 sm:p-2">?깃툒</th>
- <th className="border-2 border-black p-1 sm:p-2">遺???먯닔</th>
- <th className="border-2 border-black p-1 sm:p-2">愿由?/th>
- </tr>
- </thead>
- <tbody>
- {(rubrics[q.id] || []).map((r, rIndex) => (
- <tr key={rIndex} className="text-center">
- <td className="border-2 border-black p-1">
- <input type="number" value={r.min} onChange={(e) => {
- const newR = {...rubrics};
- newR[q.id][rIndex].min = Number(e.target.value);
- setRubrics(newR);
- localStorage.setItem('aiMath_rubrics', JSON.stringify(newR));
- }} className="w-12 sm:w-16 text-center outline-none bg-transparent" />
- </td>
- <td className="border-2 border-black p-1">
- <input type="number" value={r.max} onChange={(e) => {
- const newR = {...rubrics};
- newR[q.id][rIndex].max = Number(e.target.value);
- setRubrics(newR);
- localStorage.setItem('aiMath_rubrics', JSON.stringify(newR));
- }} className="w-12 sm:w-16 text-center outline-none bg-transparent" />
- </td>
- <td className="border-2 border-black p-1">
- <input type="text" value={r.grade} onChange={(e) => {
- const newR = {...rubrics};
- newR[q.id][rIndex].grade = e.target.value;
- setRubrics(newR);
- localStorage.setItem('aiMath_rubrics', JSON.stringify(newR));
- }} className="w-12 sm:w-16 text-center outline-none bg-transparent font-bold" />
- </td>
- <td className="border-2 border-black p-1">
- <input type="number" value={r.score} onChange={(e) => {
- const newR = {...rubrics};
- newR[q.id][rIndex].score = Number(e.target.value);
- setRubrics(newR);
- localStorage.setItem('aiMath_rubrics', JSON.stringify(newR));
- }} className="w-12 sm:w-16 text-center outline-none bg-transparent font-bold" />
- </td>
- <td className="border-2 border-black p-1">
- <button onClick={() => {
- const newR = {...rubrics};
- newR[q.id].splice(rIndex, 1);
- setRubrics(newR);
- localStorage.setItem('aiMath_rubrics', JSON.stringify(newR));
- }} className="text-xs font-bold px-2 py-1 bg-gray-200 border border-black">??젣</button>
- </td>
- </tr>
- ))}
- </tbody>
- </table>
- </div>
- </div>
- ))}
- </div>
- </div>
- )}
+                      <textarea value={q.content} onChange={e => {
+                        const newConfig = {...configBySession};
+                        newConfig[activeSession].questions[qIndex].content = e.target.value;
+                        setConfigBySession(newConfig);
+                      }} className="w-full p-2 border-2 border-black mb-2 h-24 outline-none" placeholder="내용을 입력하세요. 빈칸은 {{단어}} 형태로 만드세요." />
+                      
+                      {q.type === 'count' && (
+                        <div className="mb-4">
+                          <label className="font-bold text-sm text-gray-600 block mb-1">보기 (쉼표로 구분)</label>
+                          <input type="text" value={(q.options || []).join(', ')} onChange={e => {
+                            const newConfig = {...configBySession};
+                            newConfig[activeSession].questions[qIndex].options = e.target.value.split(',').map(s=>s.trim()).filter(s=>s);
+                            setConfigBySession(newConfig);
+                          }} className="w-full p-2 border-2 border-black outline-none" />
+                        </div>
+                      )}
 
- {tab === 'settings' && (
- <div>
- <h2 className="text-xl font-black mb-6 border-b-2 border-black pb-2">?ㅼ젙 諛??곕룞</h2>
- <div className="mb-6 p-4 border-4 border-black bg-white">
- <h3 className="font-black mb-2">援먯궗 鍮꾨?踰덊샇 ?ㅼ젙</h3>
- <input type="text" value={settings.password} onChange={(e) => setSettings({...settings, password: e.target.value})} className="w-full p-2 border-2 border-black outline-none font-bold" />
- <p className="text-xs font-bold text-gray-500 mt-1">濡쒓렇?????ъ슜???뷀샇瑜??낅젰?섏꽭??</p>
- </div>
- <div className="mb-6 p-4 border-4 border-black bg-white">
- <h3 className="font-black mb-2">援ш? ?쒗듃 ?곕룞 URL (?좏깮)</h3>
- <input type="text" value={settings.gasUrl} onChange={(e) => setSettings({...settings, gasUrl: e.target.value})} className="w-full p-2 border-2 border-black outline-none text-xs sm:text-sm font-mono text-gray-600" placeholder="https://script.google.com/..." />
- <p className="text-xs font-bold text-gray-500 mt-1">?쒓났??援ш? ?깆뒪 ?ㅽ겕由쏀듃 ????URL???낅젰?섏꽭??</p>
- </div>
- <button onClick={() => {
- localStorage.setItem('aiMath_settings', JSON.stringify(settings));
- setModal({ show: true, message: '?ㅼ젙????λ릺?덉뒿?덈떎.', isAlert: true });
- }} className="w-full bg-black text-white py-3 font-black text-lg btn-retro">蹂寃쎌궗?????/button>
- </div>
- )}
- </div>
- </div>
- );
- }
+                      <div className="bg-gray-50 p-4 border border-gray-300 rounded">
+                        <h4 className="font-bold mb-2">루브릭 (채점 기준)</h4>
+                        {(rubrics[q.id] || []).map((r, rIndex) => (
+                          <div key={rIndex} className="flex gap-2 items-center mb-2">
+                            {q.type === 'value' ? (
+                              <React.Fragment>
+                                <input type="text" value={r.matchValue} onChange={e => {
+                                  const newConfig = {...configBySession};
+                                  newConfig[activeSession].rubrics[q.id][rIndex].matchValue = e.target.value;
+                                  setConfigBySession(newConfig);
+                                }} className="w-24 p-1 border border-black" placeholder="정답값" />
+                                <span className="font-bold text-sm">와 일치하면</span>
+                              </React.Fragment>
+                            ) : (
+                              <React.Fragment>
+                                <input type="number" value={r.min} onChange={e => {
+                                  const newConfig = {...configBySession};
+                                  newConfig[activeSession].rubrics[q.id][rIndex].min = Number(e.target.value);
+                                  setConfigBySession(newConfig);
+                                }} className="w-16 p-1 border border-black" /> 개 ~ 
+                                <input type="number" value={r.max} onChange={e => {
+                                  const newConfig = {...configBySession};
+                                  newConfig[activeSession].rubrics[q.id][rIndex].max = Number(e.target.value);
+                                  setConfigBySession(newConfig);
+                                }} className="w-16 p-1 border border-black" /> 개 맞히면
+                              </React.Fragment>
+                            )}
+                            <input type="text" value={r.grade} onChange={e => {
+                              const newConfig = {...configBySession};
+                              newConfig[activeSession].rubrics[q.id][rIndex].grade = e.target.value;
+                              setConfigBySession(newConfig);
+                            }} className="w-16 p-1 border border-black ml-4" placeholder="등급" /> 등급,
+                            <input type="number" value={r.score} onChange={e => {
+                              const newConfig = {...configBySession};
+                              newConfig[activeSession].rubrics[q.id][rIndex].score = Number(e.target.value);
+                              setConfigBySession(newConfig);
+                            }} className="w-16 p-1 border border-black" /> 점
+                            <button onClick={() => {
+                              const newConfig = {...configBySession};
+                              newConfig[activeSession].rubrics[q.id].splice(rIndex, 1);
+                              setConfigBySession(newConfig);
+                            }} className="ml-auto text-red-500 font-bold text-sm bg-gray-200 px-2 rounded hover:bg-gray-300">X</button>
+                          </div>
+                        ))}
+                        <button onClick={() => {
+                          const newConfig = {...configBySession};
+                          if (!newConfig[activeSession].rubrics[q.id]) {
+                            newConfig[activeSession].rubrics[q.id] = [];
+                          }
+                          if (q.type === 'value') {
+                            newConfig[activeSession].rubrics[q.id].push({ matchValue: '입력', grade: 'C', score: 0 });
+                          } else {
+                            newConfig[activeSession].rubrics[q.id].push({ min: 0, max: 0, grade: 'C', score: 0 });
+                          }
+                          setConfigBySession(newConfig);
+                        }} className="text-sm font-bold bg-white border-2 border-black px-3 py-1 rounded mt-2">+ 기준 추가</button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
 
- const root = ReactDOM.createRoot(document.getElementById('root'));
- root.render(<App />);
- </script>
+              {tab === 'students' && (
+                <div className="bg-white p-6 rounded-xl shadow border-2 border-black">
+                  <div className="flex justify-between items-center mb-6">
+                    <h2 className="text-2xl font-bold">학생 결과 모아보기 ({activeSession})</h2>
+                    {isLoadingData && <span className="text-blue-500 font-bold animate-pulse">구글 시트에서 불러오는 중...</span>}
+                  </div>
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-left border-collapse">
+                      <thead>
+                        <tr className="bg-gray-200">
+                          <th className="p-3 border-2 border-black">학번</th>
+                          <th className="p-3 border-2 border-black">이름</th>
+                          {questions.map((q, i) => (
+                            <th key={q.id} className="p-3 border-2 border-black text-center whitespace-nowrap">Q{i+1}</th>
+                          ))}
+                          <th className="p-3 border-2 border-black text-blue-600">총점</th>
+                          <th className="p-3 border-2 border-black">제출시간</th>
+                          <th className="p-3 border-2 border-black text-center text-red-500">관리</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {students.length === 0 ? (
+                          <tr><td colSpan={5 + questions.length} className="text-center p-8 text-gray-500 font-bold border-2 border-black">제출된 데이터가 없습니다.</td></tr>
+                        ) : (
+                          students.slice().reverse().map((s, i) => (
+                            <tr key={i} className="hover:bg-blue-50 cursor-pointer border-2 border-black">
+                              <td className="p-3 border-2 border-black font-bold">{s.id}</td>
+                              <td className="p-3 border-2 border-black">{s.name}</td>
+                              {questions.map((q) => {
+                                const qRes = s.results && s.results[q.id];
+                                const score = (qRes && qRes.scoreInfo) ? qRes.scoreInfo.score : '-';
+                                return <td key={q.id} className="p-3 border-2 border-black text-center font-bold text-gray-700">{score}</td>;
+                              })}
+                              <td className="p-3 border-2 border-black text-blue-600 font-black text-lg text-center">{s.totalScore}점</td>
+                              <td className="p-3 border-2 border-black text-sm text-gray-500">{s.timestamp}</td>
+                              <td className="p-3 border-2 border-black text-center">
+                                <button onClick={(e) => handleDeleteStudent(s.id, e)} className="bg-red-500 text-white font-bold px-3 py-1 border-2 border-black rounded shadow-[2px_2px_0_0_rgba(0,0,0,1)] hover:bg-red-600 hover:translate-y-0.5 hover:shadow-none transition-all text-sm">
+                                  삭제
+                                </button>
+                              </td>
+                            </tr>
+                          ))
+                        )}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              )}
+            </main>
+          </div>
+        </div>
+      );
+    };
+
+    ReactDOM.render(<App />, document.getElementById('root'));
+  </script>
 </body>
 </html>
