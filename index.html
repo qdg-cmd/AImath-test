@@ -1,8 +1,91 @@
-<!DOCTYPE html>
-<html lang="ko">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+let totalScore = 0;
+              const results = {};
+              questions.forEach(q => {
+                const userAnswers = studentAnswers[q.id] || [];
+                const correctAnswers = q.type === 'essay' ? [] : ((q.content || '').match(/\{\{(.*?)\}\}/g) || []).map(s => s.replace(/[{}]/g, '').trim());
+                const qRubrics = rubrics[q.id] || [];
+                
+                let scoreInfo = { grade: 'F', score: 0 };
+                let correctCount = 0;
+                
+                if (q.type === 'essay') {
+                  const text = (userAnswers[0] || '').trim();
+                  let matchedR = null;
+                  const sortedRubrics = [...qRubrics].sort((a,b) => b.score - a.score);
+                  for (let r of sortedRubrics) {
+                    if (r.type === 'keyword') {
+                      const keywords = (r.keywords || '').split(',').map(k => k.trim()).filter(k => k);
+                      let allMatch = true;
+                      for (let k of keywords) {
+                        if (text.indexOf(k) === -1) { allMatch = false; break; }
+                      }
+                      if (allMatch && keywords.length > 0) {
+                         matchedR = r;
+                         break;
+                      }
+                    }
+                  }
+                  if (matchedR) scoreInfo = { grade: matchedR.grade, score: matchedR.score };
+                } else if (q.type === 'value') {
+                  const mode = q.gradingMode || 'count';
+                  if (mode === 'count') {
+                    correctAnswers.forEach((ans, idx) => {
+                      if ((userAnswers[idx] || '').trim() === ans) correctCount++;
+                    });
+                    for (let r of qRubrics) {
+                      if (r.type === 'count' && correctCount >= r.min && correctCount <= r.max) {
+                        scoreInfo = { grade: r.grade, score: r.score };
+                        break;
+                      }
+                    }
+                  } else if (mode === 'individual') {
+                    let totalScoreIndividual = 0;
+                    let grades = [];
+                    for (let r of qRubrics) {
+                      if (r.type === 'individual') {
+                        const uAns = (userAnswers[r.blankIndex] || '').trim();
+                        if (uAns === r.matchValue.toString().trim()) {
+                          totalScoreIndividual += r.score;
+                          if(r.grade) grades.push(r.grade);
+                          correctCount++;
+                        }
+                      }
+                    }
+                    scoreInfo = { grade: grades.join('/') || '완료', score: totalScoreIndividual };
+                  } else if (mode === 'combination') {
+                    let maxScoreR = null;
+                    for (let r of qRubrics) {
+                      if (r.type === 'combination') {
+                        const indices = (r.indices || '').split(',').map(n => parseInt(n.trim(), 10)).filter(n => !isNaN(n));
+                        let allCorrect = true;
+                        for (let idx of indices) {
+                          const uAns = (userAnswers[idx] || '').trim();
+                          const cAns = correctAnswers[idx];
+                          if (uAns !== cAns) { allCorrect = false; break; }
+                        }
+                        if (allCorrect && indices.length > 0) {
+                          if (!maxScoreR || r.score > maxScoreR.score) maxScoreR = r;
+                        }
+                      }
+                    }
+                    if (maxScoreR) scoreInfo = { grade: maxScoreR.grade, score: maxScoreR.score };
+                  }
+                } else {
+                  correctAnswers.forEach((ans, idx) => {
+                    if (userAnswers[idx] === ans) correctCount++;
+                  });
+                  for (let r of qRubrics) {
+                    if (r.type === 'count' || !r.type) {
+                      if (correctCount >= r.min && correctCount <= r.max) {
+                        scoreInfo = { grade: r.grade, score: r.score };
+                        break;
+                      }
+                    }
+                  }
+                }
+                
+                results[q.id] = { correctCount, scoreInfo, type: q.type, userAnswers, correctAnswers };
+              });device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>AI 활용 수학 평가</title>
   
   <script src="https://unpkg.com/react@17/umd/react.production.min.js"></script>
@@ -335,17 +418,14 @@
       const rubrics = (configBySession[activeSession] && configBySession[activeSession].rubrics) || {};
       const [currentQIndex, setCurrentQIndex] = React.useState(0);
       const [studentAnswers, setStudentAnswers] = React.useState({});
-      // Add individual grading UI states
       const [activeBlank, setActiveBlank] = React.useState(null);
       const handleNumberClick = (num) => {
         if (!activeBlank) return;
         setStudentAnswers(prev => {
           const newAns = { ...prev };
           if (!newAns[activeBlank.qId]) newAns[activeBlank.qId] = [];
-          
           let currentVal = newAns[activeBlank.qId][activeBlank.index] || '';
           if (currentVal === '?') currentVal = '';
-          
           newAns[activeBlank.qId][activeBlank.index] = currentVal + num;
           return newAns;
         });
@@ -360,7 +440,7 @@
         });
       };
 
-      const [activeBlank, setActiveBlank] = React.useState(null);
+      
       const [isSubmitting, setIsSubmitting] = React.useState(false);
 
       const currentQ = questions[currentQIndex];
@@ -427,7 +507,7 @@
           }
           return <span key={i}>{part}</span>;
         });
-      };
+      };};
 
       const handleSubmit = () => {
         showModal('confirm', '제출 확인', '정말 제출하시겠습니까?').then(confirmed => {
@@ -437,90 +517,91 @@
           const results = {};
 
           questions.forEach(q => {
-                const userAnswers = studentAnswers[q.id] || [];
-                const correctAnswers = q.type === 'essay' ? [] : ((q.content || '').match(/\{\{(.*?)\}\}/g) || []).map(s => s.replace(/[{}]/g, '').trim());
-                const qRubrics = rubrics[q.id] || [];
-                
-                let scoreInfo = { grade: 'F', score: 0 };
-                let correctCount = 0;
-                
-                if (q.type === 'essay') {
-                  const text = (userAnswers[0] || '').trim();
-                  let matchedR = null;
-                  const sortedRubrics = [...qRubrics].sort((a,b) => b.score - a.score);
-                  for (let r of sortedRubrics) {
-                    if (r.type === 'keyword') {
-                      const keywords = (r.keywords || '').split(',').map(k => k.trim()).filter(k => k);
-                      let allMatch = true;
-                      for (let k of keywords) {
-                        if (text.indexOf(k) === -1) { allMatch = false; break; }
-                      }
-                      if (allMatch && keywords.length > 0) {
-                         matchedR = r;
-                         break;
-                      }
-                    }
+            const userAnswers = studentAnswers[q.id] || [];
+            const correctAnswers = q.type === 'essay' ? [] : ((q.content || '').match(/\{\{(.*?)\}\}/g) || []).map(s => s.replace(/[{}]/g, '').trim());
+            const qRubrics = rubrics[q.id] || [];
+            
+            let scoreInfo = { grade: 'F', score: 0 };
+            let correctCount = 0;
+            
+            if (q.type === 'essay') {
+              const text = (userAnswers[0] || '').trim();
+              let matchedR = null;
+              // sort rubrics by score descending so higher score matches first
+              const sortedRubrics = [...qRubrics].sort((a,b) => b.score - a.score);
+              for (let r of sortedRubrics) {
+                if (r.type === 'keyword') {
+                  const keywords = (r.keywords || '').split(',').map(k => k.trim()).filter(k => k);
+                  let allMatch = true;
+                  for (let k of keywords) {
+                    if (text.indexOf(k) === -1) { allMatch = false; break; }
                   }
-                  if (matchedR) scoreInfo = { grade: matchedR.grade, score: matchedR.score };
-                } else if (q.type === 'value') {
-                  const mode = q.gradingMode || 'count';
-                  if (mode === 'count') {
-                    correctAnswers.forEach((ans, idx) => {
-                      if ((userAnswers[idx] || '').trim() === ans) correctCount++;
-                    });
-                    for (let r of qRubrics) {
-                      if (r.type === 'count' && correctCount >= r.min && correctCount <= r.max) {
-                        scoreInfo = { grade: r.grade, score: r.score };
-                        break;
-                      }
-                    }
-                  } else if (mode === 'individual') {
-                    let totalScoreIndividual = 0;
-                    let grades = [];
-                    for (let r of qRubrics) {
-                      if (r.type === 'individual') {
-                        const uAns = (userAnswers[r.blankIndex] || '').trim();
-                        if (uAns === r.matchValue.toString().trim()) {
-                          totalScoreIndividual += r.score;
-                          if(r.grade) grades.push(r.grade);
-                          correctCount++;
-                        }
-                      }
-                    }
-                    scoreInfo = { grade: grades.join('/') || '완료', score: totalScoreIndividual };
-                  } else if (mode === 'combination') {
-                    let maxScoreR = null;
-                    for (let r of qRubrics) {
-                      if (r.type === 'combination') {
-                        const indices = (r.indices || '').split(',').map(n => parseInt(n.trim(), 10)).filter(n => !isNaN(n));
-                        let allCorrect = true;
-                        for (let idx of indices) {
-                          const uAns = (userAnswers[idx] || '').trim();
-                          const cAns = correctAnswers[idx];
-                          if (uAns !== cAns) { allCorrect = false; break; }
-                        }
-                        if (allCorrect && indices.length > 0) {
-                          if (!maxScoreR || r.score > maxScoreR.score) maxScoreR = r;
-                        }
-                      }
-                    }
-                    if (maxScoreR) scoreInfo = { grade: maxScoreR.grade, score: maxScoreR.score };
+                  if (allMatch && keywords.length > 0) {
+                     matchedR = r;
+                     break;
                   }
-                } else {
-                  correctAnswers.forEach((ans, idx) => {
-                    if (userAnswers[idx] === ans) correctCount++;
-                  });
-                  for (let r of qRubrics) {
-                    if (r.type === 'count' || !r.type) {
-                      if (correctCount >= r.min && correctCount <= r.max) {
-                        scoreInfo = { grade: r.grade, score: r.score };
-                        break;
-                      }
+                }
+              }
+              if (matchedR) scoreInfo = { grade: matchedR.grade, score: matchedR.score };
+            } else if (q.type === 'value') {
+              const mode = q.gradingMode || 'count';
+              if (mode === 'count') {
+                correctAnswers.forEach((ans, idx) => {
+                  if ((userAnswers[idx] || '').trim() === ans) correctCount++;
+                });
+                for (let r of qRubrics) {
+                  if (r.type === 'count' && correctCount >= r.min && correctCount <= r.max) {
+                    scoreInfo = { grade: r.grade, score: r.score };
+                    break;
+                  }
+                }
+              } else if (mode === 'individual') {
+                let totalScore = 0;
+                let grades = [];
+                for (let r of qRubrics) {
+                  if (r.type === 'individual') {
+                    const uAns = (userAnswers[r.blankIndex] || '').trim();
+                    if (uAns === r.matchValue.toString().trim()) {
+                      totalScore += r.score;
+                      if(r.grade) grades.push(r.grade);
+                      correctCount++;
                     }
                   }
                 }
-                
-                results[q.id] = { correctCount, scoreInfo, type: q.type, userAnswers, correctAnswers };
+                scoreInfo = { grade: grades.join('/') || '완료', score: totalScore };
+              } else if (mode === 'combination') {
+                let maxScoreR = null;
+                for (let r of qRubrics) {
+                  if (r.type === 'combination') {
+                    const indices = (r.indices || '').split(',').map(n => parseInt(n.trim(), 10)).filter(n => !isNaN(n));
+                    let allCorrect = true;
+                    for (let idx of indices) {
+                      const uAns = (userAnswers[idx] || '').trim();
+                      const cAns = correctAnswers[idx];
+                      if (uAns !== cAns) { allCorrect = false; break; }
+                    }
+                    if (allCorrect && indices.length > 0) {
+                      if (!maxScoreR || r.score > maxScoreR.score) maxScoreR = r;
+                    }
+                  }
+                }
+                if (maxScoreR) scoreInfo = { grade: maxScoreR.grade, score: maxScoreR.score };
+              }
+            } else {
+              correctAnswers.forEach((ans, idx) => {
+                if (userAnswers[idx] === ans) correctCount++;
+              });
+              for (let r of qRubrics) {
+                if (r.type === 'count' || !r.type) {
+                  if (correctCount >= r.min && correctCount <= r.max) {
+                    scoreInfo = { grade: r.grade, score: r.score };
+                    break;
+                  }
+                }
+              }
+            }
+            
+            results[q.id] = { correctCount, scoreInfo, type: q.type, userAnswers, correctAnswers };
             totalScore += scoreInfo.score;
           });
 
