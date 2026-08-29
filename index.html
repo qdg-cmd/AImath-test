@@ -432,7 +432,7 @@
               );
             }
           }
-          return <span key={i}>{part}</span>;
+          return <span key={i}><LatexText text={part} /></span>;
         });
       };
 
@@ -585,7 +585,7 @@
             </div>
             
             <div className="p-4 sm:p-6 flex-shrink-0">
-              <h2 className="text-xl sm:text-2xl font-black break-keep">{currentQ.title}</h2>
+              <h2 className="text-xl sm:text-2xl font-black break-keep"><LatexText text={currentQ.title} /></h2>
             </div>
 
             <div className="flex-1 overflow-y-auto px-4 sm:px-6 pb-6 text-lg sm:text-xl md:text-2xl leading-loose font-medium whitespace-pre-wrap break-keep">
