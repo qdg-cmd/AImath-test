@@ -537,7 +537,7 @@
               method: 'POST',
               mode: 'no-cors',
               headers: { 'Content-Type': 'text/plain' },
-              body: JSON.stringify({ action: "submit", data: { session: activeSession, ...finalData } })
+              body: JSON.stringify({ action: "submit", session: activeSession, ...finalData, data: { session: activeSession, ...finalData } })
             }).then(() => {
               setStudentsBySession(prev => {
                 const next = {...prev};
@@ -652,7 +652,7 @@
                 method: 'POST',
                 mode: 'no-cors',
                 headers: { 'Content-Type': 'text/plain' },
-                body: JSON.stringify({ action: "delete", data: { session: activeSession, studentId: studentId } })
+                body: JSON.stringify({ action: "delete", session: activeSession, studentId: studentId, data: { session: activeSession, studentId: studentId } })
               }).then(() => {
                 setStudentsBySession(prev => {
                   const next = {...prev};
