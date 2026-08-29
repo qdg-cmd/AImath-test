@@ -344,6 +344,7 @@
           newAns[activeBlank.qId][activeBlank.index] = word;
           return newAns;
         });
+        setActiveBlank(null);
       };
       
       const handleNumberClick = (num) => {
