@@ -227,7 +227,7 @@
           method: 'POST',
           mode: 'no-cors',
           headers: { 'Content-Type': 'text/plain' },
-          body: JSON.stringify({ action: "saveConfig", data: configData })
+          body: JSON.stringify({ action: "saveConfig", ...configData, data: configData })
         }).then(() => {
           showModal('alert', '성공', '구글 시트에 모든 설정과 문항/루브릭 배포가 완료되었습니다.');
         }).catch(err => {
