@@ -495,10 +495,10 @@
                   }
                 }
                 scoreInfo = { grade: grades.join('/') || '완료', score: totalScoreIndividual };
-              } else if (mode === 'combination') {
+                            } else if (mode === 'combination_strict') {
                 let maxScoreR = null;
                 for (let r of qRubrics) {
-                  if (r.type === 'combination') {
+                  if (r.type === 'combination' || r.type === 'combination_strict') {
                     const indices = (r.indices || '').split(',').map(n => parseInt(n.trim(), 10)).filter(n => !isNaN(n));
                     let allCorrect = true;
                     for (let idx of indices) {
@@ -506,7 +506,24 @@
                       const cAns = correctAnswers[idx];
                       if (uAns !== cAns) { allCorrect = false; break; }
                     }
-                    if (allCorrect && indices.length > 0) {
+                    if (allCorrect) {
+                      if (!maxScoreR || r.score > maxScoreR.score) maxScoreR = r;
+                    }
+                  }
+                }
+                if (maxScoreR) scoreInfo = { grade: maxScoreR.grade, score: maxScoreR.score };
+              } else if (mode === 'combination') {
+                let maxScoreR = null;
+                for (let r of qRubrics) {
+                  if (r.type === 'combination') {
+                    const indices = (r.indices || '').split(',').map(n => parseInt(n.trim(), 10)).filter(n => !isNaN(n));
+                    let allCorrect = true;
+                    const userSet = indices.map(idx => (userAnswers[idx] || '').trim()).sort();
+                    const correctSet = indices.map(idx => correctAnswers[idx]).sort();
+                    for (let i = 0; i < indices.length; i++) {
+                      if (userSet[i] !== correctSet[i]) { allCorrect = false; break; }
+                    }
+                    if (allCorrect) {
                       if (!maxScoreR || r.score > maxScoreR.score) maxScoreR = r;
                     }
                   }
@@ -885,14 +902,15 @@
                                     blanks.forEach((b, idx) => {
                                       newConfig[activeSession].rubrics[q.id].push({ type: 'individual', blankIndex: idx, matchValue: b.replace(/[{}]/g, '').trim(), grade: 'A', score: 10 });
                                     });
-                                  } else if (e.target.value === 'combination') {
+                                  } else if (e.target.value === 'combination' || e.target.value === 'combination_strict') {
                                     newConfig[activeSession].rubrics[q.id] = [{ type: 'combination', indices: '0,1', grade: 'A', score: 10 }];
                                   }
                                   setConfigBySession(newConfig);
                                 }} className="border border-black p-1">
                                   <option value="count">정답 개수 채점</option>
                                   <option value="individual">빈칸 개별 채점</option>
-                                  <option value="combination">특정 빈칸 조합 채점</option>
+                                  <option value="combination">특정 빈칸 조합 채점 (순서 무관)</option>
+<option value="combination_strict">특정 빈칸 조합 채점 (순서 엄격)</option>
                                 </select>
                               </div>
                               
@@ -978,7 +996,7 @@
                                 </React.Fragment>
                               )}
                               
-                              {q.gradingMode === 'combination' && (
+                              {(q.gradingMode === 'combination' || q.gradingMode === 'combination_strict') && (
                                 <React.Fragment>
                                   <p className="text-sm text-gray-500 mb-2">필수 빈칸을 콤마(,)로 구분 (예: 0,1)</p>
                                   {(rubrics[q.id] || []).map((r, rIndex) => (
