@@ -336,6 +336,16 @@
       const [currentQIndex, setCurrentQIndex] = React.useState(0);
       const [studentAnswers, setStudentAnswers] = React.useState({});
       const [activeBlank, setActiveBlank] = React.useState(null);
+      const handleSelectWord = (word) => {
+        if (!activeBlank) return;
+        setStudentAnswers(prev => {
+          const newAns = { ...prev };
+          if (!newAns[activeBlank.qId]) newAns[activeBlank.qId] = [];
+          newAns[activeBlank.qId][activeBlank.index] = word;
+          return newAns;
+        });
+      };
+      
       const handleNumberClick = (num) => {
         if (!activeBlank) return;
         setStudentAnswers(prev => {
